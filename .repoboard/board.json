@@ -1,0 +1,699 @@
+{
+  "version": 1,
+  "columns": [
+    "Todo",
+    "In Progress",
+    "Review",
+    "Done"
+  ],
+  "milestones": [],
+  "cards": [
+    {
+      "id": "2ea982ad-8642-4211-933d-c8a9484215eb",
+      "number": 6,
+      "column": "Todo",
+      "position": 5,
+      "title": "Этап 6 — выводы на пересечении данных",
+      "description": "То, ради чего панель и трекер объединялись: панель знает контекст дня, трекер знает факты, на пересечении рождаются наблюдения о себе. Этого нет в готовых трекерах.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "2b707c4f-58f9-4585-b90d-75185c0d467f",
+          "text": "Погода × привычка",
+          "done": false,
+          "notes": "Сравнить долю выполнения в дождливые и ясные дни. Источник — код погоды, сохранённый в log на этапе 4.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "5da6f512-8d7d-4599-a474-5a8753d0a6af",
+          "text": "День недели × привычка",
+          "done": false,
+          "notes": "Найти самый провальный день недели.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "be200f21-f4c4-424c-858c-30ec4337bd20",
+          "text": "Динамика за месяц",
+          "done": false,
+          "notes": "Выполнение за последний месяц против предыдущего: растёт или падает.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "8ed59810-c9da-4bb6-8eb3-8f9ed4e101f9",
+          "text": "Порог достоверности",
+          "done": false,
+          "notes": "**Обязательное правило.** Вывод не показывается, пока в каждой сравниваемой группе меньше 10 дней или разница меньше 25%. Иначе «в дождь ты ленивее» окажется совпадением на трёх наблюдениях. Панель, которая врёт уверенным тоном, хуже панели, которая молчит.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "f71b7eb4-c8cf-4ff9-a2f0-a509844a80f5",
+          "text": "Проверка этапа",
+          "done": false,
+          "notes": "Подготовить в log заведомо перекошенные данные — вывод появился. Урезать выборку до 5 дней — вывод исчез.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 4,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790543449687,
+      "deletedAt": null
+    },
+    {
+      "id": "591c3440-7302-469e-9a6e-57be97958bf9",
+      "number": 7,
+      "column": "Todo",
+      "position": 6,
+      "title": "Этап 7 — виджет на рабочий стол",
+      "description": "Обёртка готовой панели в Electron: маленькое окно на рабочем столе, где видны сегодняшние привычки и можно их отмечать. Идёт последним, потому что требует npm и сборки — к этому моменту уже есть продукт, ради которого не жалко разобраться.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "cc43abaa-0b80-4687-8827-b30ee39cba33",
+          "text": "package.json и Electron",
+          "done": false,
+          "notes": "Первое место в проекте, где нужен терминал и npm install. До этого всё работало двойным кликом.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "489ff2f4-f828-4f52-bc85-30641d173992",
+          "text": "Окно виджета",
+          "done": false,
+          "notes": "desktop/main.js: frame: false, transparent: true, размер примерно с заметку. Показывает сегодняшние привычки, серию и погоду, отмечать можно прямо в нём.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "75c7824d-9b4e-466e-ad03-6451115c1fe0",
+              "text": "Поведение относительно других окон",
+              "done": false,
+              "notes": "По умолчанию закреплён на рабочем столе и не мешает. В настройках — переключатель «always on top» и горячая клавиша для быстрого вызова.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            },
+            {
+              "id": "a3f9d705-d8cd-4b3d-b773-81890f668164",
+              "text": "Перетаскивание и память позиции",
+              "done": false,
+              "notes": "-webkit-app-region: drag на шапке виджета. Важно: на кнопках внутри поставить no-drag, иначе они перестанут нажиматься. Позицию и размер сохранять между запусками.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "b1832f79-9f36-4ebd-849f-3e1b0248519d",
+          "text": "Полная панель вторым окном",
+          "done": false,
+          "notes": "Двойной клик по виджету открывает тот же index.html в обычном окне. Код один, хранилище одно.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "ebb96aed-f5fc-490e-b059-a488b0c2b440",
+          "text": "Автозапуск",
+          "done": false,
+          "notes": "app.setLoginItemSettings({ openAtLogin: true }).",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "27d02fc0-cbe0-4169-bbb1-e7e98ed9ac64",
+          "text": "Перенос данных из браузера",
+          "done": false,
+          "notes": "Ловушка: у окна Electron собственное хранилище, данные из браузера туда сами не попадут. Закрывается экспортом и импортом из этапа 3: один раз выгрузить файл и загрузить в приложении.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "001d78bd-8aa4-42f3-9f64-c78161dab6a5",
+          "text": "Проверка этапа",
+          "done": false,
+          "notes": "Перезагрузить компьютер: виджет поднялся сам и встал на прежнее место. Отметить привычку в виджете, открыть полную панель — значение то же.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 4,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790543518978,
+      "deletedAt": null
+    },
+    {
+      "id": "5c5e80a6-216e-4604-8993-5f98a7339dd5",
+      "number": 4,
+      "column": "Todo",
+      "position": 3,
+      "title": "Этап 4 — погода",
+      "description": "Первые внешние данные в проекте. Панель начинает знать контекст дня — это же станет основой для выводов на шестом этапе.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "15ef9fe9-667c-4b59-8720-ea8d886dbfb2",
+          "text": "Запрос к Open-Meteo",
+          "done": false,
+          "notes": "Ключ и регистрация не нужны. Берём температуру, код погоды и осадки на сегодня. Код погоды сохранять в log по дате — без этого этап 6 не сможет ничего сопоставить.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "74f1ae6d-9fce-4864-917e-9c0f0d2ede5a",
+          "text": "Определение города",
+          "done": false,
+          "notes": "Сначала геолокация браузера, при отказе — поиск города руками через geocoding Open-Meteo. Выбор сохраняется в settings.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "144aac5d-79f2-42cc-9e16-f541d8f8dc4c",
+          "text": "Кэш на час",
+          "done": false,
+          "notes": "Иначе каждое открытие вкладки бьёт в сеть. Хранить ответ и метку времени в localStorage.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "b278ba62-0eea-4a3e-87ac-a19f92f8d952",
+          "text": "Поведение без сети",
+          "done": false,
+          "notes": "Показать последнее известное значение с пометкой, что оно устарело. Ошибка сети не должна ломать остальную панель.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "193ba6ce-581a-4b52-9da0-1843f45908d3",
+          "text": "Проверить ограничение file://",
+          "done": false,
+          "notes": "Ключевая развилка этапа. Запросы с file:// обычно проходят (сервер отдаёт CORS *), но браузер может заблокировать. Если заблокирован — переходим на `npx --yes serve .` и http://localhost:3000.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "ad2c5df5-614b-4f1b-93b7-a78f1ea24a2c",
+          "text": "Проверка этапа",
+          "done": false,
+          "notes": "Сверить температуру с любым прогнозом. Отключить сеть — панель не падает. В DevTools → Network убедиться, что при повторной загрузке в течение часа запроса нет.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 3,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790543355632,
+      "deletedAt": null
+    },
+    {
+      "id": "9c8a9ddc-0d8c-47e4-a7c4-dad68b921800",
+      "number": 1,
+      "column": "In Progress",
+      "position": 0,
+      "title": "Этап 1 — каркас, часы, тема суток",
+      "description": "Основа панели: структура файлов, разметка, тикающие часы и четыре цветовые темы, которые сменяются по времени суток. После этого этапа страницу уже можно ставить стартовой в браузере.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "0d168ad4-1365-485c-a606-c6fc25758e84",
+          "text": "Создать структуру файлов",
+          "done": true,
+          "notes": "index.html, css/theme.css, css/app.css, js/main.js. Подключать обычными <script src>, **без** type=\"module\" — ES-модули не работают при открытии через file:// (двойным кликом).",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Созданы index.html, css/theme.css, css/app.css, js/main.js. Скрипт подключён обычным <script src=\"js/main.js\"> без type=\"module\". Проверено через document.styleSheets в браузере: оба css загрузились (theme.css — 6 правил, app.css — 22).",
+            "at": 1790543739827
+          }
+        },
+        {
+          "id": "109c1f27-258f-465b-876a-0a0636a058ac",
+          "text": "Разметка страницы",
+          "done": true,
+          "notes": "Три зоны: шапка (дата, часы, погода), зона плиток, зона истории. Пустые контейнеры с id — наполнять будем на следующих этапах.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Шапка (greeting, date, clock, weather), секция Today с #tiles, секция History с #history, футер с индикатором темы. Пустые состояния подписаны по-английски. Видно на скриншотах всех четырёх тем.",
+            "at": 1790543739849
+          }
+        },
+        {
+          "id": "33ea0a77-894b-4599-ad40-cb493e386a7b",
+          "text": "Часы и дата прописью (английский)",
+          "done": true,
+          "notes": "setInterval раз в секунду. Дата через Intl.DateTimeFormat('en-US', { weekday:'long', day:'numeric', month:'long' }) — интерфейс панели целиком на английском по решению от 2026-09-27. Проверить: часы идут, дата читается как «Saturday, September 27».",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "На серии скриншотов часы шли: 23:14:24 → 23:14:58 → 23:14:59 → 23:15:01. Дата отрисовалась как «Sunday, September 27» через Intl.DateTimeFormat('en-US'). Цифры с font-variant-numeric: tabular-nums, ширина не прыгает.",
+            "at": 1790543739859
+          }
+        },
+        {
+          "id": "2ff5a5f9-fa7c-4def-916c-66a5aa68f107",
+          "text": "Четыре темы в CSS-переменных",
+          "done": false,
+          "notes": "theme.css: наборы переменных для утра, дня, вечера и ночи. Все цвета только через var() — ни одного хардкода в app.css, иначе тема сломается.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "93b731ff-4ec7-4e67-98ab-912f4e2f932f",
+              "text": "Утро 05–11",
+              "done": true,
+              "notes": "Светлая, тёплая: мягкий песочный фон.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Тёплый песочный: bg #f8f4ed, surface #fffdfa, accent #c0723a. Скриншот http://localhost:8137/#morning — фон тёплый, текст читается, приветствие «Good morning».",
+                "at": 1790543761546
+              }
+            },
+            {
+              "id": "aefc3fc0-3ce5-47a3-9334-fc22368004e1",
+              "text": "День 11–17",
+              "done": true,
+              "notes": "Светлая нейтральная, максимальный контраст — днём экран самый яркий.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Нейтральный светлый, самый контрастный: bg #eff2f6, surface #ffffff, text #191d22, accent #2d6cd4. Скриншот #day — приветствие «Good afternoon».",
+                "at": 1790543761559
+              }
+            },
+            {
+              "id": "f290a3e6-7bb6-4569-93c0-29778ff5b2e3",
+              "text": "Вечер 17–22",
+              "done": true,
+              "notes": "Тёплая приглушённая, контраст ниже.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Тёплые сумерки: bg #2a2320, surface #352d28, accent #e08f4d. Скриншот #evening — тёмно-коричневый фон, приветствие «Good evening». Получилась дуга: утро светлое тёплое → день светлый яркий → вечер тёмный тёплый → ночь тёмная холодная.",
+                "at": 1790543761569
+              }
+            },
+            {
+              "id": "c3927469-29b1-456b-8065-a2f5979412d5",
+              "text": "Ночь 22–05",
+              "done": true,
+              "notes": "Тёмная. Проверить внимательнее остальных: текст не должен быть чисто белым по чёрному, режет глаза.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "bg #131519, text #c5cad3 — намеренно не чисто белый, как и требовал пункт. Проверено getComputedStyle: bodyBg = rgb(19, 21, 25). Скриншот #night, приветствие «Still up?».",
+                "at": 1790543761578
+              }
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "2f750e61-1202-4c34-853d-3603c9975cc5",
+          "text": "Переключение темы по времени",
+          "done": false,
+          "notes": "Атрибут data-time на :root. Пересчёт при загрузке и по таймеру раз в минуту — иначе страница, открытая в 16:59, останется дневной до утра.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "8a7f5f20-a3d7-4506-bf41-3a1ee9c58c31",
+          "text": "Плавный переход между темами",
+          "done": false,
+          "notes": "transition на background-color и color. Без него смена темы в полночь выглядит как мигание.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "c500f03a-175f-4b75-a70a-b499f6db3ad2",
+          "text": "Проверка этапа",
+          "done": false,
+          "notes": "Открыть index.html двойным кликом: часы идут, дата верная. Временно захардкодить час (0, 8, 14, 19) и просмотреть все четыре темы — каждая читаема, ночная не слепит.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790543761578,
+      "deletedAt": null
+    },
+    {
+      "id": "a85f8a8f-3e27-4c2f-9e9a-2d4e31dbdac5",
+      "number": 3,
+      "column": "Todo",
+      "position": 2,
+      "title": "Этап 3 — история, серии, сохранность данных",
+      "description": "Накопленные отметки превращаются в видимый прогресс: сетка за 10 недель, серии и проценты. Здесь же экспорт и импорт — с этого этапа в браузере лежат данные, которых больше нигде нет.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "611aa8ff-7018-4b29-99bf-60efe9465ae8",
+          "text": "Сетка отметок за 10 недель",
+          "done": false,
+          "notes": "Столбец — неделя, строка — день. Насыщенность цвета по доле выполненного за день (5 ступеней). CSS Grid с grid-auto-flow: column.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "8699fafe-d0b3-4595-960f-100483609291",
+          "text": "Расчёт серий",
+          "done": false,
+          "notes": "В habits.js отдельной чистой функцией: принимает log и id привычки, возвращает текущую и лучшую серию. Чистая — значит ничего не читает из DOM и хранилища, её легко проверить на выдуманных данных.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "b1acbbc6-c364-4662-993e-2e2326a10dc5",
+              "text": "Сегодняшний день не рвёт серию",
+              "done": false,
+              "notes": "Важная деталь: если сегодня ещё не отмечено, серия считается до вчера и пока жива. Иначе каждое утро панель будет сообщать, что ты всё провалил.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "355b061d-7492-4d46-bd7f-84cc2c5755d4",
+          "text": "Статистика и полоска года",
+          "done": false,
+          "notes": "Текущая серия, лучшая серия, процент закрытого месяца, доля прошедшего года.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "2a730a8e-6f5f-4b2b-ac4a-592b1a61b546",
+          "text": "Экспорт и импорт JSON",
+          "done": false,
+          "notes": "Стоит именно здесь, а не в конце: localStorage стирается при чистке браузера, а накопленную историю восстановить невозможно. Скачивание через Blob и <a download>, загрузка через <input type=file>. Он же понадобится на этапе 7 для переезда в Electron.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "4470069f-3047-4f6d-81ae-e9d8a298bb9c",
+          "text": "Проверка этапа",
+          "done": false,
+          "notes": "Вписать в log выдуманные данные за прошлый месяц и сверить сетку и серии вручную. Выгрузить JSON, очистить хранилище, загрузить обратно — всё вернулось.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 3,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790543355618,
+      "deletedAt": null
+    },
+    {
+      "id": "b770ad4d-17c9-4d19-ac40-92229a894190",
+      "number": 2,
+      "column": "Todo",
+      "position": 1,
+      "title": "Этап 2 — привычки: библиотека и отметки",
+      "description": "Ядро трекера: библиотека готовых привычек по четырём категориям, выбор своего набора и отметка выполнения за сегодня с сохранением. С этого момента панель полезна каждый день.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "c0670f2c-09df-439b-9067-e429ba3ad899",
+          "text": "storage.js — хранилище",
+          "done": false,
+          "notes": "Один ключ localStorage `dayPanel`, всё состояние одним объектом, пишется целиком. Функции: load(), save(), today(). Поле version: 1 — чтобы потом мигрировать, а не терять данные.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "895fc906-5941-4c2c-bd3d-2b8113b2a8b5",
+              "text": "Функция today()",
+              "done": false,
+              "notes": "Возвращает строку 'ГГГГ-ММ-ДД' по локальному времени. Использовать ТОЛЬКО её везде, где нужна дата — иначе в разных местах 'сегодня' разъедется. Не брать toISOString(): он отдаёт UTC и после 21:00 по Киеву вернёт завтрашний день.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            },
+            {
+              "id": "8c0d3c5f-32b7-4b09-a476-ec2559616eab",
+              "text": "Защита от битых данных",
+              "done": false,
+              "notes": "JSON.parse в try/catch. Если хранилище повреждено — вернуть пустую структуру, а не уронить страницу.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "fb75f32d-6e62-4faf-a204-640e9ca1920e",
+          "text": "presets.js — библиотека привычек",
+          "done": false,
+          "notes": "Четыре категории: спорт и тело, режим и здоровье, учёба и развитие, работа и фокус. В учёбе вариантов больше остальных: язык (минуты), чтение (страницы), курс (уроки), практика кода (минуты) — это заявленный приоритет.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "1378b311-fe12-4481-bbc1-0c52fabfb775",
+          "text": "Экран выбора привычек",
+          "done": false,
+          "notes": "Отметить нужные из пресетов, добавить свою (название, единица, цель), убрать лишнюю.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "4b231a74-de6b-4ce3-a5ea-5dc54f9fb168",
+              "text": "Убранная привычка архивируется, а не удаляется",
+              "done": false,
+              "notes": "archived: true. Удаление стёрло бы всю её историю из log — восстановить будет неоткуда.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "a77eb100-03c5-4933-98da-9bdebb21e234",
+          "text": "Плитка привычки на сегодня",
+          "done": false,
+          "notes": "Привычка — всегда число с целью: зарядка цель 1, вода 8, английский 20 минут. Галочка это частный случай, отдельного типа нет.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "3c3d330d-f114-457a-ba94-85aa472398e6",
+              "text": "Нажатие добавляет единицу",
+              "done": false,
+              "notes": "При достижении цели плитка переходит в состояние «готово».",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            },
+            {
+              "id": "2ee0f82d-27ba-4624-a188-76555ad28f98",
+              "text": "Правый клик убавляет",
+              "done": false,
+              "notes": "Обязательно: без отмены случайное нажатие не исправить, и данные за день становятся враньём.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "19d038ba-7b9c-4b16-8e0a-970650d1e647",
+          "text": "Проверка этапа",
+          "done": false,
+          "notes": "Отметить привычку, перезагрузить страницу — значение на месте. Открыть DevTools → Application → Local Storage, найти ключ dayPanel и увидеть свою структуру своими глазами.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790543249136,
+      "deletedAt": null
+    },
+    {
+      "id": "d774af9b-c46c-47c9-843e-40026b4bd7c3",
+      "number": 5,
+      "column": "Todo",
+      "position": 4,
+      "title": "Этап 5 — задачи, отсчёты, заметка дня",
+      "description": "Панель начинает закрывать день целиком, а не только привычки. Все подписи в интерфейсе на английском.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "a9123e05-49ce-46e2-8429-7486630673c6",
+          "text": "Задачи на день (Today's tasks)",
+          "done": false,
+          "notes": "Добавить, отметить, удалить. Список привязан к дате.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "43686acf-ef11-4375-8194-c599f67cae58",
+              "text": "Перенос невыполненного",
+              "done": false,
+              "notes": "Утром список чистый, но вчерашние незакрытые не пропадают — панель предлагает перенести их одним нажатием (Move 3 tasks from yesterday).",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "77d6105e-e29e-4de3-9df0-3e64ccaf9fc9",
+          "text": "Обратные отсчёты (Countdowns)",
+          "done": false,
+          "notes": "Название плюс дата, показывает оставшиеся дни. Прошедшие уходят в конец списка, а не исчезают.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "a836b560-c652-45da-bcbf-91570195d0e7",
+          "text": "Заметка дня (Note)",
+          "done": false,
+          "notes": "Пара строк, сохраняется по дате с задержкой после остановки набора, а не на каждое нажатие клавиши.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "1d30fc6a-fb69-4e60-9f8e-d9ba82735894",
+          "text": "Блок «One year ago»",
+          "done": false,
+          "notes": "Заложить сразу, хотя оживёт он только через год. Пока данных нет — блок просто не показывается.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "e452d82f-b55c-4123-8334-6ee593991328",
+          "text": "Проверка этапа",
+          "done": false,
+          "notes": "Создать задачу, подменить дату на завтрашнюю — панель предлагает перенос невыполненного.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 4,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790543449673,
+      "deletedAt": null
+    }
+  ],
+  "board": {
+    "name": "Main board",
+    "description": null,
+    "color": null,
+    "art": null,
+    "owner": null,
+    "updatedAt": 0
+  },
+  "boards": []
+}
