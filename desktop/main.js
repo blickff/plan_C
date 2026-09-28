@@ -23,6 +23,16 @@ const path = require('node:path');
 const vault = require('./vault');
 
 const ROOT = path.join(__dirname, '..');
+
+/* Pinned rather than left to Electron.
+
+   Electron names this folder after the product, so an installed build
+   called "Day Panel" would look in one place and a development run
+   called "day-panel" in another — two profiles, two sets of habits,
+   and no hint to the person that their history is still on the disk
+   under a different name. Naming it once here keeps the two the same
+   for good. Must run before the app is ready. */
+app.setPath('userData', path.join(app.getPath('appData'), 'day-panel'));
 const STATE_FILE = () => path.join(app.getPath('userData'), 'window-state.json');
 
 const TYPES = {
@@ -307,6 +317,23 @@ function wireMessages() {
     const where = vault.info(app);
     if (where.file && where.exists) shell.showItemInFolder(where.file);
     else if (where.folder) shell.openPath(where.folder);
+  });
+}
+
+/* One copy at a time. Double-clicking the shortcut twice would
+   otherwise start a second app with its own widget, its own tray icon
+   and its own idea of the data — and the two would overwrite each
+   other. The second one hands focus back to the first and exits. */
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on('second-instance', () => {
+    if (widget && !widget.isDestroyed()) {
+      widget.show();
+      widget.focus();
+    } else {
+      createWidget();
+    }
   });
 }
 

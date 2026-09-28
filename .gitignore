@@ -17,3 +17,7 @@ day-panel-*.json
 
 # Local Claude Code settings are per-machine; the launch config is not
 .claude/settings.local.json
+
+# Built installers — they are attached to a GitHub release, not stored
+# in the tree. Around 90 MB each.
+release/

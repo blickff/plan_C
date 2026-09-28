@@ -1,16 +1,74 @@
 {
   "name": "day-panel",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
-  "description": "A day panel and habit tracker that lives on the desktop.",
+  "description": "A day panel and habit tracker that lives on your desktop.",
   "main": "desktop/main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "icon": "node scripts/make-icon.js",
+    "dist": "electron-builder --win"
   },
   "devDependencies": {
-    "electron": "^33.0.0"
+    "electron": "^33.0.0",
+    "electron-builder": "^26.15.3"
   },
   "allowScripts": {
     "electron@33.4.11": true
+  },
+  "author": {
+    "name": "blickff"
+  },
+  "license": "MIT",
+  "build": {
+    "appId": "com.dayPanel.app",
+    "productName": "Day Panel",
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "index.html",
+      "widget.html",
+      "css/**/*",
+      "js/**/*",
+      "desktop/**/*",
+      "!release/**",
+      "!scripts/**",
+      "!.repoboard/**",
+      "!.claude/**"
+    ],
+    "npmRebuild": false,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Day Panel",
+      "uninstallDisplayName": "Day Panel",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "DayPanel-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "DayPanel-${version}-portable.${ext}"
+    }
   }
 }
