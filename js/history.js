@@ -34,11 +34,13 @@ var HistoryView = (function () {
       if (key > todayKey) {
         html = '<span class="cell cell--future" title="' + key + '"></span>';
       } else {
-        var ratio = Habits.completionFor(state.log, state.habits, key);
-        var label = ratio === null
-          ? key + ': no habits yet'
-          : key + ': ' + Math.round(ratio * 100) + '% done';
         var level = Habits.levelOn(state.log, state.habits, key);
+        var ratio = Habits.completionFor(state.log, state.habits, key);
+        var label = !Storage.known(state.log, key)
+          ? key + ': never filled in'
+          : ratio === null
+            ? key + ': no habits yet'
+            : key + ': ' + Math.round(ratio * 100) + '% done';
         html = '<span class="cell" data-level="' + level + '" title="' + label + '"></span>';
       }
 
@@ -86,6 +88,7 @@ var HistoryView = (function () {
 
     for (var day = 1; day <= Number(parts[2]); day++) {
       var key = parts[0] + '-' + parts[1] + '-' + (day < 10 ? '0' + day : day);
+      if (!Storage.known(state.log, key)) continue;
       var ratio = Habits.completionFor(state.log, state.habits, key);
       if (ratio !== null) {
         total += ratio;

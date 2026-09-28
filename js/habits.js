@@ -30,35 +30,141 @@ var Habits = (function () {
     return null;
   }
 
-  function todayLog() {
+  /* Dates ------------------------------------------------------------
+     Date keys are 'YYYY-MM-DD', which compares correctly as plain text,
+     so no Date objects are needed to put two days in order. */
+
+  function shiftDate(key, days) {
+    var parts = key.split('-');
+    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    date.setDate(date.getDate() + days);
+    return Storage.dateKey(date);
+  }
+
+  /* Monday is 0. The week starts on Monday everywhere in this project;
+     getDay() calling Sunday 0 is a fact about JavaScript, not about weeks. */
+  function weekdayOf(key) {
+    var parts = key.split('-');
+    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    return (date.getDay() + 6) % 7;
+  }
+
+  function mondayOf(key) {
+    return shiftDate(key, -weekdayOf(key));
+  }
+
+  /* Schedules ---------------------------------------------------------
+
+     A habit used to be daily and only daily, and that made the whole
+     scoreboard wrong for anyone whose habits are not. Three gym sessions
+     in a week is a perfect week; under the old model it read as 43% and
+     painted four days of the calendar as failures.
+
+     Three shapes cover nearly everything:
+       nothing / {type:'daily'}          every day
+       {type:'days', days:[0,2,4]}       certain weekdays, Monday is 0
+       {type:'week', times:3}            that many times a week, any days */
+
+  function schedOf(habit) {
+    var s = habit && habit.sched;
+    if (!s || !s.type || s.type === 'daily') return { type: 'daily' };
+    if (s.type === 'days') {
+      var days = (s.days || []).filter(function (d) { return d >= 0 && d <= 6; });
+      return days.length ? { type: 'days', days: days } : { type: 'daily' };
+    }
+    if (s.type === 'week') {
+      var times = Math.max(1, Math.min(7, parseInt(s.times, 10) || 1));
+      return { type: 'week', times: times };
+    }
+    return { type: 'daily' };
+  }
+
+  var DAY_LETTERS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  var DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  function scheduleLabel(habit) {
+    var s = schedOf(habit);
+    if (s.type === 'daily') return 'Every day';
+    if (s.type === 'week') return s.times + '× a week';
+    return s.days.slice().sort().map(function (d) { return DAY_SHORT[d]; }).join(', ');
+  }
+
+  /* How many times the habit was met in the week containing `key`,
+     counting only the days strictly before it. */
+  function metEarlierInWeek(log, habit, key) {
+    var cursor = mondayOf(key);
+    var done = 0;
+    var guard = 0;
+    while (cursor < key && guard++ < 10) {
+      if (metOn(log, habit, cursor)) done++;
+      cursor = shiftDate(cursor, 1);
+    }
+    return done;
+  }
+
+  /* Is this a day the habit is actually asked for?
+
+     For the weekly kind the answer is the interesting one. Three times a
+     week does not mean Monday; it means the week is not lost yet. So a
+     weekly habit is only "due" on a day once there are no spare days
+     left — do it today or the week cannot be made. Any earlier day it is
+     optional, and skipping an optional day is not a miss. */
+  function dueOn(log, habit, key) {
+    var s = schedOf(habit);
+    if (s.type === 'daily') return true;
+    if (s.type === 'days') return s.days.indexOf(weekdayOf(key)) !== -1;
+
+    var remaining = s.times - metEarlierInWeek(log, habit, key);
+    if (remaining <= 0) return false;
+    var daysLeft = 7 - weekdayOf(key);
+    return remaining >= daysLeft;
+  }
+
+  function dueToday(habit) {
+    return dueOn(Storage.load().log, habit, Storage.today());
+  }
+
+  /* Today's values ---------------------------------------------------- */
+
+  function valueOf(id, key) {
     var log = Storage.load().log;
-    var key = Storage.today();
-    if (!log[key]) log[key] = {};
-    return log[key];
+    return Storage.valuesOn(log, key || Storage.today())[id] || 0;
   }
 
-  function valueOf(id) {
-    return todayLog()[id] || 0;
-  }
+  function setValue(id, value, key) {
+    key = key || Storage.today();
+    var day = Storage.day(key, true);
 
-  function setValue(id, value) {
-    var log = todayLog();
     if (value > 0) {
-      log[id] = value;
+      day.values[id] = value;
+      /* The clock is only meaningful for something happening now.
+         Filling in last Tuesday from memory does not tell you when last
+         Tuesday's run happened, and inventing a time would poison the
+         one insight that depends on it. */
+      if (key === Storage.today()) {
+        if (!day.at) day.at = {};
+        if (!day.at[id]) day.at[id] = Storage.clock();
+      }
     } else {
       /* Zero is the default, so storing it would only pad the file. */
-      delete log[id];
+      delete day.values[id];
+      if (day.at) delete day.at[id];
+      /* Zeroing the last habit would make the day look untouched again,
+         which is a different claim from "nothing got done". */
+      if (!Object.keys(day.values).length) day.closed = true;
     }
+
     Storage.save();
   }
 
   /* A goal of 1 is the tick-box case: clicking flips it rather than
      counting past the goal. Everything else moves by its step. */
-  function bump(id, direction) {
+  function bump(id, direction, key) {
     var habit = find(id);
     if (!habit) return;
 
-    var current = valueOf(id);
+    key = key || Storage.today();
+    var current = valueOf(id, key);
     var next;
 
     if (habit.goal === 1) {
@@ -67,7 +173,7 @@ var Habits = (function () {
       next = current + habit.step * direction;
     }
 
-    setValue(id, Math.max(0, next));
+    setValue(id, Math.max(0, next), key);
     renderTiles();
     /* Today's cell and the streak numbers move with every tick. */
     if (typeof repaint === 'function') repaint();
@@ -156,6 +262,16 @@ var Habits = (function () {
     return null;
   }
 
+  function setSchedule(id, sched) {
+    var habit = find(id);
+    if (!habit) return;
+    var clean = schedOf({ sched: sched });
+    if (clean.type === 'daily') delete habit.sched;
+    else habit.sched = clean;
+    Storage.save();
+    render();
+  }
+
   /* Archived, never deleted: the log is keyed by habit id, and dropping the
      habit would orphan every day it was ever ticked. */
   function remove(id) {
@@ -166,57 +282,133 @@ var Habits = (function () {
     render();
   }
 
-  /* Dates and streaks ------------------------------------------------
+  /* Streaks and rates -------------------------------------------------
      The functions below are pure: everything they need arrives as an
      argument, nothing is read from the DOM or storage. That makes them
-     easy to try out on made-up data. Date keys are 'YYYY-MM-DD', which
-     compares correctly as plain text, so no Date objects are needed to
-     put two days in order. */
-
-  function shiftDate(key, days) {
-    var parts = key.split('-');
-    var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-    date.setDate(date.getDate() + days);
-    return Storage.dateKey(date);
-  }
+     easy to try out on made-up data. */
 
   function metOn(log, habit, key) {
-    var day = log[key];
-    return !!day && (day[habit.id] || 0) >= habit.goal;
+    return (Storage.valuesOn(log, key)[habit.id] || 0) >= habit.goal;
+  }
+
+  /* Every point at which the habit could have been met, oldest first.
+     For a daily or weekday habit that is a day; for a weekly one it is a
+     whole week, because three-times-a-week is kept or broken by the week
+     and not by any single Tuesday. */
+  function occurrences(log, habit, todayKey) {
+    var s = schedOf(habit);
+    var out = [];
+    var guard = 0;
+    var start = habit.createdAt && habit.createdAt < todayKey ? habit.createdAt : todayKey;
+
+    if (s.type === 'week') {
+      var week = mondayOf(start);
+      var thisWeek = mondayOf(todayKey);
+      while (week <= thisWeek && guard++ < 600) {
+        var done = 0;
+        for (var i = 0; i < 7; i++) {
+          var d = shiftDate(week, i);
+          if (d > todayKey) break;
+          if (metOn(log, habit, d)) done++;
+        }
+        out.push({ key: week, met: done >= s.times });
+        week = shiftDate(week, 7);
+      }
+      return out;
+    }
+
+    var key = start;
+    while (key <= todayKey && guard++ < 4000) {
+      if (s.type === 'daily' || s.days.indexOf(weekdayOf(key)) !== -1) {
+        out.push({ key: key, met: metOn(log, habit, key) });
+      }
+      key = shiftDate(key, 1);
+    }
+    return out;
   }
 
   function streaks(log, habit, todayKey) {
+    var list = occurrences(log, habit, todayKey);
     var best = 0;
     var run = 0;
-    var guard = 0;
 
-    var key = habit.createdAt && habit.createdAt < todayKey ? habit.createdAt : todayKey;
-    while (key <= todayKey && guard++ < 4000) {
-      if (metOn(log, habit, key)) {
+    list.forEach(function (point) {
+      if (point.met) {
         run++;
         if (run > best) best = run;
       } else {
         run = 0;
       }
-      key = shiftDate(key, 1);
-    }
+    });
 
-    /* Today only counts once it is actually done. An unfinished today must
-       not read as a break, or every morning would announce that the streak
-       is over before the day has even started. */
-    var cursor = metOn(log, habit, todayKey) ? todayKey : shiftDate(todayKey, -1);
+    /* The one still in progress only counts once it is actually done. An
+       unfinished today must not read as a break, or every morning would
+       announce that the streak is over before the day has begun. */
+    var last = list.length - 1;
+    if (last >= 0 && !list[last].met) last--;
+
     var current = 0;
-    guard = 0;
-    while (metOn(log, habit, cursor) && guard++ < 4000) {
+    while (last >= 0 && list[last].met) {
       current++;
-      cursor = shiftDate(cursor, -1);
+      last--;
     }
 
-    return { current: current, best: best };
+    return {
+      current: current,
+      best: best,
+      unit: schedOf(habit).type === 'week' ? 'week' : 'day'
+    };
   }
 
-  /* How much of that day got done, from 0 to 1, or null when no habit
-     existed yet.
+  /* Met how often out of how many chances, over the last N days. This is
+     what a streak cannot say: a streak of nought and a streak of nought
+     look identical whether the last month was perfect but for yesterday,
+     or empty throughout. */
+  function rate(log, habit, todayKey, windowDays) {
+    var from = shiftDate(todayKey, -(windowDays - 1));
+    var list = occurrences(log, habit, todayKey).filter(function (point) {
+      return point.key >= from;
+    });
+    var met = list.filter(function (point) { return point.met; }).length;
+    return { met: met, total: list.length, unit: schedOf(habit).type === 'week' ? 'week' : 'day' };
+  }
+
+  /* The habit doing worst lately, when there is one worth naming. The
+     dashboard averages everything into a single ring, and an average is
+     exactly the thing that hides one habit failing while the rest carry
+     the number. */
+  function laggard(log, habits, todayKey) {
+    var worst = null;
+
+    habits.forEach(function (habit) {
+      var r = rate(log, habit, todayKey, 30);
+      if (r.total < 7) return;
+      var share = r.met / r.total;
+      if (share > 0.4) return;
+      if (!worst || share < worst.share) {
+        worst = { habit: habit, share: share, met: r.met, total: r.total, unit: r.unit };
+      }
+    });
+
+    return worst;
+  }
+
+  /* Which habits a given day is actually judged on.
+
+     A habit counts on a day if it was asked for that day, or if it was
+     done that day anyway. The second half matters: going to the gym on a
+     day it was not required should never make the day look worse. */
+  function countingOn(log, habits, key) {
+    return habits.filter(function (h) {
+      if (h.archived) return false;
+      if (h.createdAt && h.createdAt > key) return false;
+      if ((Storage.valuesOn(log, key)[h.id] || 0) > 0) return true;
+      return dueOn(log, h, key);
+    });
+  }
+
+  /* How much of that day got done, from 0 to 1, or null when nothing was
+     being asked of it.
 
      Habits are measured in different units — 20 minutes and 20 pages are
      the same number and nothing alike — so nothing raw can be added up.
@@ -225,22 +417,16 @@ var Habits = (function () {
 
      Each one is capped at 1 so that overshooting one habit cannot paper
      over skipping another: drinking sixteen glasses does not make up for
-     not reading.
-
-     A habit only counts from the day it was created, so adding one today
-     does not retroactively spoil last month. */
+     not reading. */
   function completionFor(log, habits, key) {
-    var eligible = habits.filter(function (h) {
-      return !h.archived && (!h.createdAt || h.createdAt <= key);
-    });
+    var eligible = countingOn(log, habits, key);
     if (!eligible.length) return null;
 
-    var day = log[key] || {};
+    var values = Storage.valuesOn(log, key);
     var total = 0;
 
     eligible.forEach(function (habit) {
-      var value = day[habit.id] || 0;
-      total += Math.min(1, value / habit.goal);
+      total += Math.min(1, (values[habit.id] || 0) / habit.goal);
     });
 
     return total / eligible.length;
@@ -255,8 +441,13 @@ var Habits = (function () {
      day did not happen, and splitting hairs between them would need a
      shade nobody can read off a small square.
 
-     -1 means no habit existed yet, which is not a score at all. */
+     -1 is "no score", and it covers two cases that must not be painted
+     red. One is a day before any habit existed. The other, and this was
+     a real lie the calendar used to tell, is a day nobody ever accounted
+     for: the app not being open on Sunday is not the same as failing on
+     Sunday, and colouring it red said it was. */
   function levelOn(log, habits, key) {
+    if (!Storage.known(log, key)) return -1;
     var score = completionFor(log, habits, key);
     if (score === null) return -1;
     if (score < 0.15) return 0;
@@ -270,29 +461,48 @@ var Habits = (function () {
 
   /* Rendering ------------------------------------------------------- */
 
+  function plural(n, word) {
+    return n + ' ' + word + (n === 1 ? '' : 's');
+  }
+
   function tileHtml(habit) {
     var value = valueOf(habit.id);
     var done = value >= habit.goal;
     var percent = Math.min(100, Math.round((value / habit.goal) * 100));
+    var due = dueToday(habit);
 
     var readout = habit.goal === 1
       ? (done ? 'Done' : 'Not yet')
       : '<strong>' + value + '</strong> / ' + habit.goal + ' ' + escapeHtml(habit.unit);
 
-    /* A single day is not a streak worth announcing. */
-    var run = streaksFor(habit).current;
-    var streak = run >= 2
-      ? '<span class="tile__streak">' + run + ' days in a row</span>'
-      : '';
+    /* A single one is not a streak worth announcing. */
+    var run = streaksFor(habit);
+    var foot = run.current >= 2
+      ? plural(run.current, run.unit) + ' in a row'
+      : (due ? '' : 'Not on today — ' + scheduleLabel(habit).toLowerCase());
 
     return '' +
-      '<button class="tile' + (done ? ' is-done' : '') + '" data-id="' + escapeHtml(habit.id) + '"' +
-      ' title="Click to add, right-click to take away">' +
+      '<button class="tile' + (done ? ' is-done' : '') + (due ? '' : ' is-off') +
+        '" data-id="' + escapeHtml(habit.id) + '"' +
+      ' title="' + escapeHtml(scheduleLabel(habit)) + ' · click to add, right-click to take away">' +
         '<span class="tile__name">' + escapeHtml(habit.name) + '</span>' +
         '<span class="tile__value">' + readout + '</span>' +
         '<span class="tile__bar"><span style="width:' + percent + '%"></span></span>' +
-        streak +
+        (foot ? '<span class="tile__streak">' + escapeHtml(foot) + '</span>' : '') +
       '</button>';
+  }
+
+  /* Due first. What is being asked of you today belongs above what is
+     not; the rest stay visible because doing one early is allowed. */
+  function todaysOrder() {
+    var log = Storage.load().log;
+    var key = Storage.today();
+    var due = [];
+    var off = [];
+    active().forEach(function (habit) {
+      (dueOn(log, habit, key) ? due : off).push(habit);
+    });
+    return due.concat(off);
   }
 
   function renderTiles() {
@@ -301,7 +511,7 @@ var Habits = (function () {
        compact layout, so the full panel's containers are not there. */
     if (!el) return;
 
-    var list = active();
+    var list = todaysOrder();
 
     if (!list.length) {
       el.innerHTML = '<p class="empty">No habits yet — press “Edit habits” to pick some.</p>';
@@ -326,6 +536,35 @@ var Habits = (function () {
         '<span class="preset__name">' + escapeHtml(item.name) + '</span>' +
         '<span class="preset__goal">' + escapeHtml(goalText) + '</span>' +
       '</button>';
+  }
+
+  function schedulerHtml(habit) {
+    var s = schedOf(habit);
+
+    var modes = [
+      ['daily', 'Every day'],
+      ['days', 'Certain days'],
+      ['week', 'Times a week']
+    ].map(function (pair) {
+      return '<option value="' + pair[0] + '"' +
+        (s.type === pair[0] ? ' selected' : '') + '>' + pair[1] + '</option>';
+    }).join('');
+
+    var dayToggles = DAY_LETTERS.map(function (letter, i) {
+      var on = s.type === 'days' && s.days.indexOf(i) !== -1;
+      return '<button class="daypick' + (on ? ' is-on' : '') + '" type="button"' +
+        ' data-day-toggle="' + i + '" aria-label="' + DAY_SHORT[i] + '"' +
+        ' aria-pressed="' + (on ? 'true' : 'false') + '">' + letter + '</button>';
+    }).join('');
+
+    return '' +
+      '<div class="sched">' +
+        '<select class="input input--mode" data-sched-mode aria-label="How often">' + modes + '</select>' +
+        '<div class="dayrow"' + (s.type === 'days' ? '' : ' hidden') + '>' + dayToggles + '</div>' +
+        '<input class="input input--tiny" type="number" min="1" max="7" step="1"' +
+          ' value="' + (s.type === 'week' ? s.times : 3) + '" data-sched-times' +
+          ' aria-label="Times a week"' + (s.type === 'week' ? '' : ' hidden') + '>' +
+      '</div>';
   }
 
   function renderPicker() {
@@ -355,16 +594,20 @@ var Habits = (function () {
               return '' +
                 '<div class="tune" data-tune="' + escapeHtml(h.id) + '">' +
                   '<span class="tune__name">' + escapeHtml(h.name) + '</span>' +
-                  '<input class="input input--tiny" type="number" min="1" step="1"' +
-                    ' value="' + h.goal + '" data-goal aria-label="Goal">' +
-                  '<input class="input input--unit" type="text"' +
-                    ' value="' + escapeHtml(h.unit) + '" data-unit aria-label="Unit">' +
                   '<button class="task__drop" type="button" data-remove="' +
                     escapeHtml(h.id) + '" aria-label="Remove">&#215;</button>' +
+                  '<div class="tune__row">' +
+                    '<input class="input input--tiny" type="number" min="1" step="1"' +
+                      ' value="' + h.goal + '" data-goal aria-label="Goal">' +
+                    '<input class="input input--unit" type="text"' +
+                      ' value="' + escapeHtml(h.unit) + '" data-unit aria-label="Unit">' +
+                    schedulerHtml(h) +
+                  '</div>' +
                 '</div>';
             }).join('') +
           '</div>' +
-          '<p class="custom__hint muted">A goal of 1 means yes / no.</p>' +
+          '<p class="custom__hint muted">A goal of 1 means yes / no. ' +
+            '“Times a week” only counts against you once the week cannot be made.</p>' +
           '<p class="custom__error" id="tune-error"></p>' +
         '</div>';
     }
@@ -381,6 +624,43 @@ var Habits = (function () {
   }
 
   /* Wiring ---------------------------------------------------------- */
+
+  function readSchedule(row) {
+    var mode = row.querySelector('[data-sched-mode]').value;
+    if (mode === 'week') {
+      return { type: 'week', times: row.querySelector('[data-sched-times]').value };
+    }
+    if (mode === 'days') {
+      var days = [];
+      row.querySelectorAll('[data-day-toggle]').forEach(function (button) {
+        if (button.classList.contains('is-on')) days.push(Number(button.getAttribute('data-day-toggle')));
+      });
+      /* Certain days with no day chosen is not a schedule, it is a habit
+         that can never come up. Treated as daily until one is picked. */
+      return days.length ? { type: 'days', days: days } : { type: 'daily' };
+    }
+    return { type: 'daily' };
+  }
+
+  /* Shown and hidden in place rather than by redrawing. The mode is
+     being chosen; redrawing mid-choice would throw away the half of it
+     that has been made. */
+  function syncModeUI(row) {
+    var mode = row.querySelector('[data-sched-mode]').value;
+    var dayrow = row.querySelector('.dayrow');
+    var times = row.querySelector('[data-sched-times]');
+
+    if (mode === 'days') {
+      dayrow.removeAttribute('hidden');
+      times.setAttribute('hidden', '');
+    } else if (mode === 'week') {
+      dayrow.setAttribute('hidden', '');
+      times.removeAttribute('hidden');
+    } else {
+      dayrow.setAttribute('hidden', '');
+      times.setAttribute('hidden', '');
+    }
+  }
 
   function start() {
     render();
@@ -401,14 +681,32 @@ var Habits = (function () {
       bump(tile.getAttribute('data-id'), -1);
     });
 
+    var body = document.getElementById('picker-body');
+
     /* 'change', not 'input': saving redraws the picker, and redrawing on
        every keystroke would tear the field out from under the cursor. */
-    document.getElementById('picker-body').addEventListener('change', function (event) {
+    body.addEventListener('change', function (event) {
       var row = event.target.closest('[data-tune]');
       if (!row) return;
+      var id = row.getAttribute('data-tune');
+
+      if (event.target.matches('[data-sched-mode]')) {
+        syncModeUI(row);
+        var picked = readSchedule(row);
+        /* "Certain days" with no day ticked yet is the start of a
+           choice, not a choice. Saving it would read as daily, redraw
+           the row, and snap the menu straight back to Every day — which
+           is exactly what it did. */
+        if (picked.type === 'daily' && row.querySelector('[data-sched-mode]').value === 'days') return;
+        return setSchedule(id, picked);
+      }
+
+      if (event.target.matches('[data-sched-times]')) {
+        return setSchedule(id, readSchedule(row));
+      }
 
       var error = retune(
-        row.getAttribute('data-tune'),
+        id,
         row.querySelector('[data-goal]').value,
         row.querySelector('[data-unit]').value
       );
@@ -420,7 +718,25 @@ var Habits = (function () {
       }
     });
 
-    document.getElementById('picker-body').addEventListener('click', function (event) {
+    body.addEventListener('click', function (event) {
+      /* Weekday buttons are toggled in place and only saved once the
+         pointer leaves the row — picking Mon, Wed and Fri would
+         otherwise redraw three times and lose the second two clicks. */
+      var dayBtn = event.target.closest('[data-day-toggle]');
+      if (dayBtn) {
+        dayBtn.classList.toggle('is-on');
+        dayBtn.setAttribute('aria-pressed', dayBtn.classList.contains('is-on') ? 'true' : 'false');
+        var tuneRow = dayBtn.closest('[data-tune]');
+        clearTimeout(tuneRow._timer);
+        /* Nothing ticked is not yet an answer either — wait rather than
+           saving a schedule that means every day. */
+        if (readSchedule(tuneRow).type === 'daily') return;
+        tuneRow._timer = setTimeout(function () {
+          setSchedule(tuneRow.getAttribute('data-tune'), readSchedule(tuneRow));
+        }, 600);
+        return;
+      }
+
       var preset = event.target.closest('[data-preset]');
       if (preset) {
         var id = preset.getAttribute('data-preset');
@@ -465,15 +781,30 @@ var Habits = (function () {
   return {
     start: start,
     render: render,
+    renderTiles: renderTiles,
     bump: bump,
+    setValue: setValue,
     retune: retune,
+    setSchedule: setSchedule,
     valueOf: valueOf,
+    all: all,
     active: active,
+    find: find,
     streaks: streaks,
     streaksFor: streaksFor,
+    occurrences: occurrences,
+    rate: rate,
+    laggard: laggard,
     completionFor: completionFor,
+    countingOn: countingOn,
     levelOn: levelOn,
     metOn: metOn,
-    shiftDate: shiftDate
+    dueOn: dueOn,
+    dueToday: dueToday,
+    scheduleLabel: scheduleLabel,
+    plural: plural,
+    shiftDate: shiftDate,
+    weekdayOf: weekdayOf,
+    mondayOf: mondayOf
   };
 })();

@@ -1,8 +1,10 @@
-/* Insights: what the weather and the calendar say about the habits.
+/* Insights: what the rest of the day says about the habits.
 
    This is the whole reason the panel and the tracker were merged. The
-   panel knows the context of a day, the tracker knows what got done, and
-   only their intersection can say something you did not already know.
+   panel knows the context of a day — the weather, what was planned, what
+   was written down — and the tracker knows what got done. Only their
+   intersection can say something you did not already know, and no
+   habit tracker on its own can say any of it.
 
    Everything here obeys one rule, and it matters more than the findings:
    say nothing unless the numbers earn it. A panel that states "you skip
@@ -24,11 +26,17 @@ var Insights = (function () {
      (about p < 0.003) brings that 97% down to 3%, while still catching
      real effects: a 20%-vs-80% split is found about 60% of the time at
      fifteen days a side. The bar is deliberately stricter than the usual
-     p < 0.05 because every habit is tested three ways, and many tests
+     p < 0.05 because every habit is tested several ways, and many tests
      mean many chances to be fooled. */
   var MIN_DAYS = 10;
   var MIN_GAP = 25;
   var MIN_Z = 3;
+
+  /* Enough first-tick times to talk about when something usually
+     happens. This one is a description, not a claim about cause, so it
+     does not need the z-test — but it does need enough days not to be
+     an anecdote. */
+  var MIN_TIMES = 10;
 
   function escapeHtml(text) {
     return String(text)
@@ -71,33 +79,54 @@ var Insights = (function () {
     return gap / se >= MIN_Z;
   }
 
-  /* Every day from the habit's first to yesterday. Today is left out on
-     purpose: it is not over, and counting it as a miss would drag every
-     figure down every morning.
+  /* Which days may be counted at all.
 
-     Walking the calendar rather than the log's keys matters — a day with
-     no entry is a day the habit did not happen, and skipping those would
-     quietly only ever count the good days. */
-  function eachDay(habit, todayKey, visit) {
+     Two conditions, and the first one was missing for a long time. A day
+     nobody ever filled in is not a day the habit failed — it is a day
+     with no record. Counting those as misses meant the busiest weeks,
+     when the app went untouched, looked like the laziest ones, and
+     "Sunday is your weak spot" could mean nothing more than that the
+     computer stays off on Sundays.
+
+     The second: a day the habit was not asked for is not a day it was
+     skipped. Tuesday says nothing about a Monday-Wednesday-Friday habit.
+
+     Today is left out throughout — it is not over, and counting it as a
+     miss would drag every figure down every morning. */
+  function eachDay(log, habit, todayKey, visit) {
     var key = habit.createdAt || todayKey;
     var guard = 0;
     while (key < todayKey && guard++ < 4000) {
-      visit(key);
+      if (Storage.known(log, key) && Habits.dueOn(log, habit, key)) visit(key);
       key = Habits.shiftDate(key, 1);
     }
+  }
+
+  /* A habit measured by the week is kept or broken by the week, so a
+     day-by-day comparison of it would be comparing the wrong thing. */
+  function daily(habit) {
+    return !habit.sched || habit.sched.type !== 'week';
   }
 
   function didIt(log, habit, key) {
     return Habits.metOn(log, habit, key) ? 1 : 0;
   }
 
+  /* Each test returns the two groups it built plus a finding if the
+     numbers earned one. The groups are kept either way: when there is no
+     finding, they are what the page uses to say how far off it is. */
+
+  function result(kind, a, b, found) {
+    return { kind: kind, a: a.length, b: b.length, found: found || null };
+  }
+
   /* Weather ---------------------------------------------------------- */
 
-  function weatherFinding(log, habit, todayKey) {
+  function weatherTest(log, habit, todayKey) {
     var wet = [];
     var dry = [];
 
-    eachDay(habit, todayKey, function (key) {
+    eachDay(log, habit, todayKey, function (key) {
       var day = log[key];
       /* No weather recorded means the panel was not open that day —
          that is missing context, not fair weather. */
@@ -105,18 +134,17 @@ var Insights = (function () {
       (Weather.isWet(day.weather) ? wet : dry).push(didIt(log, habit, key));
     });
 
-    if (!convincing(wet, dry)) return null;
+    if (!convincing(wet, dry)) return result('weather', wet, dry);
 
     var wetShare = share(wet);
     var dryShare = share(dry);
-    var worseInRain = wetShare < dryShare;
-    return {
+    return result('weather', wet, dry, {
       habit: habit.name,
-      text: worseInRain
+      text: wetShare < dryShare
         ? 'You manage it on ' + wetShare + '% of wet days, against ' + dryShare + '% of dry ones.'
         : 'Rain suits you: ' + wetShare + '% on wet days, against ' + dryShare + '% of dry ones.',
       note: wet.length + ' wet days, ' + dry.length + ' dry'
-    };
+    });
   }
 
   /* Day of the week --------------------------------------------------- */
@@ -124,19 +152,18 @@ var Insights = (function () {
   var DAY_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday',
                    'Friday', 'Saturday', 'Sunday'];
 
-  function weekdayFinding(log, habit, todayKey) {
+  function weekdayTest(log, habit, todayKey) {
     var buckets = [[], [], [], [], [], [], []];
 
-    eachDay(habit, todayKey, function (key) {
-      var parts = key.split('-');
-      var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      var index = (date.getDay() + 6) % 7;
-      buckets[index].push(didIt(log, habit, key));
+    eachDay(log, habit, todayKey, function (key) {
+      buckets[Habits.weekdayOf(key)].push(didIt(log, habit, key));
     });
 
     var worst = -1;
     var worstShare = 101;
+    var fullest = 0;
     for (var i = 0; i < 7; i++) {
+      if (buckets[i].length > fullest) fullest = buckets[i].length;
       if (buckets[i].length < MIN_DAYS) continue;
       var s = share(buckets[i]);
       if (s < worstShare) {
@@ -144,7 +171,8 @@ var Insights = (function () {
         worst = i;
       }
     }
-    if (worst === -1) return null;
+
+    if (worst === -1) return { kind: 'weekday', a: fullest, b: MIN_DAYS, found: null };
 
     /* Compared against every other day pooled, not against the best
        single day — one freak Tuesday should not set the bar. */
@@ -152,85 +180,263 @@ var Insights = (function () {
     for (var j = 0; j < 7; j++) {
       if (j !== worst) rest = rest.concat(buckets[j]);
     }
-    if (!convincing(buckets[worst], rest)) return null;
+    if (!convincing(buckets[worst], rest)) {
+      return result('weekday', buckets[worst], rest);
+    }
 
-    var restShare = share(rest);
-    return {
+    return result('weekday', buckets[worst], rest, {
       habit: habit.name,
       text: DAY_NAMES[worst] + ' is the weak spot: ' + worstShare +
-        '%, against ' + restShare + '% on other days.',
+        '%, against ' + share(rest) + '% on other days.',
       note: buckets[worst].length + ' ' + DAY_NAMES[worst] + 's on record'
-    };
+    });
   }
 
   /* Recent trend ------------------------------------------------------ */
 
-  function trendFinding(log, habit, todayKey) {
+  function trendTest(log, habit, todayKey) {
     var recent = [];
     var earlier = [];
     var cutoff = Habits.shiftDate(todayKey, -30);
     var start = Habits.shiftDate(todayKey, -60);
 
-    eachDay(habit, todayKey, function (key) {
+    eachDay(log, habit, todayKey, function (key) {
       if (key >= cutoff) recent.push(didIt(log, habit, key));
       else if (key >= start) earlier.push(didIt(log, habit, key));
     });
 
-    if (!convincing(recent, earlier)) return null;
+    if (!convincing(recent, earlier)) return result('trend', recent, earlier);
 
     var now = share(recent);
     var before = share(earlier);
-    return {
+    return result('trend', recent, earlier, {
       habit: habit.name,
       text: now > before
         ? 'Picking up: ' + now + '% this past month, against ' + before + '% the month before.'
         : 'Slipping: ' + now + '% this past month, against ' + before + '% the month before.',
-      note: 'last 30 days vs the 30 before'
+      note: 'last 30 days against the 30 before'
+    });
+  }
+
+  /* How much was on that day -------------------------------------------
+
+     This one exists only because the tasks and the habits live in the
+     same place. A habit tracker cannot ask it, because it does not know
+     what else you had on. */
+
+  var BUSY = 3;
+
+  function loadTest(log, habit, todayKey, tasks) {
+    var busy = [];
+    var quiet = [];
+
+    eachDay(log, habit, todayKey, function (key) {
+      var n = 0;
+      tasks.forEach(function (task) { if (task.date === key) n++; });
+      /* The middle is left out on purpose. Two tasks is neither a busy
+         day nor a quiet one, and stretching the groups to meet in the
+         middle would blur exactly the contrast being looked for. */
+      if (n >= BUSY) busy.push(didIt(log, habit, key));
+      else if (n <= 1) quiet.push(didIt(log, habit, key));
+    });
+
+    if (!convincing(busy, quiet)) return result('load', busy, quiet);
+
+    var busyShare = share(busy);
+    var quietShare = share(quiet);
+    return result('load', busy, quiet, {
+      habit: habit.name,
+      text: busyShare < quietShare
+        ? 'Full days crowd it out: ' + busyShare + '% when ' + BUSY +
+          ' or more things were planned, against ' + quietShare + '% on quiet days.'
+        : 'It survives a full day: ' + busyShare + '% when ' + BUSY +
+          ' or more things were planned, against ' + quietShare + '% on quiet days.',
+      note: busy.length + ' full days, ' + quiet.length + ' quiet'
+    });
+  }
+
+  /* Whether you wrote anything ------------------------------------------
+
+     Also only possible here. Writing a couple of lines about the day is
+     not a habit being tracked, but it turns out to mark the days that go
+     differently often enough to be worth the comparison. */
+
+  function wroteTest(log, habit, todayKey, notes) {
+    var wrote = [];
+    var silent = [];
+
+    eachDay(log, habit, todayKey, function (key) {
+      var text = notes[key];
+      (text && text.trim() ? wrote : silent).push(didIt(log, habit, key));
+    });
+
+    if (!convincing(wrote, silent)) return result('wrote', wrote, silent);
+
+    var wroteShare = share(wrote);
+    var silentShare = share(silent);
+    return result('wrote', wrote, silent, {
+      habit: habit.name,
+      text: wroteShare > silentShare
+        ? 'The days you write something down are the good ones: ' + wroteShare +
+          '%, against ' + silentShare + '% on the days you do not.'
+        : 'Odd one: ' + wroteShare + '% on the days you write something down, against ' +
+          silentShare + '% on the days you do not.',
+      note: wrote.length + ' days written up, ' + silent.length + ' not'
+    });
+  }
+
+  /* When it usually happens --------------------------------------------
+
+     Plain description, not a claim about cause, so it is kept apart from
+     the findings above and worded as an observation. */
+
+  function timing(log, habit, todayKey) {
+    var minutes = [];
+    var key = habit.createdAt || todayKey;
+    var guard = 0;
+
+    while (key <= todayKey && guard++ < 4000) {
+      var day = log[key];
+      var stamp = day && day.at && day.at[habit.id];
+      if (stamp) {
+        var parts = stamp.split(':');
+        minutes.push(Number(parts[0]) * 60 + Number(parts[1]));
+      }
+      key = Habits.shiftDate(key, 1);
+    }
+
+    if (minutes.length < MIN_TIMES) return null;
+
+    minutes.sort(function (a, b) { return a - b; });
+    var mid = minutes[Math.floor(minutes.length / 2)];
+    var hh = Math.floor(mid / 60);
+    var mm = mid % 60;
+
+    /* The quarter either side, so "usually at eight" does not hide a
+       habit that happens anywhere between six and midnight. */
+    var low = minutes[Math.floor(minutes.length * 0.25)];
+    var high = minutes[Math.floor(minutes.length * 0.75)];
+
+    function clock(total) {
+      var h = Math.floor(total / 60);
+      var m = total % 60;
+      return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+    }
+
+    return {
+      habit: habit.name,
+      text: 'Usually around ' + clock(hh * 60 + mm) +
+        ' (most of them between ' + clock(low) + ' and ' + clock(high) + ').',
+      note: minutes.length + ' days timed'
     };
   }
 
-  /* Rendering --------------------------------------------------------- */
+  /* Putting it together ------------------------------------------------ */
+
+  var LABELS = {
+    weather: 'Rain against clear weather',
+    weekday: 'One weekday against the rest',
+    trend: 'This month against last',
+    load: 'Full days against quiet ones',
+    wrote: 'Days you wrote something down'
+  };
 
   function collect() {
     var state = Storage.load();
     var todayKey = Storage.today();
     var found = [];
+    var best = {};
 
     Habits.active().forEach(function (habit) {
-      [weatherFinding, weekdayFinding, trendFinding].forEach(function (test) {
-        var hit = test(state.log, habit, todayKey);
-        if (hit) found.push(hit);
+      if (!daily(habit)) return;
+
+      [
+        weatherTest(state.log, habit, todayKey),
+        weekdayTest(state.log, habit, todayKey),
+        trendTest(state.log, habit, todayKey),
+        loadTest(state.log, habit, todayKey, state.tasks),
+        wroteTest(state.log, habit, todayKey, state.notes)
+      ].forEach(function (test) {
+        if (test.found) {
+          found.push(test.found);
+          best[test.kind] = 'done';
+          return;
+        }
+        if (best[test.kind] === 'done') return;
+
+        /* How close the closest habit is, so the page can say what it is
+           waiting for instead of looking broken. */
+        var reach = Math.min(test.a, test.b);
+        if (!best[test.kind] || reach > best[test.kind].reach) {
+          best[test.kind] = { reach: reach, a: test.a, b: test.b };
+        }
       });
     });
 
-    return found;
+    var waiting = Object.keys(LABELS).filter(function (kind) {
+      return best[kind] && best[kind] !== 'done';
+    }).map(function (kind) {
+      var it = best[kind];
+      return {
+        label: LABELS[kind],
+        note: it.reach >= MIN_DAYS
+          ? 'enough days — no difference big enough to call'
+          : Math.min(it.a, it.b) + ' of the ' + MIN_DAYS + ' days needed on the thinner side'
+      };
+    });
+
+    var times = [];
+    Habits.active().forEach(function (habit) {
+      var t = timing(state.log, habit, todayKey);
+      if (t) times.push(t);
+    });
+
+    return { found: found, waiting: waiting, times: times };
+  }
+
+  function findingHtml(f) {
+    return '' +
+      '<li class="finding">' +
+        '<span class="finding__habit">' + escapeHtml(f.habit) + '</span>' +
+        '<span class="finding__text">' + escapeHtml(f.text) + '</span>' +
+        '<span class="finding__note muted">' + escapeHtml(f.note) + '</span>' +
+      '</li>';
   }
 
   function render() {
     var el = document.getElementById('insights');
     if (!el) return;
 
-    var found = collect();
+    var out = collect();
+    var html = '<p class="card__title">Patterns</p>';
 
-    if (!found.length) {
-      el.innerHTML =
-        '<p class="card__title">Patterns</p>' +
-        '<p class="card__note muted">Nothing solid yet. These need about ' + MIN_DAYS +
-        ' days on each side of a comparison before they mean anything, ' +
-        'so they show up once there is history to stand on.</p>';
-      return;
+    if (out.found.length) {
+      html += '<ul class="findings">' + out.found.map(findingHtml).join('') + '</ul>';
+    } else {
+      html += '<p class="card__note muted">Nothing solid yet. Every comparison below ' +
+        'needs about ' + MIN_DAYS + ' days on each side before it means anything, ' +
+        'and a day only counts once it has been filled in — press a day on the ' +
+        'calendar to fill in one that was missed.</p>';
     }
 
-    el.innerHTML =
-      '<p class="card__title">Patterns</p>' +
-      '<ul class="findings">' + found.map(function (f) {
-        return '' +
-          '<li class="finding">' +
-            '<span class="finding__habit">' + escapeHtml(f.habit) + '</span>' +
-            '<span class="finding__text">' + escapeHtml(f.text) + '</span>' +
-            '<span class="finding__note muted">' + escapeHtml(f.note) + '</span>' +
-          '</li>';
-      }).join('') + '</ul>';
+    /* Saying what is being waited for. A page that shows nothing and
+       explains nothing is indistinguishable from a page that is broken,
+       and this one will be empty for weeks by design. */
+    if (out.waiting.length) {
+      html += '<p class="label">Still counting</p><ul class="waiting">' +
+        out.waiting.map(function (w) {
+          return '<li class="waiting__row">' +
+            '<span>' + escapeHtml(w.label) + '</span>' +
+            '<span class="muted">' + escapeHtml(w.note) + '</span></li>';
+        }).join('') + '</ul>';
+    }
+
+    if (out.times.length) {
+      html += '<p class="label">When you do them</p><ul class="findings">' +
+        out.times.map(findingHtml).join('') + '</ul>';
+    }
+
+    el.innerHTML = html;
   }
 
   return {

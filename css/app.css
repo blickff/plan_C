@@ -1,5 +1,12 @@
 * { box-sizing: border-box; }
 
+/* The browser hides [hidden] elements with display: none, but that is a
+   default — any display rule of ours outranks it and the element stays
+   on screen with the attribute quietly set. That is what made the
+   location prompt look broken: the buttons did fire, the panel just
+   never went away. Made explicit so hiding always wins. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0;
   padding: 0;
@@ -428,7 +435,12 @@ body {
 
 /* Before any habit existed, and days still to come. */
 .day[data-level="-1"] { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
-.day[data-level="-2"] { background: transparent; color: var(--text-faint); opacity: 0.45; }
+/* Days still to come. Dimmed by colour, not by opacity: opacity fades
+   the whole button, and that dragged the star down with it — a marked
+   future day was harder to see than a marked past one, which is exactly
+   backwards for something you are meant to be reminded about. */
+.day[data-level="-2"] { background: transparent; color: var(--text-faint); }
+.day[data-level="-2"] { font-weight: 400; }
 
 .day.is-today { box-shadow: inset 0 0 0 1.5px var(--ok); }
 
@@ -622,17 +634,30 @@ body {
 
 .tuner {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
   gap: 8px;
 }
 
+/* Two lines, not one. The name used to share a row with the goal, the
+   unit and the delete button, and adding the schedule to that row
+   squeezed the name out of existence — flex: 1 against four fixed
+   widths in a 300px column leaves nothing. */
 .tune {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 8px;
-  padding: 7px 8px 7px 13px;
+  gap: 6px 8px;
+  padding: 9px 9px 10px 13px;
   border: 1px solid var(--border);
   border-radius: 12px;
+}
+
+.tune__row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .tune__name {
@@ -899,3 +924,373 @@ body {
   .greeting { font-size: 22px; }
   .year { grid-template-columns: repeat(13, 1fr); }
 }
+
+/* Where the data file lives ------------------------------------------- */
+
+.vault__path {
+  margin: 12px 0 0;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text-faint);
+  font-family: var(--mono, ui-monospace, "Cascadia Code", Consolas, monospace);
+  font-size: 12px;
+  /* The path is the thing you carry to another machine, so it is shown
+     whole and stays selectable rather than being cut off. */
+  word-break: break-all;
+  user-select: all;
+}
+
+.vault__path.is-set { color: var(--text); }
+
+.vault__when { margin: 7px 0 0; font-size: 12px; }
+
+/* The one thing the panel asks for ------------------------------------ */
+
+.ask {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px;
+  padding: 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.ask__title { margin: 0; font-size: 15px; font-weight: 500; }
+.ask__note { margin: 4px 0 0; font-size: 12px; max-width: 60ch; }
+.ask__buttons { display: flex; flex: none; gap: 8px; }
+
+@media (max-width: 720px) {
+  .ask { flex-direction: column; align-items: flex-start; }
+}
+
+/* A day, opened from the calendar -------------------------------------- */
+
+.dayview,
+#dayview { margin-bottom: 20px; }
+
+.dv__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.dv__note {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--accent-bg);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.dv__list { list-style: none; margin: 0; padding: 0; }
+.dv__empty { margin: 0; font-size: 13px; }
+
+.dv__habit,
+.dv__task {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.dv__habit:last-child,
+.dv__task:last-child { border-bottom: 0; }
+
+.dv__value { flex: none; font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.dv__habit.is-done .dv__value { color: var(--ok); }
+.dv__task.is-done { color: var(--text-faint); text-decoration: line-through; }
+
+/* A day carries something: a countdown, tasks, or a note. */
+.day { position: relative; border: 0; font: inherit; cursor: pointer; }
+.day[data-level="-2"] { cursor: default; }
+.day[data-level="-2"][data-has] { cursor: pointer; }
+
+/* Sky blue on purpose: the day cells are red, yellow and green, so a
+   star in any of those hues would read as part of the score. This one
+   belongs to a different scale — it says something is attached to the
+   day, not how the day went. The dark halo keeps it legible on the pale
+   yellow cells as well as the deep red ones. */
+.day__dot {
+  position: absolute;
+  right: 2px;
+  top: -1px;
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.5;
+  color: #38bdf8;
+  text-shadow: 0 0 2px rgba(8, 20, 30, 0.85);
+}
+
+/* The notes archive ---------------------------------------------------- */
+
+.notes__search { width: 100%; margin: 12px 0 4px; }
+
+.note-row {
+  display: grid;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.note-row:last-child { border-bottom: 0; }
+.note-row:hover .note-row__text { color: var(--text); }
+
+.note-row__date {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-faint);
+}
+
+.note-row__text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+}
+
+.note-row mark {
+  padding: 0 2px;
+  border-radius: 3px;
+  background: var(--lv-1);
+  color: var(--ink-dark);
+}
+
+.ask__note.is-warning { color: var(--danger); }
+
+.dv__tally {
+  margin-left: 8px;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Carried to another day: it stood here, and it did not finish here. */
+.dv__task.is-moved span:first-child { color: var(--text-faint); }
+
+.ask__side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
+
+.ask__again {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-faint);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ask__again input { accent-color: var(--ok); cursor: pointer; }
+
+@media (max-width: 720px) {
+  .ask__side { align-items: flex-start; }
+}
+
+/* The date box ---------------------------------------------------------- */
+
+.input[type="date"] {
+  position: relative;
+  cursor: pointer;
+  /* Sized to what is actually in it — dd/mm/yyyy plus the icon. The
+     browser's own width left a gap of empty pill between the digits and
+     the icon, which read as the text being off-centre. */
+  width: 136px;
+  padding: 8px 28px 8px 12px;
+}
+
+/* Chrome draws the calendar button almost black, which disappears on a
+   dark panel. Inverting it in dark mode is the only way to see it. */
+.input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 6px;
+  padding: 2px;
+  border-radius: 5px;
+  opacity: 0.75;
+  cursor: pointer;
+}
+
+.input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  background: var(--accent-bg);
+}
+
+:root[data-theme="dark"] .input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
+
+/* Schedules, backfilling, planning ahead ------------------------------
+   Everything below arrived with the round of work that taught the app
+   the difference between "did not happen" and "was never written down". */
+
+/* A rest day is not a missed day, and must not be marked like one. */
+.dot.is-off { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+.dot.is-blank { background: transparent; box-shadow: inset 0 0 0 1px var(--text-faint); opacity: 0.6; }
+
+/* Under the streak. The big number can go to zero overnight; this one
+   cannot, which is the point of it being there. */
+.card__sub { margin: 6px 0 0; font-size: 12px; opacity: 0.65; }
+
+.card__flag {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(127, 127, 127, 0.25);
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* A habit today does not ask for. Still tickable — doing one early is
+   allowed — but not competing for attention. */
+.tile.is-off { opacity: 0.55; }
+.tile.is-off:hover { opacity: 1; }
+.wgh.is-off { opacity: 0.5; }
+.wgh.is-off:hover { opacity: 1; }
+
+/* How often ----------------------------------------------------------- */
+
+.sched { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+
+.input--mode { width: 124px; padding: 5px 8px; font-size: 13px; }
+
+.dayrow { display: flex; gap: 3px; }
+
+.daypick {
+  width: 22px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.daypick:hover { border-color: var(--text-faint); }
+.daypick.is-on { background: var(--invert-bg); border-color: var(--invert-bg); color: var(--invert-text); }
+
+/* One day, opened and editable ---------------------------------------- */
+
+.dv__habits .dv__habit { display: flex; align-items: center; gap: 10px; }
+.dv__hname { flex: 1 1 auto; min-width: 0; }
+.dv__off { color: var(--text-faint); font-size: 12px; }
+.dv__habit.is-off { opacity: 0.6; }
+.dv__steps { display: flex; gap: 4px; flex: none; }
+
+.dv__step {
+  min-width: 28px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dv__step:hover:not(:disabled) { border-color: var(--text-faint); }
+.dv__step:disabled { opacity: 0.35; cursor: default; }
+.dv__step--wide { min-width: 84px; }
+
+.dv__write { margin-bottom: 4px; }
+
+.dv__mark { margin-top: 10px; }
+
+/* Tasks ---------------------------------------------------------------- */
+
+.taskform { display: flex; flex-direction: column; gap: 8px; }
+
+.row--sub { align-items: center; gap: 6px; font-size: 12px; }
+
+.chipbtn {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chipbtn:hover { border-color: var(--text-faint); color: var(--text); }
+
+.input--date { width: 136px; padding: 6px 10px; font-size: 13px; }
+
+.task__text { cursor: text; }
+.task__edit { font-size: 13px; }
+.task.is-editing { padding: 0; border: 0; background: transparent; }
+
+/* Dragging one row over another. The line, not a wholesale reshuffle:
+   the list should not jump about under the pointer. */
+.task[draggable="true"] { cursor: grab; }
+.task.is-dragging { opacity: 0.4; }
+.task.is-over { box-shadow: inset 0 2px 0 var(--accent); }
+
+.label--tight { margin-top: 12px; }
+
+.tasks__later { opacity: 0.85; }
+
+.task__when {
+  flex: none;
+  min-width: 62px;
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+.undo {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.undo__btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Something the panel has to own up to, rather than a question. */
+.ask--warn { border-color: var(--miss); }
+
+/* What the patterns are still waiting for ------------------------------ */
+
+.waiting { margin: 0; padding: 0; list-style: none; }
+
+.waiting__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.waiting__row:last-child { border-bottom: 0; }

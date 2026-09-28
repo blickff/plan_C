@@ -13,10 +13,12 @@
    The same files are served that a browser would open by hand. Nothing
    in the panel knows it is running inside Electron. */
 
-const { app, BrowserWindow, globalShortcut, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu,
+        nativeImage, Notification, shell, Tray } = require('electron');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const vault = require('./vault');
 
 const ROOT = path.join(__dirname, '..');
 const STATE_FILE = () => path.join(app.getPath('userData'), 'window-state.json');
@@ -33,6 +35,7 @@ const TYPES = {
 let widget = null;
 let panel = null;
 let origin = null;
+let tray = null;
 
 /* Where the widget was left, and how it was set to behave. Kept in
    Electron's own data folder rather than in the page's storage: it is
@@ -99,8 +102,8 @@ function createWidget() {
   const firstRun = saved.x === undefined;
 
   widget = new BrowserWindow({
-    width: saved.width || 330,
-    height: saved.height || 400,
+    width: saved.width || 340,
+    height: saved.height || 440,
     minWidth: 260,
     minHeight: 260,
     x: saved.x,
@@ -112,14 +115,18 @@ function createWidget() {
        indistinguishable from an app that failed to start. Windows 11
        rounds the corners by itself. */
     transparent: false,
-    backgroundColor: '#0b0b0d',
+    backgroundColor: '#0b0b0b',
     resizable: true,
     skipTaskbar: false,
     alwaysOnTop: firstRun ? true : !!saved.onTop,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
-      nodeIntegration: false
+      nodeIntegration: false,
+      /* The widget is the thing that keeps time. Chromium slows timers
+         in a hidden window to once a minute or less, which is exactly
+         when the reminder would need to fire. */
+      backgroundThrottling: false
     }
   });
 
@@ -168,6 +175,35 @@ function openPanel() {
   panel.on('closed', () => { panel = null; });
 }
 
+function showWidget() {
+  if (!widget || widget.isDestroyed()) return createWidget();
+  widget.show();
+  widget.focus();
+}
+
+/* An icon by the clock, because until now the only way back to a hidden
+   widget was a keyboard shortcut you had to already know about. It also
+   carries the day's figure in its tooltip, which is the cheapest glance
+   there is. */
+function createTray() {
+  const icon = nativeImage.createFromPath(path.join(__dirname, 'tray.png'));
+  if (icon.isEmpty()) return;
+
+  tray = new Tray(icon);
+  tray.setToolTip('Day Panel');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Show the widget', click: showWidget },
+    { label: 'Open the panel', click: openPanel },
+    { type: 'separator' },
+    { label: 'Quit Day Panel', click: () => { app.isQuitting = true; app.quit(); } }
+  ]));
+
+  tray.on('click', () => {
+    if (widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
+    else showWidget();
+  });
+}
+
 function wireMessages() {
   ipcMain.handle('open-panel', openPanel);
 
@@ -197,20 +233,62 @@ function wireMessages() {
   });
 
   ipcMain.handle('open-external', (_event, url) => shell.openExternal(url));
+
+  /* The page decides when to send this, because the page is the only
+     side that knows whether the day is finished. */
+  ipcMain.handle('notify', (_event, title, body) => {
+    if (!Notification.isSupported()) return false;
+    const note = new Notification({ title: String(title), body: String(body) });
+    note.on('click', showWidget);
+    note.show();
+    return true;
+  });
+
+  ipcMain.handle('tray-note', (_event, text) => {
+    if (tray && !tray.isDestroyed()) tray.setToolTip(String(text).slice(0, 120));
+  });
+
+  /* The vault — the data as a file in a folder the person picks, so it
+     can ride along with whatever already syncs that folder. */
+  ipcMain.handle('vault-info', () => vault.info(app));
+  ipcMain.handle('vault-read', () => vault.read(app));
+  ipcMain.handle('vault-write', (_event, text) => vault.write(app, text));
+  ipcMain.handle('vault-stash', (_event, text) => vault.stash(app, text));
+  ipcMain.handle('vault-forget', () => vault.forget(app));
+
+  ipcMain.handle('vault-pick', async () => {
+    const picked = await dialog.showOpenDialog({
+      title: 'Choose a folder for your Day Panel data',
+      properties: ['openDirectory', 'createDirectory'],
+      buttonLabel: 'Keep data here'
+    });
+    if (picked.canceled || !picked.filePaths.length) return vault.info(app);
+    return vault.setFolder(app, picked.filePaths[0]);
+  });
+
+  ipcMain.handle('vault-reveal', () => {
+    const where = vault.info(app);
+    if (where.file && where.exists) shell.showItemInFolder(where.file);
+    else if (where.folder) shell.openPath(where.folder);
+  });
 }
 
 app.whenReady().then(async () => {
+  /* Windows needs this before a notification will show the app's name
+     rather than "electron.app.Electron". */
+  if (process.platform === 'win32') app.setAppUserModelId('com.dayPanel.app');
+
   origin = await serve();
   wireMessages();
+  createTray();
   createWidget();
 
   /* Brings the widget back when it is hidden or buried. Registration can
      fail if another program already owns the combination — not worth
      stopping the app over. */
   const ok = globalShortcut.register('CommandOrControl+Shift+D', () => {
-    if (!widget || widget.isDestroyed()) return createWidget();
-    if (widget.isVisible()) widget.hide();
-    else { widget.show(); widget.focus(); }
+    if (widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
+    else showWidget();
   });
   if (!ok) console.warn('Could not register the Ctrl+Shift+D shortcut.');
 
@@ -222,6 +300,9 @@ app.whenReady().then(async () => {
 /* Closing the panel window leaves the widget running — that is the point
    of the thing. Quitting happens from the widget's own menu. */
 app.on('window-all-closed', () => {
+  /* With an icon by the clock there is somewhere to come back from, so
+     closing every window is no longer the same as quitting. */
+  if (tray && !tray.isDestroyed()) return;
   if (process.platform !== 'darwin') app.quit();
 });
 

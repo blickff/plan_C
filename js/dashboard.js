@@ -29,15 +29,17 @@ var Dashboard = (function () {
     var lead = null;
     var bestRun = -1;
 
+    var unit = 'day';
     Habits.active().forEach(function (habit) {
-      var run = Habits.streaks(log, habit, todayKey).current;
-      if (run > bestRun) {
-        bestRun = run;
+      var run = Habits.streaks(log, habit, todayKey);
+      if (run.current > bestRun) {
+        bestRun = run.current;
+        unit = run.unit;
         lead = habit;
       }
     });
 
-    return lead ? { habit: lead, run: bestRun } : null;
+    return lead ? { habit: lead, run: bestRun, unit: unit } : null;
   }
 
   function weekRow(habit) {
@@ -59,6 +61,14 @@ var Dashboard = (function () {
         state = 'is-today';
       } else if (key > todayKey) {
         state = 'is-future';
+      } else if (!Habits.dueOn(log, habit, key)) {
+        /* A rest day is not a missed day. Marking Tuesday red for a
+           Monday-Wednesday-Friday habit invents a failure. */
+        state = 'is-off';
+      } else if (!Storage.known(log, key)) {
+        /* Never filled in, so nobody knows. Shown as unknown rather
+           than as a miss. */
+        state = 'is-blank';
       } else {
         state = 'is-missed';
       }
@@ -85,10 +95,11 @@ var Dashboard = (function () {
       return;
     }
 
-    var word = lead.run === 1 ? 'day' : 'days';
     var state = Storage.load();
-    var score = Habits.completionFor(state.log, state.habits, Storage.today());
+    var todayKey = Storage.today();
+    var score = Habits.completionFor(state.log, state.habits, todayKey);
     var percent = score === null ? 0 : Math.round(score * 100);
+    var word = Habits.plural(lead.run, lead.unit).split(' ')[1];
 
     /* The ring replaces what used to be a bare habit name: it answers
        "how is today going" across habits measured in different units. */
@@ -98,15 +109,34 @@ var Dashboard = (function () {
         '<span class="ring__inner">' + percent + '<i>%</i></span>' +
       '</div>';
 
+    /* A streak is the most fragile number in the app and it sits in the
+       largest type: one missed day takes it to zero and the last month
+       of work with it. So the month is stated too. A broken streak is
+       then a broken streak, not a verdict on how you have been doing. */
+    var recent = Habits.rate(state.log, lead.habit, todayKey, 30);
+    var sub = recent.total
+      ? 'Met on ' + recent.met + ' of the last ' + Habits.plural(recent.total, recent.unit)
+      : '';
+
+    /* One ring for the whole day hides the habit that is failing while
+       the others carry the average. If there is one, it gets named. */
+    var behind = Habits.laggard(state.log, Habits.active(), todayKey);
+    var flag = behind && behind.habit.id !== lead.habit.id
+      ? '<p class="card__flag">Falling behind · ' + escapeHtml(behind.habit.name) +
+        ' — ' + behind.met + ' of ' + Habits.plural(behind.total, behind.unit) + '</p>'
+      : '';
+
     el.innerHTML = '' +
       '<div class="card__head">' +
         '<div>' +
           '<p class="card__eyebrow">Streak · ' + escapeHtml(lead.habit.name) + '</p>' +
           '<p class="card__big">' + lead.run + ' <span>' + word + '</span></p>' +
+          (sub ? '<p class="card__sub">' + sub + '</p>' : '') +
         '</div>' +
         ring +
       '</div>' +
-      weekRow(lead.habit);
+      weekRow(lead.habit) +
+      flag;
   }
 
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -165,15 +195,36 @@ var Dashboard = (function () {
     var guard = 0;
 
     while (key <= lastKey && guard++ < 400) {
-      var ratio = Habits.completionFor(state.log, state.habits, key);
-      if (ratio !== null) {
-        total += ratio;
-        counted++;
+      /* Days nobody filled in are left out rather than counted as
+         zeroes. A month is not 40% done because the app was shut for
+         half of it. */
+      if (Storage.known(state.log, key)) {
+        var ratio = Habits.completionFor(state.log, state.habits, key);
+        if (ratio !== null) {
+          total += ratio;
+          counted++;
+        }
       }
       key = Habits.shiftDate(key, 1);
     }
 
     return counted ? Math.round((total / counted) * 100) : null;
+  }
+
+  /* What is attached to a day, for the marker and its tooltip. */
+  function marksOn(key) {
+    var state = Storage.load();
+    var marks = [];
+
+    var due = state.countdowns.filter(function (c) { return c.date === key; });
+    if (due.length) marks.push(due.map(function (c) { return c.title; }).join(', '));
+
+    var tasks = state.tasks.filter(function (t) { return t.date === key; });
+    if (tasks.length) marks.push(tasks.length + (tasks.length === 1 ? ' task' : ' tasks'));
+
+    if (state.notes[key]) marks.push('a note');
+
+    return marks;
   }
 
   function monthBody(year, month, todayKey) {
@@ -199,8 +250,20 @@ var Dashboard = (function () {
       }
       if (key === todayKey) extra = ' is-today';
 
-      cells.push('<span class="day' + extra + '" data-level="' + level +
-        '" title="' + key + '">' + d + '</span>');
+      /* A dot marks a day that has something waiting on it: a
+         countdown's date, or notes and tasks already written for it.
+         Without it the calendar shows how the day went but not that
+         anything is attached to it. */
+      var marks = marksOn(key);
+      /* A star, not a dot: a four-pixel dot in the corner of a small
+         square is easy to miss entirely, which defeats the point of
+         marking the day at all. */
+      var dot = marks.length ? '<i class="day__dot">★</i>' : '';
+      var hint = marks.length ? key + ' — ' + marks.join(', ') : key;
+
+      cells.push('<button class="day' + extra + '" data-level="' + level +
+        '" data-day="' + key + '"' + (marks.length ? ' data-has="1"' : '') +
+        ' title="' + hint + '">' + d + dot + '</button>');
     }
 
     var heads = DOW.map(function (name) {
@@ -303,7 +366,18 @@ var Dashboard = (function () {
       }
 
       var monthBtn = event.target.closest('[data-month]');
-      if (monthBtn) setViewKey(monthBtn.getAttribute('data-month'), 'month');
+      if (monthBtn) return setViewKey(monthBtn.getAttribute('data-month'), 'month');
+
+      /* Pressing a day opens what it held. A day still to come is inert
+         unless something is already attached to it — a countdown lands on
+         a future date, and that date is exactly the one worth opening. */
+      var dayBtn = event.target.closest('[data-day]');
+      if (dayBtn && typeof DayView !== 'undefined') {
+        var future = dayBtn.getAttribute('data-level') === '-2';
+        if (!future || dayBtn.hasAttribute('data-has')) {
+          DayView.open(dayBtn.getAttribute('data-day'));
+        }
+      }
     };
   }
 

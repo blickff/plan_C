@@ -16,6 +16,7 @@
     <nav class="nav">
       <button class="nav__item is-active" type="button" data-view="dashboard">Dashboard</button>
       <button class="nav__item" type="button" data-view="history">History</button>
+      <button class="nav__item" type="button" data-view="notes">Notes</button>
       <button class="nav__item" type="button" data-view="settings">Settings</button>
     </nav>
   </aside>
@@ -45,6 +46,29 @@
 
     <!-- Dashboard ------------------------------------------------- -->
     <section class="view" data-view="dashboard">
+      <div class="ask" id="location-ask" hidden>
+        <div>
+          <p class="ask__title">Find your city automatically?</p>
+          <p class="ask__note muted">
+            For the weather, and for spotting which habits the weather gets in the way of.
+            The panel asks this device for its location; if that is refused, it looks the city
+            up from your internet address. Only the city is kept, and only on this computer.
+          </p>
+        </div>
+        <div class="ask__side">
+          <div class="ask__buttons">
+            <button class="pill pill--solid" type="button" id="location-yes">Yes, find it</button>
+            <button class="pill" type="button" id="location-no">Not now</button>
+          </div>
+          <label class="ask__again">
+            <input type="checkbox" id="location-never">
+            <span>Don't ask again</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="ask ask--warn" id="replaced-note" hidden></div>
+
       <div class="cards">
         <div class="stack">
           <div class="card card--dark" id="streak-card"></div>
@@ -54,12 +78,23 @@
         <div class="card card--fill">
           <p class="card__title">Today's tasks</p>
           <div class="fill" id="tasks"></div>
-          <form class="row" id="task-form">
-            <input class="input input--wide" id="task-input" type="text" placeholder="Call the dentist" autocomplete="off">
-            <button class="pill" type="submit">Add</button>
+          <form class="taskform" id="task-form">
+            <div class="row">
+              <input class="input input--wide" id="task-input" type="text" placeholder="Call the dentist" autocomplete="off">
+              <button class="pill" type="submit">Add</button>
+            </div>
+            <div class="row row--sub">
+              <span class="soft">For</span>
+              <button class="chipbtn" type="button" data-when="today">Today</button>
+              <button class="chipbtn" type="button" data-when="tomorrow">Tomorrow</button>
+              <input class="input input--date" id="task-date" type="date" aria-label="Date">
+            </div>
+            <p class="custom__error" id="task-error"></p>
           </form>
         </div>
       </div>
+
+      <div class="card" id="dayview" hidden></div>
 
       <p class="label">Today</p>
       <div class="tiles" id="tiles"></div>
@@ -106,6 +141,19 @@
       <div class="card" id="insights"></div>
     </section>
 
+    <!-- Notes ----------------------------------------------------- -->
+    <section class="view" data-view="notes" hidden>
+      <div class="card">
+        <div class="card__head">
+          <p class="card__title">Everything you have written</p>
+          <span class="period__share" id="notes-count"></span>
+        </div>
+        <input class="input input--wide notes__search" id="notes-search" type="search"
+               placeholder="Search your notes" autocomplete="off">
+        <div id="notes-list"></div>
+      </div>
+    </section>
+
     <!-- Settings -------------------------------------------------- -->
     <section class="view" data-view="settings" hidden>
       <div class="card">
@@ -116,6 +164,7 @@
         <div class="row">
           <button class="pill" type="button" id="export-btn">Export a backup</button>
           <button class="pill" type="button" id="import-btn">Restore from file</button>
+          <button class="pill" type="button" id="prev-btn" hidden>Download the copy from before the upgrade</button>
           <input type="file" id="import-file" accept="application/json,.json" hidden>
         </div>
       </div>
@@ -130,6 +179,38 @@
           <button class="pill" type="submit">Save</button>
         </form>
         <p class="custom__error" id="city-error"></p>
+      </div>
+
+      <div class="card" id="vault-card" hidden>
+        <p class="card__title">Where your data lives</p>
+        <p class="card__note muted">
+          Keep it as a file in a folder you choose. Put that folder inside OneDrive,
+          Google Drive, Dropbox or any folder that already syncs, and your history
+          survives a new Windows or a new computer — point the app at the same
+          folder again and everything is back.
+        </p>
+
+        <p class="vault__path" id="vault-path">Not set up yet</p>
+        <p class="vault__when muted" id="vault-when"></p>
+
+        <div class="row">
+          <button class="pill" type="button" id="vault-pick">Choose a folder</button>
+          <button class="pill" type="button" id="vault-copy" hidden>Copy the path</button>
+          <button class="pill" type="button" id="vault-open" hidden>Open the folder</button>
+          <button class="pill" type="button" id="vault-forget" hidden>Stop using it</button>
+        </div>
+      </div>
+
+      <div class="card" id="reminder-card" hidden>
+        <p class="card__title">Daily reminder</p>
+        <p class="card__note muted">
+          One nudge a day, and only if the day is still unfinished when it comes.
+          It is a notification from this computer — nothing is sent anywhere.
+        </p>
+        <div class="row">
+          <button class="pill" type="button" id="remind-toggle">Remind me</button>
+          <input class="input input--date" id="remind-at" type="time" value="21:00" aria-label="Time of day">
+        </div>
       </div>
 
       <div class="card" id="desktop-card" hidden>
@@ -161,7 +242,9 @@
   <script src="js/habits.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/dashboard.js"></script>
+  <script src="js/dayview.js"></script>
   <script src="js/history.js"></script>
+  <script src="js/notes.js"></script>
   <script src="js/panel.js"></script>
   <script src="js/insights.js"></script>
   <script src="js/main.js"></script>

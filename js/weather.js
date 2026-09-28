@@ -45,11 +45,9 @@ var Weather = (function () {
 
   /* Written next to the habits so the day keeps its own weather. */
   function remember(code) {
-    var state = Storage.load();
-    var key = Storage.today();
-    if (!state.log[key]) state.log[key] = {};
-    if (state.log[key].weather !== code) {
-      state.log[key].weather = code;
+    var day = Storage.day(Storage.today(), true);
+    if (day.weather !== code) {
+      day.weather = code;
       Storage.save();
     }
   }
@@ -97,14 +95,82 @@ var Weather = (function () {
       .catch(function () { return 'Could not reach the weather service.'; });
   }
 
-  function askBrowser() {
-    if (!navigator.geolocation) return Promise.reject();
 
-    return new Promise(function (resolve, reject) {
+  /* Finding the city ------------------------------------------------
+
+     Two ways, tried in order. The browser's own location is precise but
+     needs permission and, inside Electron, an API key that this app does
+     not have — so it usually declines. Looking the city up from the
+     internet address needs neither, and a city is all the weather needs.
+
+     Both are asked about first. Either one tells a third party something
+     about where this computer is, and that is not a thing to do quietly
+     on someone's behalf. Once answered, the question is not asked again. */
+
+  function askedAlready() {
+    return !!settings().locationAsked;
+  }
+
+  function rememberAsked() {
+    settings().locationAsked = true;
+    Storage.save();
+  }
+
+  /* Raced against a timer of our own. getCurrentPosition takes a
+     timeout, but inside Electron without a Google key it can answer
+     neither way and simply never call back — and a promise that never
+     settles leaves the button saying 'Looking…' forever. */
+  function withDeadline(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise(function (_resolve, reject) {
+        setTimeout(function () { reject(new Error('timed out')); }, ms);
+      })
+    ]);
+  }
+
+  function byBrowser() {
+    if (!navigator.geolocation) return Promise.reject();
+    return withDeadline(new Promise(function (resolve, reject) {
       navigator.geolocation.getCurrentPosition(function (pos) {
-        resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude });
-      }, reject, { timeout: 8000 });
-    });
+        resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, name: null });
+      }, reject, { timeout: 6000 });
+    }), 7000);
+  }
+
+  /* No key, no sign-up. Accurate to the city, which is the resolution
+     the weather is reported at anyway. */
+  function byAddress() {
+    return fetch('https://ipwho.is/?fields=success,city,latitude,longitude')
+      .then(function (response) { return response.json(); })
+      .then(function (data) {
+        if (!data || !data.success) throw new Error('lookup failed');
+        return { lat: data.latitude, lon: data.longitude, name: data.city };
+      });
+  }
+
+  /* Resolves with the place found, or null if nothing worked. */
+  function detect() {
+    return byBrowser()
+      .then(function (where) {
+        /* Coordinates without a name: ask Open-Meteo what is there, so
+           the panel can say Kyiv rather than a pair of numbers. */
+        return fetch(GEOCODE + '?latitude=' + where.lat + '&longitude=' + where.lon + '&count=1')
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            var hit = data && data.results && data.results[0];
+            where.name = hit ? hit.name : 'Here';
+            return where;
+          })
+          .catch(function () { where.name = 'Here'; return where; });
+      })
+      .catch(function () { return withDeadline(byAddress(), 8000); })
+      .then(function (where) {
+        settings().place = { lat: where.lat, lon: where.lon, name: where.name };
+        Storage.save();
+        return fetchFor(where.lat, where.lon, where.name).then(function () { return where; });
+      })
+      .catch(function () { return null; });
   }
 
   function start() {
@@ -129,18 +195,20 @@ var Weather = (function () {
       return;
     }
 
-    askBrowser().then(function (where) {
-      return fetchFor(where.lat, where.lon, 'Here').then(function () {
-        settings().place = { lat: where.lat, lon: where.lon, name: 'Here' };
-        Storage.save();
-      });
-    }).catch(function () {
-      if (!saved) show('Weather: set a city in Settings', false);
-    });
+    /* No city, and none is guessed at here. Startup used to reach for
+       the device's location on its own, which meant the operating system
+       put up its own permission prompt before the panel had asked
+       anything — and inside Electron that request can hang, leaving the
+       page half-initialised. Finding the city is now only ever started
+       by pressing the button. */
+    show('Weather: set a city in Settings', false);
   }
 
   return {
     start: start,
+    detect: detect,
+    askedAlready: askedAlready,
+    rememberAsked: rememberAsked,
     lookUpCity: lookUpCity,
     describe: describe,
     isWet: isWet
