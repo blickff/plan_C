@@ -2,20 +2,24 @@
    Plain script on purpose: ES modules are blocked when the page is opened
    from disk with a double click, which is how this project runs. */
 
-/* Several ways of saying the same four things, so the top of the panel
-   is not identical every single day. They still have to fit the hour —
-   "Good evening" at eight in the morning would be worse than saying
-   nothing — so the variety is inside each band rather than across them.
+/* Seven greetings, one a day, round and round. Seven and a daily step
+   means each lands on the same weekday every week, so none of them can
+   say anything about the hour — the panel is open at eight in the
+   morning and at midnight, and "Good evening" would be wrong half the
+   time it appeared.
 
-   Nothing here comments on how the day is going. A greeting that
-   praised or chided would be wrong about half the time, and a panel
-   that guesses at your mood is a panel you start avoiding. */
-var GREETINGS = {
-  morning: ['Good morning', 'Morning', 'A new one', 'Here we go', 'Fresh start', 'Up and about'],
-  day: ['Good afternoon', 'Afternoon', 'Halfway through', 'Middle of it', 'Still going', 'Afternoon, then'],
-  evening: ['Good evening', 'Evening', 'Winding down', 'Home stretch', 'Evening, then', 'Last stretch'],
-  night: ['Still up?', 'Late one', 'Night owl', 'Burning the oil', 'Quiet hours', 'After hours']
-};
+   Nothing here comments on how the day is going either. A greeting that
+   praised or chided would be wrong about as often, and a panel that
+   guesses at your mood is a panel you start avoiding. */
+var GREETINGS = [
+  'Hello again',
+  'Here we go',
+  'A new one',
+  'Back at it',
+  'Good to see you',
+  'Right then',
+  'Onwards'
+];
 
 /* Days since the epoch, from the local date. Used as the index so the
    phrase is fixed for the whole day: picking at random would reshuffle
@@ -25,13 +29,8 @@ function dayNumber() {
   return Math.floor(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])) / 86400000);
 }
 
-function greetingForHour(hour) {
-  var band = hour >= 5 && hour < 11 ? GREETINGS.morning
-    : hour >= 11 && hour < 17 ? GREETINGS.day
-    : hour >= 17 && hour < 22 ? GREETINGS.evening
-    : GREETINGS.night;
-
-  return band[dayNumber() % band.length];
+function greetingForToday() {
+  return GREETINGS[dayNumber() % GREETINGS.length];
 }
 
 function pad(n) {
@@ -78,7 +77,7 @@ function renderTheme() {
     ? (hour >= 7 && hour < 19 ? 'light' : 'dark')
     : choice;
 
-  document.getElementById('greeting').textContent = greetingForHour(hour);
+  document.getElementById('greeting').textContent = greetingForToday();
   document.documentElement.setAttribute('data-theme', theme);
 
   var buttons = document.querySelectorAll('[data-theme-set]');
