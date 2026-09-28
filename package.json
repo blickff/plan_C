@@ -1,0 +1,16 @@
+{
+  "name": "day-panel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A day panel and habit tracker that lives on the desktop.",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  },
+  "allowScripts": {
+    "electron@33.4.11": true
+  }
+}

@@ -1,0 +1,17 @@
+/* The only bridge between the pages and Electron.
+
+   contextIsolation is on and nodeIntegration is off, so the page cannot
+   reach Node itself. It gets exactly these few calls and nothing more —
+   a page that only tracks habits has no business touching the file
+   system, and keeping the surface this small means a mistake in the
+   page cannot become a mistake on the machine. */
+
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('desktop', {
+  openPanel: () => ipcRenderer.invoke('open-panel'),
+  toggleOnTop: () => ipcRenderer.invoke('toggle-on-top'),
+  toggleAutostart: () => ipcRenderer.invoke('toggle-autostart'),
+  getWindowSettings: () => ipcRenderer.invoke('get-window-settings'),
+  hideWidget: () => ipcRenderer.invoke('hide-widget')
+});

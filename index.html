@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Day Panel</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+  <div class="scrim" id="scrim" hidden></div>
+
+  <aside class="sidebar" id="sidebar" hidden>
+    <p class="sidebar__brand">Day Panel</p>
+    <nav class="nav">
+      <button class="nav__item is-active" type="button" data-view="dashboard">Dashboard</button>
+      <button class="nav__item" type="button" data-view="history">History</button>
+      <button class="nav__item" type="button" data-view="settings">Settings</button>
+    </nav>
+  </aside>
+
+  <main class="main">
+
+    <header class="topbar">
+      <button class="burger" type="button" id="menu-btn" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+
+      <div class="topbar__title">
+        <p class="greeting" id="greeting">&nbsp;</p>
+        <p class="date" id="date">&nbsp;</p>
+      </div>
+
+      <div class="topbar__right">
+        <div class="topbar__now">
+          <p class="clock">
+            <span class="clock__time" id="clock-time">--:--</span><span class="clock__seconds" id="clock-seconds">--</span>
+          </p>
+          <p class="weather" id="weather">&nbsp;</p>
+        </div>
+        <button class="pill pill--solid" type="button" id="habits-toggle">Edit habits</button>
+      </div>
+    </header>
+
+    <!-- Dashboard ------------------------------------------------- -->
+    <section class="view" data-view="dashboard">
+      <div class="cards">
+        <div class="stack">
+          <div class="card card--dark" id="streak-card"></div>
+          <div class="card" id="year-card"></div>
+        </div>
+
+        <div class="card card--fill">
+          <p class="card__title">Today's tasks</p>
+          <div class="fill" id="tasks"></div>
+          <form class="row" id="task-form">
+            <input class="input input--wide" id="task-input" type="text" placeholder="Call the dentist" autocomplete="off">
+            <button class="pill" type="submit">Add</button>
+          </form>
+        </div>
+      </div>
+
+      <p class="label">Today</p>
+      <div class="tiles" id="tiles"></div>
+
+      <div class="picker" id="picker" hidden>
+        <div id="picker-body"></div>
+
+        <form class="custom" id="custom-form">
+          <h3 class="picker__heading">Add your own</h3>
+          <div class="custom__row">
+            <input class="input input--wide" id="custom-name" type="text" placeholder="Meditation" autocomplete="off">
+            <input class="input input--small" id="custom-goal" type="number" min="1" step="1" value="1" aria-label="Goal">
+            <input class="input input--small" id="custom-unit" type="text" placeholder="min" autocomplete="off" aria-label="Unit">
+            <button class="pill pill--solid" type="submit">Add</button>
+          </div>
+          <p class="custom__error" id="custom-error"></p>
+          <p class="custom__hint muted">A goal of 1 makes it a yes / no habit.</p>
+        </form>
+      </div>
+
+      <div class="cards cards--lower">
+        <div class="card">
+          <p class="card__title">Countdowns</p>
+          <div id="countdowns"></div>
+          <form class="row" id="cd-form">
+            <input class="input input--wide" id="cd-title" type="text" placeholder="Trip" autocomplete="off">
+            <input class="input" id="cd-date" type="date" aria-label="Date">
+            <button class="pill" type="submit">Add</button>
+          </form>
+          <p class="custom__error" id="cd-error"></p>
+        </div>
+
+        <div class="card">
+          <p class="card__title">Note</p>
+          <textarea class="note" id="note" rows="3" placeholder="How did today go?"></textarea>
+          <div id="year-ago" hidden></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- History --------------------------------------------------- -->
+    <section class="view" data-view="history" hidden>
+      <div id="history"></div>
+      <div class="card" id="insights"></div>
+    </section>
+
+    <!-- Settings -------------------------------------------------- -->
+    <section class="view" data-view="settings" hidden>
+      <div class="card">
+        <p class="card__title">Your data</p>
+        <p class="card__note muted">
+          Everything lives in this browser only. Clearing site data wipes it, so keep a copy.
+        </p>
+        <div class="row">
+          <button class="pill" type="button" id="export-btn">Export a backup</button>
+          <button class="pill" type="button" id="import-btn">Restore from file</button>
+          <input type="file" id="import-file" accept="application/json,.json" hidden>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card__title">Location</p>
+        <p class="card__note muted">
+          For the weather line — and later for seeing which habits the weather gets in the way of.
+        </p>
+        <form class="row" id="city-form">
+          <input class="input input--wide" id="city-input" type="text" placeholder="Kyiv" autocomplete="off">
+          <button class="pill" type="submit">Save</button>
+        </form>
+        <p class="custom__error" id="city-error"></p>
+      </div>
+
+      <div class="card" id="desktop-card" hidden>
+        <p class="card__title">Desktop widget</p>
+        <p class="card__note muted">
+          Ctrl+Shift+D hides and brings back the widget.
+        </p>
+        <div class="row">
+          <button class="pill" type="button" id="autostart-btn">Start with Windows</button>
+          <button class="pill" type="button" id="ontop-btn">Keep above other windows</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card__title">Theme</p>
+        <p class="card__note muted">Light through the day, dark after 19:00.</p>
+        <div class="row">
+          <button class="pill" type="button" data-theme-set="auto">Follow the clock</button>
+          <button class="pill" type="button" data-theme-set="light">Always light</button>
+          <button class="pill" type="button" data-theme-set="dark">Always dark</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/presets.js"></script>
+  <script src="js/habits.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/panel.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

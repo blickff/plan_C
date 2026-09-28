@@ -1,0 +1,16 @@
+# Electron and its dependencies — hundreds of megabytes, restored by
+# `npm install` from package.json. Never belongs in a repository.
+node_modules/
+
+# npm noise
+npm-debug.log*
+.npm/
+
+# Windows and editors
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+
+# Backups exported from the panel contain personal history
+day-panel-*.json

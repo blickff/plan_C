@@ -1,0 +1,901 @@
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.muted { color: var(--text-faint); }
+
+.main {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 28px 48px;
+}
+
+/* Menu --------------------------------------------------------------- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 30;
+  width: 232px;
+  height: 100%;
+  padding: 26px 18px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+}
+
+.sidebar__brand {
+  margin: 0 0 26px;
+  padding: 0 10px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.nav { display: flex; flex-direction: column; gap: 4px; }
+
+.nav__item {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.nav__item:hover { background: var(--accent-bg); color: var(--text); }
+
+.nav__item.is-active {
+  background: var(--invert-bg);
+  color: var(--invert-text);
+}
+
+.burger {
+  display: flex;
+  flex-direction: column;
+  /* Centred on both axes, with no padding pulling the bars off-centre. */
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: none;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.burger:hover { border-color: var(--text-faint); }
+
+/* Three bars of the same length: the shape is recognised instantly, and
+   a shorter middle one only made it look like something else.
+   flex: none and a whole 2px matter — a flex child with a fractional
+   height gets squeezed and rounded away, which is why only one bar was
+   showing up. */
+.burger span {
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--text);
+}
+
+/* Top bar ------------------------------------------------------------ */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 26px;
+}
+
+.topbar__title { flex: 1; min-width: 0; }
+
+.greeting {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.date { margin: 1px 0 0; font-size: 13px; color: var(--text-dim); }
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.clock {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+  /* Without tabular figures the clock jitters as digits change. */
+  font-variant-numeric: tabular-nums;
+}
+
+.clock__time { font-size: 22px; font-weight: 500; letter-spacing: -0.01em; }
+.clock__seconds { font-size: 12px; color: var(--text-faint); }
+
+.topbar__now { text-align: right; }
+
+.weather {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+/* Last known reading, shown while the network is out. */
+.weather.is-stale { color: var(--text-faint); font-style: italic; }
+
+/* Buttons ------------------------------------------------------------ */
+
+.pill {
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s;
+}
+
+.pill:hover { border-color: var(--text-faint); color: var(--text); }
+
+.pill--solid {
+  border-color: var(--invert-bg);
+  background: var(--invert-bg);
+  color: var(--invert-text);
+}
+
+.pill--solid:hover { opacity: 0.85; color: var(--invert-text); }
+
+.pill.is-active {
+  border-color: var(--invert-bg);
+  background: var(--invert-bg);
+  color: var(--invert-text);
+}
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+
+/* Cards -------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  /* Stretched, not top-aligned: a short card beside a tall one leaves a
+     gap of bare page next to the taller one, which reads as something
+     missing. Filling the height turns the row into one solid block. */
+  align-items: stretch;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+/* A card that grows to its row: the list takes the slack and the form
+   settles at the bottom, so the extra height is inside the card rather
+   than an empty patch beside it. */
+.card--fill { display: flex; flex-direction: column; }
+.card--fill .fill { flex: 1; }
+.card--fill .row { margin-top: auto; }
+
+.card {
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+/* A soft lift on the light theme; on the dark one the surface colour
+   alone does the separating and --shadow is none. */
+.card,
+.tile,
+.stat,
+.grid,
+.picker {
+  box-shadow: var(--shadow);
+}
+
+.card + .card { margin-top: 14px; }
+.cards .card + .card { margin-top: 0; }
+
+/* The accent card is the theme turned inside out — black on a light
+   panel, white on a dark one. */
+.card--dark {
+  border-color: var(--invert-bg);
+  background: var(--invert-bg);
+  color: var(--invert-text);
+}
+
+.card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.card__eyebrow {
+  margin: 0;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.6;
+}
+
+.card__big {
+  margin: 4px 0 0;
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.card__big span { font-size: 16px; font-weight: 400; opacity: 0.65; }
+
+.card__tag {
+  margin: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(127, 127, 127, 0.25);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Today's ring ------------------------------------------------------- */
+
+.ring {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  /* One conic sweep for the filled arc; the inner disc punches the hole. */
+  background: conic-gradient(var(--ok) calc(var(--p) * 3.6deg), rgba(127, 127, 127, 0.25) 0);
+}
+
+.ring__inner {
+  /* flex, not grid: a grid would put the number and the sign on separate
+     rows, since each is its own item. Centred, not baseline-aligned —
+     baseline drops the pair below the middle of the circle. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--invert-bg);
+  color: var(--invert-text);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Nudged up so the small sign sits with the digits, not under them. */
+.ring__inner i {
+  align-self: flex-start;
+  margin-top: 11px;
+  font-style: normal;
+  font-size: 9px;
+  opacity: 0.6;
+}
+
+.card__title { margin: 0; font-size: 14px; font-weight: 500; }
+.card__percent { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
+.card__note { margin: 6px 0 0; font-size: 13px; opacity: 0.7; }
+
+/* Week row ----------------------------------------------------------- */
+
+.week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(127, 127, 127, 0.3);
+}
+
+.week__day { display: flex; flex-direction: column; align-items: center; gap: 7px; }
+
+.dot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font-size: 13px;
+  line-height: 1;
+}
+
+/* The week row only ever sits on the accent card, so the filled dot takes
+   the card's text colour and the tick inside takes the card's background
+   — otherwise the tick would be the same colour as the circle. */
+.card--dark .dot.is-done {
+  background: var(--ok);
+  color: #ffffff;
+}
+
+.card--dark .dot.is-today { box-shadow: inset 0 0 0 2px var(--ok); }
+
+/* A day that has been and gone without the habit happening. Only the
+   past can be missed — today is still open and tomorrow is not a
+   failure yet. */
+.dot.is-missed { box-shadow: inset 0 0 0 2px var(--miss); }
+.dot.is-future { background: rgba(127, 127, 127, 0.22); }
+
+.week__name { font-size: 11px; opacity: 0.6; }
+
+/* Month / year switch ------------------------------------------------ */
+
+.seg {
+  display: flex;
+  flex: none;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+}
+
+.seg__btn {
+  padding: 4px 11px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.seg__btn:hover { color: var(--text); }
+
+.seg__btn.is-active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+/* Days of the current month ------------------------------------------ */
+
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 3px;
+  margin-top: 10px;
+}
+
+.dow {
+  color: var(--text-faint);
+  font-size: 9px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Short and wide, like the week of dots on the card above it. Six rows
+     of squares at this width would tower over the card beside it, so
+     height is kept down and the width does the work. */
+  height: 21px;
+  border-radius: 7px;
+  background: var(--cell-0);
+  color: var(--text-faint);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.day--blank { background: transparent; }
+
+/* The four-step scale. The ink flips with how dark each step is, not
+   with the theme — a yellow square needs dark digits in both. */
+.day[data-level="0"] { background: var(--lv-0); color: var(--ink-light); }
+.day[data-level="1"] { background: var(--lv-1); color: var(--ink-dark); }
+.day[data-level="2"] { background: var(--lv-2); color: var(--ink-light); }
+
+/* Before any habit existed, and days still to come. */
+.day[data-level="-1"] { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+.day[data-level="-2"] { background: transparent; color: var(--text-faint); opacity: 0.45; }
+
+.day.is-today { box-shadow: inset 0 0 0 1.5px var(--ok); }
+
+/* Months ------------------------------------------------------------- */
+
+.period { display: flex; align-items: center; gap: 4px; }
+
+.period__share {
+  margin-left: 6px;
+  color: var(--text-dim);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.period__arrow {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.period__arrow:hover:not(:disabled) { background: var(--accent-bg); color: var(--text); }
+.period__arrow:disabled { opacity: 0.25; cursor: default; }
+
+.months {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.month {
+  padding: 9px 0;
+  border: 0;
+  border-radius: 10px;
+  background: var(--cell-0);
+  color: var(--text-faint);
+  font: inherit;
+  font-size: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.12s;
+}
+
+/* Every month opens its own calendar. */
+.month:hover { transform: translateY(-1px); }
+
+.month.is-done { background: var(--accent); color: var(--bg); }
+
+.month.is-now {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+  color: var(--text);
+}
+
+/* Habit tiles -------------------------------------------------------- */
+
+.label {
+  margin: 0 0 12px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.tile:hover { border-color: var(--text-faint); }
+.tile.is-done { border-color: var(--ok); }
+
+.tile__name { font-size: 13px; color: var(--text-dim); }
+
+.tile__value {
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile__value strong { font-weight: 500; }
+
+.tile__bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.tile__bar > span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+  transition: width 0.2s;
+}
+
+.tile__streak { font-size: 12px; color: var(--text-faint); }
+
+.empty {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 26px;
+  border: 1px dashed var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--text-faint);
+  font-size: 14px;
+  text-align: center;
+}
+
+/* Picker ------------------------------------------------------------- */
+
+.picker {
+  margin-top: 16px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.picker__group + .picker__group { margin-top: 20px; }
+
+.picker__heading {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.picker__items {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.preset {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.preset:hover { border-color: var(--text-faint); }
+
+.preset.is-added {
+  border-color: var(--invert-bg);
+  background: var(--invert-bg);
+  color: var(--invert-text);
+}
+
+.preset__goal { flex: none; font-size: 12px; opacity: 0.6; }
+
+/* Your habits, with their goals open for editing ---------------------- */
+
+.tuner {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 8px;
+}
+
+.tune {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px 7px 13px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.tune__name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+
+.tune .task__drop { opacity: 0.45; }
+.tune:hover .task__drop { opacity: 1; }
+
+.input--tiny { width: 58px; padding: 5px 8px; font-size: 13px; }
+.input--unit { width: 78px; padding: 5px 8px; font-size: 13px; }
+
+.custom {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+.custom__row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.input {
+  padding: 8px 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+}
+
+.input--wide { flex: 1 1 180px; }
+.input--small { width: 92px; }
+
+.custom__error:empty { display: none; }
+.custom__error { margin: 9px 0 0; font-size: 13px; color: var(--danger); }
+.custom__hint { margin: 7px 0 0; font-size: 12px; }
+
+/* Patterns ------------------------------------------------------------ */
+
+#insights { margin-top: 14px; }
+
+.findings { list-style: none; margin: 14px 0 0; padding: 0; }
+
+.finding {
+  display: grid;
+  gap: 2px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.finding:last-child { border-bottom: 0; }
+.finding:first-child { padding-top: 0; }
+
+.finding__habit {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+
+.finding__text { font-size: 15px; }
+.finding__note { font-size: 12px; }
+
+/* Tasks, countdowns, note -------------------------------------------- */
+
+.cards--lower {
+  margin: 26px 0 0;
+  /* Two equal halves down here, unlike the 2:1 split at the top. */
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: 0;
+}
+
+/* The left column stacks the streak card and the calendar under it;
+   the tasks card on the right runs the full height beside them. */
+.cards > .stack { min-width: 0; }
+
+/* Tighter than the other cards: its height sets how far the column on
+   the right has to stretch. */
+#year-card { padding: 16px 18px; }
+#year-card .months { margin-top: 12px; }
+#year-card .month { padding: 8px 0; }
+
+.stack { display: flex; flex-direction: column; gap: 14px; }
+
+.soft { margin: 10px 0 0; font-size: 13px; color: var(--text-faint); }
+
+.tasks__list,
+.cds {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.task,
+.cd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.task:last-child,
+.cd:last-child { border-bottom: 0; }
+
+.task__tick {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--border-strong, var(--text-faint));
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-light);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.task.is-done .task__tick { border-color: var(--ok); background: var(--ok); }
+
+.task__text { flex: 1; min-width: 0; }
+.task.is-done .task__text { color: var(--text-faint); text-decoration: line-through; }
+
+.task__drop {
+  flex: none;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.task:hover .task__drop,
+.cd:hover .task__drop { opacity: 1; }
+.task__drop:hover { color: var(--danger); }
+
+.carry { margin-top: 12px; }
+
+.cd__title { flex: 1; min-width: 0; }
+
+.cd__left {
+  flex: none;
+  font-size: 13px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dates that have gone by sink to the bottom and fade, but stay. */
+.cd.is-past .cd__title,
+.cd.is-past .cd__left { color: var(--text-faint); }
+
+.note {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 13px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+#year-ago { margin-top: 14px; }
+#year-ago .label { margin-bottom: 4px; }
+
+/* History ------------------------------------------------------------ */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.stat {
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+}
+
+.stat__label { margin: 0; font-size: 12px; color: var(--text-dim); }
+
+.stat__value {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat__note { margin: 3px 0 0; font-size: 12px; }
+
+.stat__bar {
+  display: block;
+  margin-top: 10px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.stat__bar > span { display: block; height: 100%; background: var(--ok); }
+
+.grid {
+  display: grid;
+  /* Column per week, row per weekday — it reads like a calendar. Columns
+     are fractions rather than pixels so the grid fills its card, and the
+     cells stay square through aspect-ratio. */
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, auto);
+  /* Capped at 14px so a wide card does not blow the cells up into
+     blocks; minmax(0, …) still lets them shrink on a narrow screen. */
+  grid-template-columns: repeat(40, minmax(0, 14px));
+  justify-content: start;
+  gap: 3px;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.cell { aspect-ratio: 1; border-radius: 3px; background: var(--cell-0); }
+.cell[data-level="0"] { background: var(--lv-0); }
+.cell[data-level="1"] { background: var(--lv-1); }
+.cell[data-level="2"] { background: var(--lv-2); }
+
+/* No habit existed yet, which is not the same as having done nothing. */
+.cell[data-level="-1"] { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+.cell--future { background: transparent; }
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.legend .cell { width: 11px; height: 11px; aspect-ratio: auto; }
+.legend__gap { width: 10px; }
+
+/* Narrow screens ------------------------------------------------------ */
+
+@media (max-width: 720px) {
+  .main { padding: 20px 16px 36px; }
+  .cards { grid-template-columns: 1fr; }
+  .topbar { flex-wrap: wrap; }
+  .topbar__right { width: 100%; justify-content: space-between; }
+  .greeting { font-size: 22px; }
+  .year { grid-template-columns: repeat(13, 1fr); }
+}

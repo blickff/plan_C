@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Day Panel</title>
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/widget.css">
+</head>
+<body class="widget-body">
+
+  <div class="wg">
+    <div class="wg__grip">
+      <span class="wg__date" id="wg-date">&nbsp;</span>
+      <div class="wg__tools">
+        <button class="wg__btn" type="button" id="wg-top" title="Keep above other windows">&#9650;</button>
+        <button class="wg__btn" type="button" id="wg-open" title="Open the full panel">&#9974;</button>
+        <button class="wg__btn" type="button" id="wg-hide" title="Hide (Ctrl+Shift+D brings it back)">&#215;</button>
+      </div>
+    </div>
+
+    <div class="wg__head">
+      <div>
+        <p class="wg__eyebrow" id="wg-streak-label">Streak</p>
+        <p class="wg__streak" id="wg-streak">&nbsp;</p>
+      </div>
+      <div class="ring" id="wg-ring" style="--p: 0">
+        <span class="ring__inner" id="wg-ring-text">0<i>%</i></span>
+      </div>
+    </div>
+
+    <div class="wg__habits" id="wg-habits"></div>
+
+    <p class="wg__weather" id="weather">&nbsp;</p>
+  </div>
+
+  <script src="js/storage.js"></script>
+  <script src="js/presets.js"></script>
+  <script src="js/habits.js"></script>
+  <script src="js/weather.js"></script>
+  <script src="js/widget.js"></script>
+</body>
+</html>
