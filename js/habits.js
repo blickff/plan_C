@@ -599,7 +599,7 @@ var Habits = (function () {
                   '<div class="tune__row">' +
                     '<input class="input input--tiny" type="number" min="1" step="1"' +
                       ' value="' + h.goal + '" data-goal aria-label="Goal">' +
-                    '<input class="input input--unit" type="text"' +
+                    '<input class="input input--unit" type="text" placeholder="unit"' +
                       ' value="' + escapeHtml(h.unit) + '" data-unit aria-label="Unit">' +
                     schedulerHtml(h) +
                   '</div>' +

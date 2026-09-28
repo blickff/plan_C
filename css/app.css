@@ -144,6 +144,11 @@ body {
   margin: 0;
   display: flex;
   align-items: baseline;
+  justify-content: flex-end;
+  /* The block is as wide as the weather line under it, and text-align
+     on the parent cannot reach into a flex row — so the time sat at the
+     left of its own box with eighty pixels of nothing to its right,
+     while the line beneath it ran to the edge. */
   gap: 3px;
   /* Without tabular figures the clock jitters as digits change. */
   font-variant-numeric: tabular-nums;
@@ -672,8 +677,12 @@ body {
 .tune .task__drop { opacity: 0.45; }
 .tune:hover .task__drop { opacity: 1; }
 
-.input--tiny { width: 58px; padding: 5px 8px; font-size: 13px; }
-.input--unit { width: 78px; padding: 5px 8px; font-size: 13px; }
+/* Short fixed-width fields hold a value, not a sentence, and a lone
+   "1" pinned to the left of a rounded pill reads as a mistake. Long
+   free-text fields stay left-aligned, because that is where typing
+   starts. */
+.input--tiny { width: 58px; padding: 5px 8px; font-size: 13px; text-align: center; }
+.input--unit { width: 78px; padding: 5px 8px; font-size: 13px; text-align: center; }
 
 .custom {
   margin-top: 22px;
@@ -694,7 +703,7 @@ body {
 }
 
 .input--wide { flex: 1 1 180px; }
-.input--small { width: 92px; }
+.input--small { width: 92px; text-align: center; }
 
 .custom__error:empty { display: none; }
 .custom__error { margin: 9px 0 0; font-size: 13px; color: var(--danger); }
