@@ -1,21 +1,23 @@
 /* Electron shell: a small widget that sits on the desktop, and the full
    panel behind it.
 
-   The pages are served over http from a tiny local server rather than
-   loaded with file://, and that is not incidental. Two reasons:
+   The pages are served from a scheme of the app's own, app://panel,
+   rather than loaded with file://, and that is not incidental:
 
    1. Storage. Pages opened as file:// get an opaque origin, and two
       windows would not reliably share one localStorage — the widget and
       the panel would each keep their own separate habits.
    2. Network. The weather call is blocked from a file:// page in some
-      browsers. Over http it simply works.
+      browsers.
+   3. The origin never changes. It was an http server on a port the
+      system picked, and a new port every launch meant a new origin and
+      an empty panel every launch. See serve().
 
    The same files are served that a browser would open by hand. Nothing
    in the panel knows it is running inside Electron. */
 
 const { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu,
-        nativeImage, Notification, shell, Tray } = require('electron');
-const http = require('node:http');
+        nativeImage, Notification, protocol, shell, Tray } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const vault = require('./vault');
@@ -31,6 +33,15 @@ const TYPES = {
   '.svg': 'image/svg+xml',
   '.png': 'image/png'
 };
+
+/* Registered before the app is ready, which is the only time Chromium
+   will accept it. 'standard' gives the scheme a host and working
+   relative paths; 'secure' makes it a secure context, which the
+   clipboard and fetch both want. */
+protocol.registerSchemesAsPrivileged([{
+  scheme: 'app',
+  privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true }
+}]);
 
 let widget = null;
 let panel = null;
@@ -57,38 +68,47 @@ function saveState(patch) {
   }
 }
 
+/* One fixed origin, app://panel, for the whole life of the app.
+
+   This used to be an http server on whatever port the system handed
+   out, and that was quietly the worst bug in the project. localStorage
+   belongs to an origin, and an origin includes the port — so every
+   launch got a different port, a different origin, and an empty panel.
+   Ten ports' worth of half-finished data were sitting in the profile,
+   each abandoned by the next restart.
+
+   A fixed port would have fixed it too, until the day something else
+   was already using that port and the data vanished again. A scheme of
+   our own cannot collide with anything. */
 function serve() {
-  return new Promise((resolve) => {
-    const server = http.createServer((req, res) => {
-      let rel = decodeURIComponent(req.url.split('?')[0]);
-      if (rel === '/') rel = '/index.html';
+  protocol.handle('app', async (request) => {
+    let rel;
+    try {
+      rel = decodeURIComponent(new URL(request.url).pathname);
+    } catch (err) {
+      return new Response('bad request', { status: 400 });
+    }
+    if (!rel || rel === '/') rel = '/index.html';
 
-      const file = path.join(ROOT, rel);
-      /* Nothing outside the project folder, whatever the URL asks for. */
-      if (!file.startsWith(ROOT)) {
-        res.writeHead(403).end('forbidden');
-        return;
-      }
+    const file = path.join(ROOT, rel);
+    /* Nothing outside the project folder, whatever the URL asks for.
+       path.join has already resolved any .. by this point. */
+    if (!file.startsWith(ROOT)) return new Response('forbidden', { status: 403 });
 
-      fs.readFile(file, (err, data) => {
-        if (err) {
-          res.writeHead(404, { 'content-type': 'text/plain' }).end('not found');
-          return;
-        }
-        res.writeHead(200, {
+    try {
+      const data = await fs.promises.readFile(file);
+      return new Response(data, {
+        headers: {
           'content-type': TYPES[path.extname(file)] || 'application/octet-stream',
           'cache-control': 'no-store'
-        });
-        res.end(data);
+        }
       });
-    });
-
-    /* Port 0 lets the system pick a free one — a fixed port would clash
-       with whatever else the person happens to be running. */
-    server.listen(0, '127.0.0.1', () => {
-      resolve('http://127.0.0.1:' + server.address().port);
-    });
+    } catch (err) {
+      return new Response('not found', { status: 404 });
+    }
   });
+
+  return 'app://panel';
 }
 
 function createWidget() {
@@ -132,6 +152,7 @@ function createWidget() {
 
   if (firstRun) saveState({ onTop: true });
 
+  watch(widget, 'widget');
   widget.loadURL(origin + '/widget.html');
 
   /* Shown only once the page has painted, so it never flashes empty. */
@@ -171,6 +192,7 @@ function openPanel() {
     }
   });
 
+  watch(panel, 'panel');
   panel.loadURL(origin + '/index.html');
   panel.on('closed', () => { panel = null; });
 }
@@ -201,6 +223,21 @@ function createTray() {
   tray.on('click', () => {
     if (widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
     else showWidget();
+  });
+}
+
+/* A window that fails to load shows a blank rectangle and says
+   nothing, and a script error inside it is invisible unless DevTools
+   happen to be open. Both end up in the terminal instead. */
+function watch(win, name) {
+  win.webContents.on('did-fail-load', (_event, code, description, url) => {
+    console.error(name + ' failed to load: ' + code + ' ' + description + ' ' + url);
+  });
+  win.webContents.on('did-finish-load', () => {
+    console.log(name + ' loaded ' + win.webContents.getURL());
+  });
+  win.webContents.on('console-message', (_event, level, message, line, source) => {
+    if (level >= 2) console.error(name + ' [' + source + ':' + line + '] ' + message);
   });
 }
 
@@ -278,7 +315,7 @@ app.whenReady().then(async () => {
      rather than "electron.app.Electron". */
   if (process.platform === 'win32') app.setAppUserModelId('com.dayPanel.app');
 
-  origin = await serve();
+  origin = serve();
   wireMessages();
   createTray();
   createWidget();
