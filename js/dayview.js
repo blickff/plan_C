@@ -153,16 +153,20 @@ var DayView = (function () {
         '<button class="pill" type="button" id="dv-close">Close</button>' +
       '</div>' +
 
+      (dueRows ? '<p class="label">On this date</p>' + dueRows : '') +
+
+      /* Tasks before the note. What was on the day is the thing you
+         came to see; writing about it is what you do afterwards, and a
+         text box at the top pushed the day's actual contents below the
+         fold. */
+      '<p class="label">Tasks' +
+        (taskTally ? ' <span class="dv__tally">' + taskTally + '</span>' : '') +
+      '</p>' + taskRows +
+
       '<p class="label">Note</p>' +
       '<textarea class="note dv__write" id="dv-note" rows="3" placeholder="' +
         (ahead ? 'Anything to remember for that day?' : 'What happened that day?') +
         '">' + escapeHtml(state.notes[key] || '') + '</textarea>' +
-
-      (dueRows ? '<p class="label">On this date</p>' + dueRows : '') +
-
-      '<p class="label">Tasks' +
-        (taskTally ? ' <span class="dv__tally">' + taskTally + '</span>' : '') +
-      '</p>' + taskRows +
 
       /* Habits are a record of what was done, so a day in the future has
          none to show — a row of zeroes there would read as failure. */

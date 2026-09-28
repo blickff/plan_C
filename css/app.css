@@ -978,8 +978,14 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 4px;
+  margin-bottom: 18px;
 }
+
+/* Labels elsewhere sit above one block and need no room above them. Here
+   they divide four sections stacked in one card, and without a gap the
+   card read as one run-on list. */
+#dayview .label { margin-top: 20px; }
+#dayview .label:first-of-type { margin-top: 0; }
 
 .dv__note {
   margin: 0 0 4px;
