@@ -35,7 +35,7 @@ body {
 .scrim {
   position: fixed;
   inset: 0;
-  z-index: 20;
+  z-index: 25; /* above the pinned top bar (20), under the menu (30) */
   background: rgba(0, 0, 0, 0.4);
 }
 
@@ -2120,6 +2120,10 @@ body.is-editing #board > .block {
 .msplit__name .micon { color: var(--text-faint); margin-right: 2px; }
 .msplit.is-focus .msplit__name .micon { color: var(--text); }
 .is-colour .msplit__name .micon { color: var(--tone); }
+/* The pointed-at row too: its icon stayed in the text colour while its
+   bar took the category's, so Food showed a grey fork above an orange
+   line. One colour per category, everywhere it appears. */
+.is-colour .msplit.is-focus .msplit__name .micon { color: var(--tone); }
 
 .mrow__cat { display: inline-flex; align-items: center; gap: 7px; }
 .mrow__cat .micon { color: var(--text-faint); }
@@ -2135,3 +2139,53 @@ body.is-editing #board > .block {
 .is-colour .msplit.is-focus .msplit__bar > span { background: var(--tone); }
 
 .mentry__prefs { display: flex; align-items: center; gap: 14px; }
+
+/* The week on the streak card, by how much of each day was done -------- */
+
+.card--dark .dot.lv-0 { background: var(--lv-0); }
+.card--dark .dot.lv-1 { background: var(--lv-1); }
+.card--dark .dot.lv-2 { background: var(--lv-2); }
+
+/* Finished completely: the one case that earns the tick. */
+.card--dark .dot.is-full {
+  background: var(--ok);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* A past day nobody filled in: hollow, not red. */
+.card--dark .dot.is-blank { box-shadow: inset 0 0 0 1.5px rgba(127, 127, 127, 0.45); }
+
+/* Today, whatever its colour so far, gets a ring so it can be found. */
+.card--dark .dot.is-now { box-shadow: 0 0 0 2px var(--invert-bg), 0 0 0 3.5px var(--invert-text); }
+.card--dark .dot.is-today.is-now { box-shadow: inset 0 0 0 2px var(--ok); }
+
+/* The calendar: a note is a small dot, where the star goes -------------
+   In the ink of the page (dark on light, light on dark) so it stays out
+   of the red / amber / green that score the day and the sky blue of the
+   star. A ring in the page colour keeps it clear on any cell. When the
+   day has a star too, the dot steps left of it. */
+.day__note {
+  position: absolute;
+  top: 6px;
+  right: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 1.5px var(--bg);
+}
+.day__dot + .day__note { right: 15px; }
+
+/* Habit tiles, in edit mode: picked up and set down, not pressed ------- */
+
+body.is-editing .tile[draggable="true"] { cursor: grab; }
+body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
+.tile.is-moving { opacity: 0.4; }
+.tile.is-over { box-shadow: inset 3px 0 0 var(--accent); }
+
+/* Settings: the city now in use, beside the button that finds it. */
+.city__now { font-size: 13px; align-self: center; }
+
+/* The purchases list: the fold ------------------------------------------ */
+.mlist__more { margin-top: 10px; }

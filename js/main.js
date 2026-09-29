@@ -667,6 +667,38 @@ function wireChrome() {
     });
   }
 
+  /* The same lookup the first-run question offers, available any time —
+     after a move, or for anyone who said "not now" and changed their
+     mind. */
+  var detectBtn = document.getElementById('city-detect');
+  var cityNow = document.getElementById('city-now');
+
+  function showCity() {
+    var place = Storage.load().settings.place;
+    cityNow.textContent = place && place.name ? 'Now: ' + place.name : '';
+  }
+  showCity();
+
+  detectBtn.addEventListener('click', function () {
+    var box = document.getElementById('city-error');
+    detectBtn.disabled = true;
+    detectBtn.textContent = 'Looking…';
+    box.textContent = '';
+
+    Weather.detect().then(function (where) {
+      detectBtn.disabled = false;
+      detectBtn.textContent = 'Find my city automatically';
+      if (where) {
+        Weather.rememberAsked();
+        document.getElementById('location-ask').setAttribute('hidden', '');
+        showCity();
+      } else {
+        box.textContent = 'Could not find it — this device would not say, and the lookup by ' +
+          'internet address did not answer. Type the city below instead.';
+      }
+    });
+  });
+
   document.getElementById('city-form').addEventListener('submit', function (event) {
     event.preventDefault();
     var box = document.getElementById('city-error');
@@ -680,7 +712,10 @@ function wireChrome() {
     box.textContent = 'Looking…';
     Weather.lookUpCity(name).then(function (error) {
       box.textContent = error || '';
-      if (!error) document.getElementById('city-input').value = '';
+      if (!error) {
+        document.getElementById('city-input').value = '';
+        showCity();
+      }
     });
   });
 }

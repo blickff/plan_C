@@ -300,7 +300,13 @@
       </div>
 
       <div class="card">
-        <p class="card__title">Written down</p>
+        <div class="card__head">
+          <p class="card__title">Written down</p>
+          <div class="seg seg--small" role="group" aria-label="Sort">
+            <button class="seg__btn is-active" type="button" data-msort="date">Newest</button>
+            <button class="seg__btn" type="button" data-msort="amount">Largest</button>
+          </div>
+        </div>
         <div class="mlistwrap" id="money-list"></div>
       </div>
     </section>
@@ -325,8 +331,12 @@
         <p class="card__note muted">
           For the weather line — and later for seeing which habits the weather gets in the way of.
         </p>
+        <div class="row">
+          <button class="pill pill--solid" type="button" id="city-detect">Find my city automatically</button>
+          <span class="muted city__now" id="city-now"></span>
+        </div>
         <form class="row" id="city-form">
-          <input class="input input--wide" id="city-input" type="text" placeholder="Kyiv" autocomplete="off">
+          <input class="input input--wide" id="city-input" type="text" placeholder="…or type it: Berlin" autocomplete="off">
           <button class="pill" type="submit">Save</button>
         </form>
         <p class="custom__error" id="city-error"></p>

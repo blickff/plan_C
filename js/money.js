@@ -550,11 +550,25 @@ var Money = (function () {
     var total = sum(entries);
     var s = slices(entries);
 
-    /* The biggest piece is the story until the person points at another. */
-    var focusId = focus && s.ring.some(function (x) { return x.id === focus; })
-      ? focus
-      : (s.ring[0] ? s.ring[0].id : null);
-    var focused = s.ring.filter(function (x) { return x.id === focusId; })[0];
+    /* What is pointed at is a category, and only that one row lights up.
+
+       The small categories folded into the ring's "N more" piece used to
+       share that piece's id in the list too, so pointing at any one of
+       them lit up all of them at once — it looked as if they had been
+       merged. Now a row stands for its own category; the ring, which only
+       has the one piece for them, highlights that piece, and the centre
+       gives the pointed-at category's own share. Pointing at the "N more"
+       piece itself still lights all its rows, because that piece is them. */
+    var inTail = {};
+    (s.tail || []).forEach(function (t) { inTail[t.id] = true; });
+    function sliceOf(id) { return inTail[id] ? '__rest' : id; }
+
+    var known = focus === '__rest' ? !!s.tail : s.all.some(function (x) { return x.id === focus; });
+    var focusCat = focus && known ? focus : (s.ring[0] ? s.ring[0].id : null);
+    var focusId = focusCat ? sliceOf(focusCat) : null;
+    var focused = focusCat === '__rest'
+      ? s.ring.filter(function (x) { return x.id === '__rest'; })[0]
+      : s.all.filter(function (x) { return x.id === focusCat; })[0];
 
     document.getElementById('money-total').textContent = format(total);
 
@@ -608,11 +622,12 @@ var Money = (function () {
     });
 
     list.innerHTML = s.all.map(function (row) {
-      var sliceId = tones[row.id] ? row.id : '__rest';
+      var sliceId = sliceOf(row.id);
       var share = Math.round((row.cents / total) * 100);
-      return '<button class="msplit' + (sliceId === focusId ? ' is-focus' : '') + '" type="button"' +
+      var lit = row.id === focusCat || (focusCat === '__rest' && inTail[row.id]);
+      return '<button class="msplit' + (lit ? ' is-focus' : '') + '" type="button"' +
         ' style="--tone:' + tones[sliceId] + '"' +
-        ' data-slice="' + escapeHtml(sliceId) + '">' +
+        ' data-slice="' + escapeHtml(row.id) + '">' +
         '<span class="msplit__name">' + icon(row.id) +
           escapeHtml(row.name) + '</span>' +
         '<span class="msplit__amount">' + escapeHtml(format(row.cents)) + '</span>' +
@@ -663,16 +678,35 @@ var Money = (function () {
     document.getElementById('money-read').textContent = title(scope, cur.r) + ' · ' + format(cur.cents);
   }
 
+  /* The list of purchases: how it is sorted, and whether it is showing
+     everything or only the first few. A year of coffees made the page
+     scroll for ever. */
+  var LIST_SHORT = 5;
+  var listSort = 'date';
+  var listAll = false;
+
   function renderEntries() {
     var r = range(scope, offset);
-    /* Newest first. Within one day, the order they were written down in,
-       reversed — taken from their place in the list, not from the id,
-       because ids compared as text put "m-9" after "m-10". */
+    /* Newest first, or largest first. Within one day, the order they were
+       written down in, reversed — taken from their place in the list, not
+       from the id, because ids compared as text put "m-9" after "m-10". */
     var all = data().entries;
     var entries = within(r).slice().sort(function (a, b) {
+      if (listSort === 'amount' && a.cents !== b.cents) return b.cents - a.cents;
       if (a.date !== b.date) return a.date < b.date ? 1 : -1;
       return all.indexOf(b) - all.indexOf(a);
     });
+
+    document.querySelectorAll('[data-msort]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-msort') === listSort);
+    });
+
+    var shown = listAll ? entries : entries.slice(0, LIST_SHORT);
+    var more = entries.length > LIST_SHORT
+      ? '<button class="picker__more mlist__more" type="button" id="money-more" aria-expanded="' + listAll + '">' +
+        (listAll ? 'Show fewer' : 'Show all ' + entries.length) + '</button>'
+      : '';
+    entries = shown;
 
     var box = document.getElementById('money-list');
     var undoHtml = undone
@@ -696,11 +730,19 @@ var Money = (function () {
           '<span class="mrow__amount">' + escapeHtml(format(e.cents)) + '</span>' +
           '<button class="task__drop" type="button" data-mdrop="' + escapeHtml(e.id) + '" aria-label="Delete">&#215;</button>' +
         '</li>';
-      }).join('') + '</ul>' + undoHtml;
+      }).join('') + '</ul>' + more + undoHtml;
     }
 
     var u = document.getElementById('money-undo');
     if (u) u.addEventListener('click', undoRemove);
+
+    var m = document.getElementById('money-more');
+    if (m) {
+      m.addEventListener('click', function () {
+        listAll = !listAll;
+        renderEntries();
+      });
+    }
   }
 
   /* Two periods, category by category -----------------------------------
@@ -962,8 +1004,13 @@ var Money = (function () {
     flag.hidden = !within(range(scope, offset)).some(function (e) { return e.sample; });
   }
 
+  var listFor = null;
+
   function render() {
     if (!document.getElementById('money-view')) return;
+    /* A new period starts with the list folded again; adding a purchase
+       to the one already open leaves it as it was. */
+    if (listFor !== scope + offset) { listAll = false; listFor = scope + offset; }
     renderEntry();
     renderPeriod();
     renderSummary();
@@ -1127,6 +1174,13 @@ var Money = (function () {
     bars.addEventListener('mouseover', read);
     bars.addEventListener('focusin', read);
     bars.addEventListener('mouseleave', renderTrend);
+
+    document.querySelectorAll('[data-msort]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        listSort = this.getAttribute('data-msort');
+        renderEntries();
+      });
+    });
 
     document.getElementById('money-list').addEventListener('click', function (event) {
       var drop = event.target.closest('[data-mdrop]');

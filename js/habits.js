@@ -556,6 +556,34 @@ var Habits = (function () {
     }
 
     el.innerHTML = list.map(function (habit) { return tileHtml(habit, key, ahead); }).join('');
+
+    /* In edit mode the tiles are for arranging, not for ticking: each
+       one can be dragged to a new place. Outside it they stay what they
+       are for — something to press. */
+    if (editingNow()) {
+      el.querySelectorAll('.tile').forEach(function (t) { t.setAttribute('draggable', 'true'); });
+    }
+  }
+
+  function editingNow() {
+    return document.body.classList.contains('is-editing');
+  }
+
+  /* Moves one habit to just before or just after another in the stored
+     list. The tiles, the editor and the widget all follow that order. */
+  function moveHabit(id, ontoId, after) {
+    if (id === ontoId) return;
+    var list = all();
+    var from = -1;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) from = i;
+    if (from === -1) return;
+    var moved = list.splice(from, 1)[0];
+    var to = -1;
+    for (var j = 0; j < list.length; j++) if (list[j].id === ontoId) to = j;
+    if (to === -1) { list.splice(from, 0, moved); return; }
+    list.splice(after ? to + 1 : to, 0, moved);
+    Storage.save();
+    render();
   }
 
   function presetHtml(item) {
@@ -727,15 +755,60 @@ var Habits = (function () {
     var tiles = document.getElementById('tiles');
 
     tiles.addEventListener('click', function (event) {
+      /* No ticking while arranging: a tile that is picked up and set down
+         would otherwise count as a press. */
+      if (editingNow()) return;
       var tile = event.target.closest('.tile');
       if (tile) bump(tile.getAttribute('data-id'), 1);
+    });
+
+    var carrying = null;
+
+    tiles.addEventListener('dragstart', function (event) {
+      var tile = event.target.closest('.tile');
+      if (!tile || !editingNow()) return;
+      carrying = tile.getAttribute('data-id');
+      tile.classList.add('is-moving');
+      event.dataTransfer.effectAllowed = 'move';
+      try { event.dataTransfer.setData('text/plain', carrying); } catch (err) {}
+      /* Kept inside the habits: the blocks of the page have their own
+         dragging, and this must not start it. */
+      event.stopPropagation();
+    });
+
+    tiles.addEventListener('dragover', function (event) {
+      if (!carrying) return;
+      var tile = event.target.closest('.tile');
+      if (!tile) return;
+      event.preventDefault();
+      event.stopPropagation();
+      tiles.querySelectorAll('.is-over').forEach(function (t) { t.classList.remove('is-over'); });
+      if (tile.getAttribute('data-id') !== carrying) tile.classList.add('is-over');
+    });
+
+    tiles.addEventListener('drop', function (event) {
+      if (!carrying) return;
+      var tile = event.target.closest('.tile');
+      event.preventDefault();
+      event.stopPropagation();
+      if (!tile) return;
+      /* Dropped on the right half of a tile, it goes after it. */
+      var r = tile.getBoundingClientRect();
+      moveHabit(carrying, tile.getAttribute('data-id'), event.clientX > r.left + r.width / 2);
+    });
+
+    tiles.addEventListener('dragend', function () {
+      carrying = null;
+      tiles.querySelectorAll('.is-moving, .is-over').forEach(function (t) {
+        t.classList.remove('is-moving', 'is-over');
+      });
     });
 
     /* Undo matters: without it a stray click leaves the day's number wrong
        for good, and wrong data is worse than no data. */
     tiles.addEventListener('contextmenu', function (event) {
       var tile = event.target.closest('.tile');
-      if (!tile) return;
+      if (!tile || editingNow()) return;
       event.preventDefault();
       bump(tile.getAttribute('data-id'), -1);
     });
@@ -829,6 +902,7 @@ var Habits = (function () {
       else picker.setAttribute('hidden', '');
       toggle.textContent = on ? 'Done' : 'Edit';
       document.body.classList.toggle('is-editing', on);
+      renderTiles();
       if (typeof onEditMode === 'function') onEditMode(on);
     }
 

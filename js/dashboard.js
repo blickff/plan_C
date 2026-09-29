@@ -42,8 +42,21 @@ var Dashboard = (function () {
     return lead ? { habit: lead, run: bestRun, unit: unit } : null;
   }
 
-  function weekRow(habit) {
-    var log = Storage.load().log;
+  /* The week, one circle per day, for the whole day rather than for the
+     one habit named above it.
+
+     The tick used to mean "the lead habit was met", which read as "the
+     day was done" — so a day at 60% overall could show a tick. Now the
+     circle takes the same colours as the calendar, and the tick is kept
+     for a day that was finished completely:
+       100%           green, with a tick
+       60% and up     green
+       15% to 60%     amber
+       under 15%      red
+     A day nobody filled in stays hollow; it is not a failure. */
+  function weekRow() {
+    var state = Storage.load();
+    var log = state.log;
     var todayKey = Storage.today();
     var cursor = mondayOfThisWeek();
 
@@ -51,31 +64,34 @@ var Dashboard = (function () {
       var key = Storage.dateKey(cursor);
       cursor.setDate(cursor.getDate() + 1);
 
-      var state;
+      var cls;
       var mark = '';
+      var hint = key;
 
-      if (Habits.metOn(log, habit, key)) {
-        state = 'is-done';
-        mark = '&#10003;';
-      } else if (key === todayKey) {
-        state = 'is-today';
-      } else if (key > todayKey) {
-        state = 'is-future';
-      } else if (!Habits.dueOn(log, habit, key)) {
-        /* A rest day is not a missed day. Marking Tuesday red for a
-           Monday-Wednesday-Friday habit invents a failure. */
-        state = 'is-off';
+      if (key > todayKey) {
+        cls = 'is-future';
       } else if (!Storage.known(log, key)) {
-        /* Never filled in, so nobody knows. Shown as unknown rather
-           than as a miss. */
-        state = 'is-blank';
+        cls = key === todayKey ? 'is-today' : 'is-blank';
       } else {
-        state = 'is-missed';
+        var score = Habits.completionFor(log, state.habits, key);
+        if (score === null) {
+          cls = 'is-blank';
+        } else {
+          hint += ' · ' + Math.round(score * 100) + '% done';
+          if (score >= 1) {
+            cls = 'is-full';
+            mark = '&#10003;';
+          } else {
+            cls = 'lv-' + Habits.levelOn(log, state.habits, key);
+          }
+        }
       }
+
+      if (key === todayKey) cls += ' is-now';
 
       return '' +
         '<div class="week__day">' +
-          '<span class="dot ' + state + '" title="' + key + '">' + mark + '</span>' +
+          '<span class="dot ' + cls + '" title="' + hint + '">' + mark + '</span>' +
           '<span class="week__name">' + name + '</span>' +
         '</div>';
     });
@@ -137,7 +153,7 @@ var Dashboard = (function () {
         '</div>' +
         ring +
       '</div>' +
-      weekRow(lead.habit) +
+      weekRow() +
       flag;
   }
 
@@ -260,10 +276,15 @@ var Dashboard = (function () {
          Without it the calendar shows how the day went but not that
          anything is attached to it. */
       var marks = marksOn(key);
-      /* A star, not a dot: a four-pixel dot in the corner of a small
-         square is easy to miss entirely, which defeats the point of
-         marking the day at all. */
-      var dot = marks.length ? '<i class="day__dot">★</i>' : '';
+      /* Two marks for two different things, where there used to be one
+         star for all of them: a star for plans — tasks and events, the
+         things the day holds — and a small violet dot for a note, what was
+         written about it. Both can sit on the same day. */
+      var hasPlans = state.countdowns.some(function (c) { return c.date === key; }) ||
+        state.tasks.some(function (t) { return t.date === key; });
+      var hasNote = !!state.notes[key];
+      var dot = (hasPlans ? '<i class="day__dot">★</i>' : '') +
+        (hasNote ? '<i class="day__note" aria-hidden="true"></i>' : '');
       var hint = marks.length ? key + ' — ' + marks.join(', ') : key;
 
       cells.push('<button class="day' + extra + '" data-level="' + level +
