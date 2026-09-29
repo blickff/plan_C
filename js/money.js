@@ -285,6 +285,16 @@ var Money = (function () {
     return data().entries.filter(function (e) { return e.date >= r.from && e.date <= r.to; });
   }
 
+  /* The first day anything was written down. Before it the app was not
+     in use, so a period that ends before it holds no spending to compare
+     with — only an empty stretch, and "nothing spent last year" said
+     about a year nobody was counting reads as a fact when it is not. */
+  function firstDay() {
+    var first = null;
+    data().entries.forEach(function (e) { if (!first || e.date < first) first = e.date; });
+    return first;
+  }
+
   function sum(entries) {
     var total = 0;
     entries.forEach(function (e) { total += e.cents; });
@@ -334,6 +344,8 @@ var Money = (function () {
       : 'the ' + word + ' before';
 
     if (!b && !a) return null;
+    var first = firstDay();
+    if (!b && (!first || p.other.to < first)) return null;
     /* Nothing to compare with is not the same as no change, so it gets
        no arrow. */
     if (!b) return { text: 'Nothing spent ' + against, dir: null };
@@ -782,8 +794,18 @@ var Money = (function () {
      calendar's year view — the same pills, stacked top to bottom — with
      the year written above each run of months, instead of the system's
      own drop-down list. */
-  function renderPicker(base) {
-    var n = LOOKBACK[base.which];
+  /* Only periods something was spent in. An empty one offers nothing to
+     compare with, and a year from before the app was in use would fill
+     the table with zeros and "new" beside every line. */
+  function choices(base) {
+    var out = [];
+    for (var k = 1; k <= LOOKBACK[base.which]; k++) {
+      if (within(range(base.which, base.off - k)).length) out.push(k);
+    }
+    return out;
+  }
+
+  function renderPicker(base, ks) {
     var btn = document.getElementById('money-against-btn');
     var panel = document.getElementById('money-against-panel');
 
@@ -791,7 +813,7 @@ var Money = (function () {
 
     var html = '';
     var lastYear = null;
-    for (var k = 1; k <= n; k++) {
+    ks.forEach(function (k) {
       var r = range(base.which, base.off - k);
       var y = r.from.slice(0, 4);
       if (base.which === 'month' && y !== lastYear) {
@@ -802,14 +824,20 @@ var Money = (function () {
       html += '<button class="mpick__opt' + (k === back ? ' is-on' : '') + '" type="button"' +
         ' role="option" aria-selected="' + (k === back) + '" data-back="' + k + '">' +
         escapeHtml(name) + '</button>';
-    }
+    });
     panel.innerHTML = html;
   }
 
   function renderCompare() {
     var base = compareBase();
-    if (back > LOOKBACK[base.which]) back = 1;
-    renderPicker(base);
+    var ks = choices(base);
+    var card = document.getElementById('money-against-card');
+    /* Nothing earlier to compare with — the first month, or the first
+       year, of using the app: no card, rather than a table of zeros. */
+    card.hidden = !ks.length;
+    if (!ks.length) return;
+    if (ks.indexOf(back) < 0) back = ks[0];
+    renderPicker(base, ks);
 
     var p = pair(base.which, base.off, back);
     var nowBy = {};

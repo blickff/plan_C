@@ -53,9 +53,9 @@ var HistoryView = (function () {
       '<div class="legend">' +
         '<span class="cell" data-level="0"></span><span class="muted">under 15%</span>' +
         '<span class="legend__gap"></span>' +
-        '<span class="cell" data-level="1"></span><span class="muted">to 60%</span>' +
+        '<span class="cell" data-level="1"></span><span class="muted">to 65%</span>' +
         '<span class="legend__gap"></span>' +
-        '<span class="cell" data-level="2"></span><span class="muted">60% and up</span>' +
+        '<span class="cell" data-level="2"></span><span class="muted">65% and up</span>' +
       '</div>';
   }
 

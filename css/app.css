@@ -30,47 +30,56 @@ body {
   padding: 28px 28px 48px;
 }
 
-/* Menu --------------------------------------------------------------- */
+/* The sections rail ----------------------------------------------------
+   Always on screen down the left edge, so another section is one press
+   away from anywhere on the page. It replaced a menu behind a button at
+   the top, which meant scrolling back up first. Icon and name together:
+   a row of bare icons asks to be learnt, a name under each does not. */
 
-.scrim {
-  position: fixed;
-  inset: 0;
-  z-index: 25; /* above the pinned top bar (20), under the menu (30) */
-  background: rgba(0, 0, 0, 0.4);
-}
+body:has(> .rail) { padding-left: var(--rail); }
+:root { --rail: 84px; }
 
-.sidebar {
+.rail {
   position: fixed;
   top: 0;
+  bottom: 0;
   left: 0;
   z-index: 30;
-  width: 232px;
-  height: 100%;
-  padding: 26px 18px;
-  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: var(--rail);
+  padding: 18px 0 14px;
   border-right: 1px solid var(--border);
+  background: var(--bg);
+  user-select: none;
+  transition: background-color var(--fade);
 }
 
-.sidebar__brand {
-  margin: 0 0 26px;
-  padding: 0 10px;
-  font-size: 15px;
-  font-weight: 500;
-  letter-spacing: -0.01em;
+.rail__nav,
+.rail__foot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
 }
 
-.nav { display: flex; flex-direction: column; gap: 4px; }
+.rail__foot { margin-top: auto; gap: 12px; }
 
 .nav__item {
-  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 68px;
+  padding: 9px 0 7px;
   border: 0;
-  border-radius: 10px;
+  border-radius: 14px;
   background: transparent;
   color: var(--text-dim);
   font: inherit;
-  font-size: 14px;
-  text-align: left;
   cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .nav__item:hover { background: var(--accent-bg); color: var(--text); }
@@ -80,39 +89,72 @@ body {
   color: var(--invert-text);
 }
 
-.burger {
+.rail__ic {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.4s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.nav__item:hover .rail__ic { transform: translateY(-1px); }
+.nav__item--gear:hover .rail__ic { transform: rotate(60deg); }
+
+.nav__label {
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+}
+
+/* The theme: a sun, a moon and a half-lit circle for "follow the clock",
+   stacked, with one bubble that slides to the chosen one. :has() reads
+   which button is active, so the script that marks it knows nothing of
+   the bubble. */
+.rail__theme {
+  position: relative;
   display: flex;
   flex-direction: column;
-  /* Centred on both axes, with no padding pulling the bars off-centre. */
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  flex: none;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--accent-bg);
+}
+
+.rail__theme::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow), 0 0 0 1px var(--border);
+  transition: transform 0.32s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.rail__theme:has([data-theme-set="dark"].is-active)::before { transform: translateY(36px); }
+.rail__theme:has([data-theme-set="auto"].is-active)::before { transform: translateY(72px); }
+
+.rail__themebtn {
+  position: relative;
+  display: grid;
+  place-items: center;
   width: 38px;
-  height: 38px;
+  height: 34px;
   padding: 0;
-  border: 1px solid var(--border);
-  border-radius: 50%;
+  border: 0;
+  border-radius: 999px;
   background: transparent;
+  color: var(--text-faint);
   cursor: pointer;
-  transition: border-color 0.15s;
 }
 
-.burger:hover { border-color: var(--text-faint); }
-
-/* Three bars of the same length: the shape is recognised instantly, and
-   a shorter middle one only made it look like something else.
-   flex: none and a whole 2px matter — a flex child with a fractional
-   height gets squeezed and rounded away, which is why only one bar was
-   showing up. */
-.burger span {
-  display: block;
-  flex: none;
-  width: 16px;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--text);
-}
+.rail__themebtn:hover,
+.rail__themebtn.is-active { color: var(--text); }
 
 /* Top bar ------------------------------------------------------------ */
 
@@ -1889,29 +1931,33 @@ body.is-editing #board > .block {
 
 .seg--small .seg__btn { padding: 3px 12px; font-size: 12px; }
 
-/* The top bar stays within reach ------------------------------------------
-   Pinned while the page scrolls, so the menu and Edit / Done are always
-   in reach — scrolling back up to finish editing was the complaint. But
-   pinned for good it covered the top of the page, so it slides away
-   while scrolling down and returns on the way up (main.js, wireTopbar).
-   Only transform moves, never its size, so nothing below it shifts. */
+/* The top bar scrolls with the page ---------------------------------------
+   Pinned for good, it covered the top of whatever was being read. The
+   sections are on the rail now, always in reach, so the bar has no need
+   to follow — except while editing, where its Done is the way out:
+   then it stays, and marks itself off from the page with a hairline. */
 
 .topbar {
-  position: sticky;
-  top: 0;
   z-index: 20;
   margin: -28px -28px 26px;
   padding: 18px 28px 14px;
   background: var(--bg);
-  transition: background-color var(--fade), transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
+  transition: background-color var(--fade), box-shadow 0.2s ease;
 }
 
-.topbar.is-stuck { box-shadow: 0 1px 0 var(--border), 0 6px 16px -12px rgba(0, 0, 0, 0.35); }
-.topbar.is-tucked { transform: translateY(-100%); box-shadow: none; }
+body.is-editing .topbar {
+  position: sticky;
+  top: 0;
+  box-shadow: 0 1px 0 var(--border), 0 6px 16px -12px rgba(0, 0, 0, 0.35);
+}
 
 /* The desktop window's title strip, on Windows ---------------------------
    The app draws its own, in the page's colours, and Windows lays its
-   three buttons over the right end of it. */
+   three buttons over the right end of it. It carries no name: the
+   window's own caption already says it, and a word up there only
+   competes with the page. Above the top bar while it is pinned (20); the
+   rail starts under it, so the whole strip stays a handle to drag the
+   window by. */
 
 .titlebar { display: none; }
 
@@ -1927,19 +1973,9 @@ body.is-editing #board > .block {
   transition: background-color var(--fade);
 }
 
-/* The strip carries no name: the window's own caption already says it,
-   and a word up there only competes with the page.
-
-   Above the pinned top bar (20), but under the dimming (25) and the menu
-   (30), which both run to the very top of the window. With the menu
-   open there is no bright line left across it; main.js dims Windows'
-   buttons in the corner to match. While the menu is open the strip
-   stops being a drag handle, so a click on it closes the menu like a
-   click anywhere else on the dimmed page. */
 .is-desktop.is-win32 body { padding-top: 36px; }
 .is-desktop.is-win32 .topbar { top: 36px; }
-.is-desktop.is-win32 .sidebar { padding-top: 62px; }
-.is-desktop.is-win32:has(#scrim:not([hidden])) .titlebar { -webkit-app-region: no-drag; }
+.is-desktop.is-win32 .rail { top: 36px; }
 
 /* Scrollbars ----------------------------------------------------------------
    Thin, rounded and in the theme's greys, instead of the Windows grey
@@ -1966,62 +2002,11 @@ body.is-editing #board > .block {
 
 ::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
 
-/* The menu's theme switch ---------------------------------------------------- */
-
-.sidebar { display: flex; flex-direction: column; user-select: none; }
-
-.sidebar__foot {
-  margin-top: auto;
-  padding: 16px 10px 6px;
-}
-
-.sidebar__label {
-  margin: 0 0 8px;
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-faint);
-}
-
-.seg--full { display: flex; }
-.seg--full .seg__btn { flex: 1; }
-
-/* The theme switch in the menu: a sun, a moon and a half-lit circle for
-   "follow the clock", with one bubble that slides to the chosen one
-   instead of three buttons that each light up. :has() reads which button
-   is active, so the script that marks it needs to know nothing about
-   the bubble. */
-.seg--theme { position: relative; padding: 3px; }
-
-.seg--theme::before {
-  content: "";
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 3px;
-  width: calc((100% - 6px - 4px) / 3);
-  border-radius: 999px;
-  background: var(--surface);
-  box-shadow: var(--shadow), 0 0 0 1px var(--border);
-  transition: transform 0.32s cubic-bezier(0.3, 1.4, 0.5, 1);
-}
-.seg--theme:has([data-theme-set="dark"].is-active)::before { transform: translateX(calc(100% + 2px)); }
-.seg--theme:has([data-theme-set="auto"].is-active)::before { transform: translateX(calc(200% + 4px)); }
-
-.seg--theme .seg__btn,
-.seg--theme .seg__btn.is-active {
-  position: relative;
-  display: grid;
-  place-items: center;
-  padding: 7px 0;
-  background: transparent;
-  box-shadow: none;
-}
+/* The theme icons on the rail ---------------------------------------------- */
 
 .themeic {
-  width: 19px;
-  height: 19px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.8;
@@ -2033,14 +2018,14 @@ body.is-editing #board > .block {
 
 /* Each one moves in its own way when pointed at: the sun turns, the moon
    rocks, the half circle flips day and night. */
-.seg__btn:hover .themeic--sun { transform: rotate(45deg); }
-.seg__btn:hover .themeic--moon { transform: rotate(-18deg); }
-.seg__btn:hover .themeic--auto { transform: rotate(180deg); }
+.rail__themebtn:hover .themeic--sun { transform: rotate(45deg); }
+.rail__themebtn:hover .themeic--moon { transform: rotate(-18deg); }
+.rail__themebtn:hover .themeic--auto { transform: rotate(180deg); }
 
 /* The chosen one takes its colour: a warm sun, a cool moon. Follow the
    clock stays in the ink of the page, being neither. */
-.seg__btn.is-active .themeic--sun { color: #f59e0b; fill: rgba(245, 158, 11, 0.25); }
-.seg__btn.is-active .themeic--moon { color: #818cf8; fill: rgba(129, 140, 248, 0.25); }
+.rail__themebtn.is-active .themeic--sun { color: #f59e0b; fill: rgba(245, 158, 11, 0.25); }
+.rail__themebtn.is-active .themeic--moon { color: #818cf8; fill: rgba(129, 140, 248, 0.25); }
 
 /* The habit editor ------------------------------------------------------------- */
 
@@ -2245,6 +2230,9 @@ body.is-editing #board > .block {
   background: var(--text);
   box-shadow: 0 0 0 1px var(--bg);
 }
+/* Alone, it takes the star's place — centred where the star's centre
+   would be — instead of sitting against the cell's edge. */
+.day__note:only-child { margin: 0 3.5px; }
 
 /* Habit tiles, in edit mode: picked up and set down, not pressed ------- */
 

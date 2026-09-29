@@ -210,32 +210,18 @@ function renderTheme() {
    disagree. */
 var lastWindowTheme = null;
 
-var menuOpen = false;
-
 function tellWindowTheme(theme) {
   if (!window.desktop || !window.desktop.setTheme) return;
   theme = theme || document.documentElement.getAttribute('data-theme');
   var css = getComputedStyle(document.documentElement);
   var bg = css.getPropertyValue('--bg').trim();
   var text = css.getPropertyValue('--text').trim();
-  /* With the menu open the page is dimmed, and Windows' own buttons in
-     the corner must be too, or they stay a bright block at the top. The
-     same black at 40% the scrim lays over the page. */
-  if (menuOpen) { bg = dimmed(bg); text = dimmed(text); }
   var key = theme + bg + text;
   if (key === lastWindowTheme) return;
   lastWindowTheme = key;
   window.desktop.setTheme({ theme: theme, bg: bg, text: text });
 }
 
-function dimmed(hex) {
-  var m = /^#([0-9a-f]{6})$/i.exec(hex);
-  if (!m) return hex;
-  var n = parseInt(m[1], 16);
-  return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(function (c) {
-    return ('0' + Math.round(c * 0.6).toString(16)).slice(-2);
-  }).join('');
-}
 
 /* The dashboard's blocks, in the order the person put them -------------
 
@@ -342,22 +328,6 @@ function setTheme(choice) {
 
 /* Menu and views ------------------------------------------------------ */
 
-function openMenu(open) {
-  var sidebar = document.getElementById('sidebar');
-  var scrim = document.getElementById('scrim');
-
-  if (open) {
-    sidebar.removeAttribute('hidden');
-    scrim.removeAttribute('hidden');
-  } else {
-    sidebar.setAttribute('hidden', '');
-    scrim.setAttribute('hidden', '');
-  }
-  menuOpen = !!open;
-  tellWindowTheme();
-}
-
-/* The menu always starts closed — it is a way in, not a fixture. */
 function showView(name) {
   var views = document.querySelectorAll('.view');
   for (var i = 0; i < views.length; i++) {
@@ -380,8 +350,6 @@ function showView(name) {
   var edit = document.getElementById('habits-toggle');
   if (name === 'dashboard') edit.removeAttribute('hidden');
   else edit.setAttribute('hidden', '');
-
-  openMenu(false);
 }
 
 /* Settings for the vault: which folder holds the data file, and the
@@ -601,59 +569,7 @@ function wirePreviousCopy() {
   });
 }
 
-/* The top bar gets out of the way ------------------------------------------
-   Pinned, it sat over the top of whatever was being read and cut it off
-   mid-row. Now it slides away while the page is scrolled down, and comes
-   back the moment it is scrolled up at all — so the menu and Edit are
-   still one small movement away. It stays out while editing, where its
-   Done is the way out. Away from the top of the page it has a hairline
-   under it, so it reads as a bar over the page rather than the page
-   cut short. */
-function wireTopbar() {
-  var bar = document.querySelector('.topbar');
-  var lastY = window.scrollY;
-  var queued = false;
-
-  function update() {
-    queued = false;
-    var y = window.scrollY;
-    var delta = y - lastY;
-    var editing = document.body.classList.contains('is-editing');
-
-    bar.classList.toggle('is-stuck', y > 4);
-    if (y < bar.offsetHeight || editing || delta < -2) {
-      bar.classList.remove('is-tucked');
-    } else if (delta > 2) {
-      bar.classList.add('is-tucked');
-    }
-    lastY = y;
-  }
-
-  window.addEventListener('scroll', function () {
-    if (queued) return;
-    queued = true;
-    requestAnimationFrame(update);
-  }, { passive: true });
-
-  /* Keyboard focus landing in a hidden bar brings it back. */
-  bar.addEventListener('focusin', function () { bar.classList.remove('is-tucked'); });
-}
-
 function wireChrome() {
-  wireTopbar();
-
-  document.getElementById('menu-btn').addEventListener('click', function () {
-    openMenu(document.getElementById('sidebar').hasAttribute('hidden'));
-  });
-
-  document.getElementById('scrim').addEventListener('click', function () {
-    openMenu(false);
-  });
-
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') openMenu(false);
-  });
-
   var items = document.querySelectorAll('.nav__item');
   for (var i = 0; i < items.length; i++) {
     items[i].addEventListener('click', function () {

@@ -46,12 +46,12 @@ var Dashboard = (function () {
      one habit named above it.
 
      The tick used to mean "the lead habit was met", which read as "the
-     day was done" — so a day at 60% overall could show a tick. Now the
+     day was done" — so a day at 65% overall could show a tick. Now the
      circle takes the same colours as the calendar, and the tick is kept
      for a day that was finished completely:
        100%           green, with a tick
-       60% and up     green
-       15% to 60%     amber
+       65% and up     green
+       15% to 65%     amber
        under 15%      red
      A day nobody filled in stays hollow; it is not a failure. */
   function weekRow() {

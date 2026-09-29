@@ -445,7 +445,7 @@ var Habits = (function () {
     return total / eligible.length;
   }
 
-  /* Three colours: red under 15%, yellow to 60%, green above. One
+  /* Three colours: red under 15%, yellow to 65%, green from there. One
      definition, used by the month calendar and the history grid alike —
      two copies would drift and the same day would end up a different
      colour in two places.
@@ -464,7 +464,7 @@ var Habits = (function () {
     var score = completionFor(log, habits, key);
     if (score === null) return -1;
     if (score < 0.15) return 0;
-    if (score < 0.60) return 1;
+    if (score < 0.65) return 1;
     return 2;
   }
 
