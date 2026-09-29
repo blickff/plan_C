@@ -2505,34 +2505,67 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
   stroke-linejoin: round;
 }
 
-/* History: spending month by month --------------------------------------- */
+/* History: spending over time ---------------------------------------------- */
 
-.mhist { margin-top: 18px; }
-.mhist__sum { margin: 2px 0 14px; font-size: 13px; color: var(--text-dim); }
-.mhist__chart { position: relative; }
+.mhist { margin-top: 18px; padding-bottom: 14px; }
+
+.mhist__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.mhist__big {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin: 6px 0 0;
+}
+
+.mhist__bignum {
+  font-size: 30px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.mhist__bigcap { font-size: 13px; color: var(--text-faint); }
+
+.mhist__sum { margin: 4px 0 0; font-size: 13px; color: var(--text-dim); }
+
+.mhist__chart { position: relative; margin-top: 14px; }
 .mhist__svg { display: block; overflow: visible; }
 
-.mhist__grid { stroke: var(--border); stroke-width: 1; }
+.mhist__wait { margin: 4px 0 6px; font-size: 13px; color: var(--text-faint); }
+
+.mhist__grid { stroke: var(--border); stroke-width: 1; stroke-dasharray: 2 4; }
+.mhist__grid.is-base { stroke-dasharray: none; }
 .mhist__ylab { font-size: 11px; fill: var(--text-faint); text-anchor: end; font-variant-numeric: tabular-nums; }
 .mhist__xlab { font-size: 11px; fill: var(--text-faint); text-anchor: middle; }
-.mhist__xlab.is-now { fill: var(--text-dim); font-weight: 600; }
+.mhist__xlab.is-now { fill: var(--text); font-weight: 600; }
 
-.mhist__fill-top { stop-color: var(--text); stop-opacity: 0.12; }
+.mhist__fill-top { stop-color: var(--text); stop-opacity: 0.16; }
 .mhist__fill-bottom { stop-color: var(--text); stop-opacity: 0; }
 .mhist__area { fill: url(#mhist-fill); }
 
 .mhist__line {
   fill: none;
   stroke: var(--text);
-  stroke-width: 2;
+  stroke-width: 2.25;
   stroke-linejoin: round;
   stroke-linecap: round;
 }
-.mhist__line.is-now { stroke-dasharray: 3 5; opacity: 0.55; }
+.mhist__line.is-now { stroke-dasharray: 2 6; opacity: 0.6; }
 
-.mhist__dot { fill: var(--text); stroke: var(--surface); stroke-width: 2; transition: r 0.12s ease; }
-.mhist__dot.is-now { fill: var(--surface); stroke: var(--text); stroke-width: 1.8; }
-.mhist__dot.is-lit { r: 5.5; }
+.mhist__dot {
+  fill: var(--text);
+  stroke: var(--surface);
+  stroke-width: 2.5;
+  transition: r 0.15s ease;
+}
+.mhist__dot.is-now { fill: var(--surface); stroke: var(--text); stroke-width: 2; }
+.mhist__dot.is-lit { r: 6.5; }
 
 .mhist__guide { stroke: var(--text-faint); stroke-width: 1; stroke-dasharray: 2 3; }
 .mhist__hit { fill: transparent; }
@@ -2541,12 +2574,14 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
   position: absolute;
   display: flex;
   flex-direction: column;
-  padding: 7px 11px;
-  border-radius: 10px;
+  gap: 1px;
+  padding: 8px 12px;
+  border-radius: 12px;
   background: var(--invert-bg);
   color: var(--invert-text);
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.35);
   pointer-events: none;
   white-space: nowrap;
 }
-.mhist__tipmonth { font-size: 11px; opacity: 0.7; }
-.mhist__tipsum { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mhist__tipwhen { font-size: 11px; opacity: 0.7; }
+.mhist__tipsum { font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }

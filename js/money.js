@@ -983,42 +983,64 @@ var Money = (function () {
     renderHistory();
   }
 
-  /* History: spending month by month ---------------------------------------
+  /* History: spending over time -----------------------------------------------
 
-     One line, one point a month, going up when more went out and down when
-     less did — the shape of the spending over time, on the History page
-     beside the habits. It starts at the first month anything was written
-     down: months before that were not "nothing spent", they were not
-     counted, and a line climbing out of them would show a rise that never
-     happened. At most the last twelve.
+     One line, one point a month — or a year, by the switch on the card —
+     going up when more went out and down when less did. It starts at the
+     first month (or year) anything was written down: before that nothing
+     was counted, and a line climbing out of those empty stretches would
+     show a rise that never happened. At most twelve months, or every year.
 
-     The month under way is not over, so its point is hollow and the line
-     to it dashed: it will rise, and a solid dip at the end would read as
-     spending falling. The sentence above compares the last two finished
-     months for the same reason. */
+     The period under way is not over, so its point is hollow and the line
+     to it dashed: it will still rise, and a solid dip at the end would read
+     as spending falling. The sentence above compares the last two finished
+     periods for the same reason. */
 
-  function monthTotals() {
+  function histScope() {
+    return data().histScope === 'year' ? 'year' : 'month';
+  }
+
+  function periodTotals(scope) {
     var first = firstDay();
     if (!first) return [];
     var today = Storage.today();
-    var y = +first.slice(0, 4);
-    var m = +first.slice(5, 7) - 1;
-    var ty = +today.slice(0, 4);
-    var tm = +today.slice(5, 7) - 1;
-    var months = [];
+    var list = [];
     var at = {};
+    var y = +first.slice(0, 4);
+    var ty = +today.slice(0, 4);
+
+    if (scope === 'year') {
+      for (; y <= ty; y++) {
+        at[String(y)] = list.length;
+        list.push({ key: String(y), short: String(y), long: String(y), cents: 0 });
+      }
+      data().entries.forEach(function (e) {
+        var i = at[e.date.slice(0, 4)];
+        if (i !== undefined) list[i].cents += e.cents;
+      });
+      return list;
+    }
+
+    var m = +first.slice(5, 7) - 1;
+    var tm = +today.slice(5, 7) - 1;
     while (y < ty || (y === ty && m <= tm)) {
       var key = y + '-' + ('0' + (m + 1)).slice(-2);
-      at[key] = months.length;
-      months.push({ y: y, m: m, cents: 0 });
+      at[key] = list.length;
+      list.push({ key: key, month: m, year: y, short: SHORT[m], long: MONTHS[m] + ' ' + y, cents: 0 });
       m += 1;
       if (m === 12) { m = 0; y += 1; }
     }
     data().entries.forEach(function (e) {
       var i = at[e.date.slice(0, 7)];
-      if (i !== undefined) months[i].cents += e.cents;
+      if (i !== undefined) list[i].cents += e.cents;
     });
-    return months.slice(-12);
+    list = list.slice(-12);
+    /* The year is added under January, and under the first month shown,
+       so a run of months across New Year stays readable. */
+    list.forEach(function (p, i) {
+      if (p.month === 0 || i === 0) p.short += ' ’' + String(p.year).slice(2);
+    });
+    return list;
   }
 
   /* Whole amounts for the axis: "€1,500", not "€1,500.00". */
@@ -1046,91 +1068,144 @@ var Money = (function () {
     return 10 * pow * 3;
   }
 
+  /* A smooth line that never swings past its points — no bump below zero
+     between two small months, no peak higher than the highest one
+     (monotone cubic, Fritsch–Carlson). One curve piece per gap, so the
+     last piece can be drawn dashed on its own. */
+  function curvePieces(pts) {
+    var n = pts.length;
+    var d = [];
+    var t = [];
+    for (var i = 0; i < n - 1; i++) {
+      d.push((pts[i + 1].y - pts[i].y) / (pts[i + 1].x - pts[i].x));
+    }
+    t[0] = d[0];
+    t[n - 1] = d[n - 2];
+    for (var j = 1; j < n - 1; j++) {
+      t[j] = d[j - 1] * d[j] <= 0 ? 0 : (d[j - 1] + d[j]) / 2;
+    }
+    for (var k = 0; k < n - 1; k++) {
+      if (d[k] === 0) { t[k] = 0; t[k + 1] = 0; continue; }
+      var a = t[k] / d[k];
+      var b = t[k + 1] / d[k];
+      var s = a * a + b * b;
+      if (s > 9) {
+        var f = 3 / Math.sqrt(s);
+        t[k] = f * a * d[k];
+        t[k + 1] = f * b * d[k];
+      }
+    }
+    var pieces = [];
+    for (var p = 0; p < n - 1; p++) {
+      var h = (pts[p + 1].x - pts[p].x) / 3;
+      pieces.push('C' + (pts[p].x + h) + ',' + (pts[p].y + t[p] * h) + ' ' +
+        (pts[p + 1].x - h) + ',' + (pts[p + 1].y - t[p + 1] * h) + ' ' +
+        pts[p + 1].x + ',' + pts[p + 1].y);
+    }
+    return pieces;
+  }
+
   function renderHistory() {
     var card = document.getElementById('money-history');
     if (!card) return;
-    var months = monthTotals();
-    card.hidden = !months.length;
-    if (!months.length) return;
+    var scope = histScope();
+    var list = periodTotals(scope);
+    card.hidden = !list.length;
+    if (!list.length) return;
+
+    card.querySelectorAll('[data-hscope]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-hscope') === scope);
+    });
 
     var sumEl = document.getElementById('money-history-sum');
+    var bigEl = document.getElementById('money-history-big');
     var chart = document.getElementById('money-history-chart');
-    var now = months[months.length - 1];
-    var done = months.slice(0, -1);
+    var now = list[list.length - 1];
+    var done = list.slice(0, -1);
+    var nowName = scope === 'year' ? now.long : MONTHS[now.month];
 
-    var line = escapeHtml(MONTHS[now.m] + ' so far: ' + format(now.cents));
+    bigEl.innerHTML = '<span class="mhist__bignum">' + escapeHtml(format(now.cents)) + '</span>' +
+      '<span class="mhist__bigcap">' + escapeHtml(nowName) + ' so far</span>';
+
+    var line = '';
     if (done.length >= 2) {
       var a = done[done.length - 1];
       var b = done[done.length - 2];
+      var an = scope === 'year' ? a.long : MONTHS[a.month];
+      var bn = scope === 'year' ? b.long : MONTHS[b.month];
       if (b.cents) {
         var change = Math.round(((a.cents - b.cents) / b.cents) * 100);
         var arrow = change > 0 ? '&#8593;' : change < 0 ? '&#8595;' : '&#8596;';
         line = '<span class="mcmp__arrow" aria-hidden="true">' + arrow + '</span>' +
-          (change === 0 ? 'The same in ' + MONTHS[a.m] + ' as in ' + MONTHS[b.m]
-            : Math.abs(change) + '% ' + (change > 0 ? 'more' : 'less') + ' in ' + MONTHS[a.m] +
-              ' than in ' + MONTHS[b.m]) +
-          ' · ' + line;
+          (change === 0 ? 'The same in ' + an + ' as in ' + bn
+            : Math.abs(change) + '% ' + (change > 0 ? 'more' : 'less') + ' in ' + an + ' than in ' + bn);
       }
     }
     sumEl.innerHTML = line;
+    sumEl.hidden = !line;
 
-    if (months.length < 2) {
-      chart.innerHTML = '<p class="soft">The line starts once there is a second month to go to.</p>';
+    if (list.length < 2) {
+      chart.innerHTML = '<p class="mhist__wait">' +
+        (scope === 'year'
+          ? 'The line starts once there is a second year to go to.'
+          : 'The line starts once there is a second month to go to.') + '</p>';
       return;
     }
 
     /* Drawn to the width it is given, so the text stays its real size. */
     var W = Math.max(320, chart.clientWidth || 640);
-    var H = 210;
-    var padL = 56;
-    var padR = 16;
-    var padT = 14;
-    var padB = 28;
-    var n = months.length;
-    var top = niceTop(Math.max.apply(null, months.map(function (x) { return x.cents; })));
+    var H = 240;
+    var padL = 58;
+    var padR = 18;
+    var padT = 18;
+    var padB = 30;
+    var n = list.length;
+    var top = niceTop(Math.max.apply(null, list.map(function (x) { return x.cents; })));
     function X(i) { return padL + (i * (W - padL - padR)) / (n - 1); }
     function Y(v) { return padT + (1 - v / top) * (H - padT - padB); }
 
     var grid = '';
     for (var g = 0; g <= 3; g++) {
       var v = (top / 3) * g;
-      grid += '<line class="mhist__grid" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/>' +
-        '<text class="mhist__ylab" x="' + (padL - 10) + '" y="' + (Y(v) + 4) + '">' + escapeHtml(roundMoney(v)) + '</text>';
+      grid += '<line class="mhist__grid' + (g === 0 ? ' is-base' : '') + '" x1="' + padL + '" x2="' + (W - padR) +
+        '" y1="' + Y(v) + '" y2="' + Y(v) + '"/>' +
+        '<text class="mhist__ylab" x="' + (padL - 12) + '" y="' + (Y(v) + 4) + '">' + escapeHtml(roundMoney(v)) + '</text>';
     }
 
-    var labels = months.map(function (x, i) {
-      var name = SHORT[x.m] + (x.m === 0 || i === 0 ? ' ' + String(x.y).slice(2) : '');
+    var labels = list.map(function (p, i) {
       return '<text class="mhist__xlab' + (i === n - 1 ? ' is-now' : '') + '" x="' + X(i) + '" y="' + (H - 8) + '">' +
-        escapeHtml(name) + '</text>';
+        escapeHtml(p.short) + '</text>';
     }).join('');
 
-    var pts = months.map(function (x, i) { return X(i) + ',' + Y(x.cents); });
-    var solid = pts.slice(0, -1);
-    var area = 'M' + X(0) + ',' + Y(0) + ' L' + solid.join(' L') + ' L' + X(n - 2) + ',' + Y(0) + ' Z';
+    var pts = list.map(function (p, i) { return { x: X(i), y: Y(p.cents) }; });
+    var pieces = curvePieces(pts);
+    var start = 'M' + pts[0].x + ',' + pts[0].y;
+    var solid = start + pieces.slice(0, -1).join('');
+    var last = 'M' + pts[n - 2].x + ',' + pts[n - 2].y + pieces[n - 2];
+    var area = start + pieces.join('') + ' L' + pts[n - 1].x + ',' + Y(0) + ' L' + pts[0].x + ',' + Y(0) + ' Z';
 
-    var dots = months.map(function (x, i) {
-      return '<circle class="mhist__dot' + (i === n - 1 ? ' is-now' : '') + '" cx="' + X(i) + '" cy="' + Y(x.cents) + '" r="3.5"/>';
+    var dots = list.map(function (p, i) {
+      return '<circle class="mhist__dot' + (i === n - 1 ? ' is-now' : '') + '" cx="' + pts[i].x + '" cy="' + pts[i].y + '" r="4"/>';
     }).join('');
 
     chart.innerHTML =
       '<svg class="mhist__svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img"' +
-        ' aria-label="Spending by month, ' + escapeHtml(SHORT[months[0].m] + ' ' + months[0].y) + ' to ' +
-        escapeHtml(SHORT[now.m] + ' ' + now.y) + '">' +
+        ' aria-label="Spending by ' + scope + ', ' + escapeHtml(list[0].long) + ' to ' + escapeHtml(now.long) + '">' +
         '<defs><linearGradient id="mhist-fill" x1="0" y1="0" x2="0" y2="1">' +
           '<stop offset="0" class="mhist__fill-top"/><stop offset="1" class="mhist__fill-bottom"/>' +
         '</linearGradient></defs>' +
         grid +
-        (solid.length > 1 ? '<path class="mhist__area" d="' + area + '"/>' : '') +
-        (solid.length > 1 ? '<polyline class="mhist__line" points="' + solid.join(' ') + '"/>' : '') +
-        '<polyline class="mhist__line is-now" points="' + pts.slice(-2).join(' ') + '"/>' +
-        '<line class="mhist__guide" x1="0" x2="0" y1="' + padT + '" y2="' + (H - padB) + '" visibility="hidden"/>' +
+        '<path class="mhist__area" d="' + area + '"/>' +
+        (n > 2 ? '<path class="mhist__line" d="' + solid + '"/>' : '') +
+        '<path class="mhist__line is-now" d="' + last + '"/>' +
+        '<line class="mhist__guide" x1="0" x2="0" y1="' + padT + '" y2="' + Y(0) + '" visibility="hidden"/>' +
         dots +
         labels +
-        '<rect class="mhist__hit" x="' + padL + '" y="0" width="' + (W - padL - padR) + '" height="' + H + '"/>' +
+        '<rect class="mhist__hit" x="' + (padL - 20) + '" y="0" width="' + (W - padL - padR + 40) + '" height="' + H + '"/>' +
       '</svg>' +
       '<div class="mhist__tip" hidden></div>';
 
-    /* Pointing anywhere over the chart picks the nearest month and says
+    /* Pointing anywhere over the chart picks the nearest point and says
        what it came to. */
     var svg = chart.querySelector('svg');
     var tip = chart.querySelector('.mhist__tip');
@@ -1140,17 +1215,17 @@ var Money = (function () {
       var box = svg.getBoundingClientRect();
       var x = event.clientX - box.left;
       var i = Math.max(0, Math.min(n - 1, Math.round(((x - padL) / (W - padL - padR)) * (n - 1))));
-      var mo = months[i];
-      guide.setAttribute('x1', X(i));
-      guide.setAttribute('x2', X(i));
+      var p = list[i];
+      guide.setAttribute('x1', pts[i].x);
+      guide.setAttribute('x2', pts[i].x);
       guide.setAttribute('visibility', 'visible');
       circles.forEach(function (c, k) { c.classList.toggle('is-lit', k === i); });
-      tip.innerHTML = '<span class="mhist__tipmonth">' + MONTHS[mo.m] + ' ' + mo.y +
-        (i === n - 1 ? ' · so far' : '') + '</span><span class="mhist__tipsum">' + escapeHtml(format(mo.cents)) + '</span>';
+      tip.innerHTML = '<span class="mhist__tipwhen">' + escapeHtml(p.long) + (i === n - 1 ? ' · so far' : '') + '</span>' +
+        '<span class="mhist__tipsum">' + escapeHtml(format(p.cents)) + '</span>';
       tip.hidden = false;
-      var left = Math.max(0, Math.min(W - tip.offsetWidth, X(i) - tip.offsetWidth / 2));
+      var left = Math.max(0, Math.min(W - tip.offsetWidth, pts[i].x - tip.offsetWidth / 2));
       tip.style.left = left + 'px';
-      tip.style.top = Math.max(0, Y(mo.cents) - tip.offsetHeight - 12) + 'px';
+      tip.style.top = Math.max(0, pts[i].y - tip.offsetHeight - 14) + 'px';
     });
     svg.addEventListener('mouseleave', function () {
       tip.hidden = true;
@@ -1246,6 +1321,17 @@ var Money = (function () {
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape' && !pickPanel.hidden) { openPicker(false); pickBtn.focus(); }
     });
+
+    var histCard = document.getElementById('money-history');
+    if (histCard) {
+      histCard.addEventListener('click', function (event) {
+        var b = event.target.closest('[data-hscope]');
+        if (!b) return;
+        data().histScope = b.getAttribute('data-hscope');
+        Storage.save();
+        renderHistory();
+      });
+    }
 
     /* No "are you sure": only the made-up entries go. */
     document.getElementById('money-example-drop').addEventListener('click', function () {
