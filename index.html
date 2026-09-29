@@ -212,13 +212,27 @@
           <span class="period__share" id="notes-count"></span>
         </div>
         <input class="input input--wide notes__search" id="notes-search" type="search"
-               placeholder="Search your notes" autocomplete="off">
+               placeholder="Search by words or a date — 29, Sep 29, 29.09" autocomplete="off">
         <div id="notes-list"></div>
       </div>
     </section>
 
     <!-- Money ----------------------------------------------------- -->
     <section class="view" data-view="money" id="money-view" hidden>
+
+      <!-- Said once, in words, at the top: the numbers below are made up.
+           Replaces a "Remove example data" button and an "includes example
+           data" tag that nobody could make sense of. -->
+      <div class="mnotice" id="money-example-note" role="note" hidden>
+        <svg class="mnotice__ic" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="0.4"/>
+        </svg>
+        <p class="mnotice__text">
+          <strong>This is example spending.</strong>
+          Made-up numbers, so you can see how the charts work. What you write down yourself shows up alongside and stays when the example goes.
+        </p>
+        <button class="pill" type="button" id="money-example-drop">Remove the example</button>
+      </div>
 
       <!-- Writing down what was just spent comes first: it is the thing
            done every day. Looking at where it all went comes after. -->
@@ -244,7 +258,6 @@
           <div class="mentry__tools">
             <button class="chipbtn" type="button" id="money-edit-toggle">Edit categories</button>
             <button class="chipbtn" type="button" id="money-example" hidden>Try it with example data</button>
-            <button class="chipbtn" type="button" id="money-example-drop" hidden>Remove example data</button>
           </div>
           <div class="mentry__prefs">
             <div class="seg seg--small" role="group" aria-label="Chart colours">
@@ -285,7 +298,7 @@
 
       <div class="mgrid">
         <div class="card msummary" id="money-summary">
-          <p class="label">Spent <span class="mflag" id="money-example-flag" hidden>includes example data</span></p>
+          <p class="label">Spent</p>
           <p class="mtotal" id="money-total"></p>
           <p class="mcmp" id="money-compare"></p>
 
@@ -445,6 +458,7 @@
   <script src="js/dashboard.js"></script>
   <script src="js/history.js"></script>
   <script src="js/notes.js"></script>
+  <script src="js/datepick.js"></script>
   <script src="js/panel.js"></script>
   <script src="js/insights.js"></script>
   <script src="js/money.js"></script>

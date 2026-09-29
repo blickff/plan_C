@@ -569,21 +569,47 @@ var Habits = (function () {
     return document.body.classList.contains('is-editing');
   }
 
-  /* Moves one habit to just before or just after another in the stored
-     list. The tiles, the editor and the widget all follow that order. */
-  function moveHabit(id, ontoId, after) {
-    if (id === ontoId) return;
+  /* The tiles on screen, in their new order, written back to the stored
+     list. The tiles are only the habits that exist on the day on show,
+     so each one goes into a slot that one of them held before, and the
+     rest keep their places. The editor and the widget follow. */
+  function saveTileOrder(ids) {
     var list = all();
-    var from = -1;
-    for (var i = 0; i < list.length; i++) if (list[i].id === id) from = i;
-    if (from === -1) return;
-    var moved = list.splice(from, 1)[0];
-    var to = -1;
-    for (var j = 0; j < list.length; j++) if (list[j].id === ontoId) to = j;
-    if (to === -1) { list.splice(from, 0, moved); return; }
-    list.splice(after ? to + 1 : to, 0, moved);
+    var shown = {};
+    ids.forEach(function (id) { shown[id] = true; });
+    var byId = {};
+    list.forEach(function (h) { byId[h.id] = h; });
+    var next = 0;
+    for (var i = 0; i < list.length; i++) {
+      if (shown[list[i].id]) list[i] = byId[ids[next++]];
+    }
     Storage.save();
     render();
+  }
+
+  /* Things that change places glide there instead of jumping: each one's
+     position is read before the change and after it, and it is shown
+     starting from where it was (FLIP). Used by the tiles and by the
+     dashboard's blocks. */
+  function glide(container, change) {
+    var items = Array.prototype.slice.call(container.children);
+    var before = items.map(function (el) { return el.getBoundingClientRect(); });
+    change();
+    items.forEach(function (el, i) {
+      var after = el.getBoundingClientRect();
+      var dx = before[i].left - after.left;
+      var dy = before[i].top - after.top;
+      if (!dx && !dy) return;
+      el.style.transition = 'none';
+      el.style.transform = 'translate(' + dx + 'px, ' + dy + 'px)';
+      el.getBoundingClientRect();
+      el.style.transition = 'transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      el.style.transform = '';
+      el.addEventListener('transitionend', function done() {
+        el.style.transition = '';
+        el.removeEventListener('transitionend', done);
+      });
+    });
   }
 
   function presetHtml(item) {
@@ -768,7 +794,10 @@ var Habits = (function () {
       var tile = event.target.closest('.tile');
       if (!tile || !editingNow()) return;
       carrying = tile.getAttribute('data-id');
-      tile.classList.add('is-moving');
+      /* Marked a moment later: the browser takes its picture of the tile
+         to carry under the pointer once this handler returns, and it
+         should be of the tile, not of the empty gap it leaves. */
+      setTimeout(function () { tile.classList.add('is-moving'); }, 0);
       event.dataTransfer.effectAllowed = 'move';
       try { event.dataTransfer.setData('text/plain', carrying); } catch (err) {}
       /* Kept inside the habits: the blocks of the page have their own
@@ -776,32 +805,38 @@ var Habits = (function () {
       event.stopPropagation();
     });
 
+    /* The tiles make room as the one being carried passes over them, so
+       where it will land is plain to see — it is already there, as an
+       outlined gap. Passing a tile moves the carried one to its other
+       side: after it when going forward, before it when going back. */
     tiles.addEventListener('dragover', function (event) {
       if (!carrying) return;
-      var tile = event.target.closest('.tile');
-      if (!tile) return;
       event.preventDefault();
       event.stopPropagation();
-      tiles.querySelectorAll('.is-over').forEach(function (t) { t.classList.remove('is-over'); });
-      if (tile.getAttribute('data-id') !== carrying) tile.classList.add('is-over');
+      var tile = event.target.closest('.tile');
+      var moving = tiles.querySelector('.tile.is-moving');
+      if (!tile || !moving || tile === moving) return;
+      var list = Array.prototype.slice.call(tiles.querySelectorAll('.tile'));
+      var forward = list.indexOf(moving) < list.indexOf(tile);
+      glide(tiles, function () {
+        tiles.insertBefore(moving, forward ? tile.nextSibling : tile);
+      });
     });
 
     tiles.addEventListener('drop', function (event) {
       if (!carrying) return;
-      var tile = event.target.closest('.tile');
       event.preventDefault();
       event.stopPropagation();
-      if (!tile) return;
-      /* Dropped on the right half of a tile, it goes after it. */
-      var r = tile.getBoundingClientRect();
-      moveHabit(carrying, tile.getAttribute('data-id'), event.clientX > r.left + r.width / 2);
     });
 
     tiles.addEventListener('dragend', function () {
+      if (!carrying) return;
       carrying = null;
-      tiles.querySelectorAll('.is-moving, .is-over').forEach(function (t) {
-        t.classList.remove('is-moving', 'is-over');
+      var ids = Array.prototype.map.call(tiles.querySelectorAll('.tile'), function (t) {
+        return t.getAttribute('data-id');
       });
+      tiles.querySelectorAll('.is-moving').forEach(function (t) { t.classList.remove('is-moving'); });
+      saveTileOrder(ids);
     });
 
     /* Undo matters: without it a stray click leaves the day's number wrong
@@ -932,6 +967,7 @@ var Habits = (function () {
     start: start,
     render: render,
     renderTiles: renderTiles,
+    glide: glide,
     bump: bump,
     setValue: setValue,
     retune: retune,

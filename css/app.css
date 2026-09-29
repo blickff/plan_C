@@ -1071,11 +1071,12 @@ body:has(> .rail) { padding-left: var(--rail); }
 .day.is-open { box-shadow: 0 0 0 2px var(--accent); }
 .day.is-open.is-today { box-shadow: 0 0 0 2px var(--accent); }
 
-/* Sky blue on purpose: the day cells are red, yellow and green, so a
-   star in any of those hues would read as part of the score. This one
-   belongs to a different scale — it says something is attached to the
-   day, not how the day went. The dark halo keeps it legible on the pale
-   yellow cells as well as the deep red ones. */
+/* The marks are drawn in the ink of the day's own number — white on red
+   and green, dark on yellow, the page's ink on an empty day — rather than
+   in a colour of their own. A sky-blue star with a dark halo on a yellow
+   cell was a third colour fighting the two already there; in the
+   number's ink they read as part of the day, like a superscript. The
+   star (tasks, events) and the dot (a note) tell apart by shape. */
 .day__marks {
   position: absolute;
   top: 2px;
@@ -1090,9 +1091,12 @@ body:has(> .rail) { padding-left: var(--rail); }
   display: block;
   width: 12px;
   height: 12px;
-  fill: #38bdf8;
-  filter: drop-shadow(0 0 1px rgba(8, 20, 30, 0.85));
+  fill: currentColor;
 }
+
+/* A day still ahead has a faint number; its marks stay readable, since
+   a planned event is exactly what one looks ahead for. */
+.day[data-level="-2"] .day__marks { color: var(--text-dim); }
 
 /* The notes archive ---------------------------------------------------- */
 
@@ -2215,18 +2219,15 @@ body.is-editing .topbar {
 .card--dark .dot.is-today.is-now { box-shadow: inset 0 0 0 2px var(--ok); }
 
 /* The calendar: a note is a small dot, where the star goes -------------
-   In the ink of the page (dark on light, light on dark) so it stays out
-   of the red / amber / green that score the day and the sky blue of the
-   star. A hairline ring in the page colour keeps it apart from the pale
-   yellow cells. It shares the star's row (.day__marks), left of it, so
-   the two are centred on one line. */
+   In the ink of the day's number, like the star (see .day__marks). It
+   shares the star's row, left of it, so the two are centred on one
+   line. */
 .day__note {
   flex: none;
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--text);
-  box-shadow: 0 0 0 1px var(--bg);
+  background: currentColor;
 }
 /* Alone, it takes the star's place — centred where the star's centre
    would be — instead of sitting against the cell's edge. */
@@ -2236,11 +2237,188 @@ body.is-editing .topbar {
 
 body.is-editing .tile[draggable="true"] { cursor: grab; }
 body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
-.tile.is-moving { opacity: 0.4; }
-.tile.is-over { box-shadow: inset 3px 0 0 var(--accent); }
+/* The tile being carried leaves an outlined gap where it will land. */
+.tile.is-moving {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  outline: 2px dashed var(--border);
+  outline-offset: -2px;
+}
+.tile.is-moving > * { visibility: hidden; }
 
 /* Settings: the city now in use, beside the button that finds it. */
 .city__now { font-size: 13px; align-self: center; }
 
 /* The purchases list: the fold ------------------------------------------ */
 .mlist__more { margin-top: 10px; }
+
+/* The date box and its calendar (js/datepick.js) --------------------------
+   In place of the system's date picker: the same round pills and the
+   same ink as the rest of the page, about the size of the one it
+   replaces. */
+
+.dpick { position: relative; display: inline-flex; }
+
+.dpick__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  width: auto;
+  min-width: 136px;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.dpick__ic {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: var(--text-faint);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dpick__pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 40;
+  width: 272px;
+  padding: 14px 14px 12px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.22), 0 2px 6px rgba(0, 0, 0, 0.06);
+  animation: dpick-in 0.16s ease-out;
+}
+
+.dpick__pop.is-up { top: auto; bottom: calc(100% + 8px); }
+
+@keyframes dpick-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+.dpick__head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.dpick__title {
+  flex: 1;
+  margin: 0 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.dpick__nav {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0 0 2px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.dpick__nav:hover { background: var(--accent-bg); color: var(--text); }
+
+.dpick__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.dpick__dow {
+  padding: 2px 0 6px;
+  font-size: 11px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--text-faint);
+}
+
+.dpick__day {
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+
+.dpick__day:hover { background: var(--accent-bg); }
+.dpick__day.is-out { color: var(--text-faint); opacity: 0.6; }
+.dpick__day.is-today { box-shadow: inset 0 0 0 1.5px var(--border); font-weight: 600; }
+
+.dpick__day.is-on,
+.dpick__day.is-on:hover {
+  background: var(--invert-bg);
+  color: var(--invert-text);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.dpick__day:focus-visible { outline: 2px solid var(--text-faint); outline-offset: 1px; }
+
+.dpick__foot {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+/* Money: the note that the numbers are an example ------------------------ */
+
+.mnotice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding: 14px 16px 14px 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.mnotice__ic {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+
+.mnotice__text {
+  flex: 1;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.mnotice__text strong { color: var(--text); font-weight: 600; }
+
+.mnotice .pill { flex: none; }

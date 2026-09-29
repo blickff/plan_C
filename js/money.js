@@ -1025,15 +1025,13 @@ var Money = (function () {
 
   function renderExampleControls() {
     var load = document.getElementById('money-example');
-    var drop = document.getElementById('money-example-drop');
-    var flag = document.getElementById('money-example-flag');
+    var note = document.getElementById('money-example-note');
     var ex = hasExample();
 
     /* Offered only while there is nothing real to look at: once there
        is, example data would only muddy it. */
     load.hidden = ex || hasReal();
-    drop.hidden = !ex;
-    flag.hidden = !within(range(scope, offset)).some(function (e) { return e.sample; });
+    note.hidden = !ex;
   }
 
   var listFor = null;
@@ -1145,8 +1143,9 @@ var Money = (function () {
       render();
     });
 
+    /* No "are you sure": only the made-up entries go, and they can be
+       brought back from the same place while nothing real is written. */
     document.getElementById('money-example-drop').addEventListener('click', function () {
-      if (!window.confirm('Take out all the example spending? Anything you wrote down yourself stays.')) return;
       removeExample();
       render();
     });

@@ -62,11 +62,71 @@ var Notes = (function () {
       .map(function (key) { return { date: key, text: notes[key] }; });
   }
 
+  /* A search can be a date as well as words: "29" finds every note from
+     a 29th, "29.09" or "Sep 29" that day in any year, "September" or
+     "сентябрь" the whole month, "2026" the year, "2026-09-29" one day.
+     Month names in English and Russian, whole or cut short. A note comes
+     back if its words match or its date does. */
+  var MONTH_NAMES = [
+    ['jan', 'янв'], ['feb', 'фев'], ['mar', 'мар'], ['apr', 'апр'],
+    ['may', 'мая', 'май'], ['jun', 'июн'], ['jul', 'июл'], ['aug', 'авг'],
+    ['sep', 'сен'], ['oct', 'окт'], ['nov', 'ноя'], ['dec', 'дек']
+  ];
+
+  function monthOf(word) {
+    if (word.length < 3) return 0;
+    for (var m = 0; m < 12; m++) {
+      for (var i = 0; i < MONTH_NAMES[m].length; i++) {
+        if (word.indexOf(MONTH_NAMES[m][i]) === 0) return m + 1;
+      }
+    }
+    return 0;
+  }
+
+  function dateQuery(text) {
+    var words = text.split(/[\s.,\/-]+/).filter(Boolean);
+    if (!words.length || words.length > 3) return null;
+    var want = {};
+    var numbers = 0;
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      if (/^\d{4}$/.test(w)) {
+        if (want.year) return null;
+        want.year = +w;
+      } else if (/^\d{1,2}$/.test(w)) {
+        var n = +w;
+        numbers += 1;
+        /* After a year, as in 2026-09-29, the month comes first; else the
+           day does, as in 29.09. */
+        var monthFirst = want.year && !want.day && !want.month;
+        if (monthFirst && n >= 1 && n <= 12) want.month = n;
+        else if (!want.day && n >= 1 && n <= 31) want.day = n;
+        else if (!want.month && n >= 1 && n <= 12) want.month = n;
+        else return null;
+      } else {
+        var m = monthOf(w);
+        if (!m || want.month) return null;
+        want.month = m;
+      }
+    }
+    if (numbers > 2) return null;
+    return want;
+  }
+
+  function dateMatches(want, key) {
+    if (!want) return false;
+    var p = key.split('-');
+    return (!want.year || +p[0] === want.year) &&
+      (!want.month || +p[1] === want.month) &&
+      (!want.day || +p[2] === want.day);
+  }
+
   function matching() {
     var needle = query.trim().toLowerCase();
     if (!needle) return all();
+    var want = dateQuery(needle);
     return all().filter(function (note) {
-      return note.text.toLowerCase().indexOf(needle) !== -1;
+      return note.text.toLowerCase().indexOf(needle) !== -1 || dateMatches(want, note.date);
     });
   }
 
@@ -93,14 +153,19 @@ var Notes = (function () {
     }
 
     if (!found.length) {
-      box.innerHTML = '<p class="muted soft">No note mentions that.</p>';
+      box.innerHTML = '<p class="muted soft">No note mentions that, and none is from that date.</p>';
       return;
     }
 
+    /* The date is lit up when it is the date that matched, as the words
+       are when they did. */
+    var want = dateQuery(query.trim().toLowerCase());
     box.innerHTML = found.map(function (note) {
+      var date = escapeHtml(pretty(note.date));
+      if (dateMatches(want, note.date)) date = '<mark>' + date + '</mark>';
       return '' +
         '<button class="note-row" type="button" data-note-date="' + note.date + '">' +
-          '<span class="note-row__date">' + pretty(note.date) + '</span>' +
+          '<span class="note-row__date">' + date + '</span>' +
           '<span class="note-row__text">' + highlight(note.text, query.trim()) + '</span>' +
         '</button>';
     }).join('');

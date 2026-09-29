@@ -304,7 +304,9 @@ function wireBoard() {
     var half = target.classList.contains('block--full')
       ? event.clientY < r.top + r.height / 2
       : event.clientX < r.left + r.width / 2;
-    board.insertBefore(dragging, half ? target : target.nextSibling);
+    var place = half ? target : target.nextSibling;
+    if (place === dragging || place === dragging.nextSibling) return;
+    Habits.glide(board, function () { board.insertBefore(dragging, place); });
   });
 
   board.addEventListener('drop', function (event) {

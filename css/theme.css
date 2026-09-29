@@ -44,8 +44,8 @@
   /* Three colours, three hues. The eye reads hue off a small square far
      better than it reads shade. */
   --lv-0: #dc2626;
-  --lv-1: #eab543;
-  --lv-2: #2f8f52;
+  --lv-1: #fabd2e;
+  --lv-2: #2e9a58;
   --cell-0: #e7e7eb;
 
   /* Money charts. One highlighted mark in the accent, everything else in
@@ -106,8 +106,8 @@
   /* Same four, pulled back a little: full-strength hues glare on a
      near-black page. */
   --lv-0: #c62828;
-  --lv-1: #d1a03c;
-  --lv-2: #2c8a51;
+  --lv-1: #e5ab2c;
+  --lv-2: #2e9155;
   --cell-0: #26262c;
 
   --viz-muted: #3d3d3d;
