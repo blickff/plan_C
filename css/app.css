@@ -1889,9 +1889,12 @@ body.is-editing #board > .block {
 
 .seg--small .seg__btn { padding: 3px 12px; font-size: 12px; }
 
-/* The top bar stays -------------------------------------------------------
+/* The top bar stays within reach ------------------------------------------
    Pinned while the page scrolls, so the menu and Edit / Done are always
-   in reach. Scrolling back up to finish editing was the complaint. */
+   in reach — scrolling back up to finish editing was the complaint. But
+   pinned for good it covered the top of the page, so it slides away
+   while scrolling down and returns on the way up (main.js, wireTopbar).
+   Only transform moves, never its size, so nothing below it shifts. */
 
 .topbar {
   position: sticky;
@@ -1900,8 +1903,11 @@ body.is-editing #board > .block {
   margin: -28px -28px 26px;
   padding: 18px 28px 14px;
   background: var(--bg);
-  transition: background-color var(--fade);
+  transition: background-color var(--fade), transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
 }
+
+.topbar.is-stuck { box-shadow: 0 1px 0 var(--border), 0 6px 16px -12px rgba(0, 0, 0, 0.35); }
+.topbar.is-tucked { transform: translateY(-100%); box-shadow: none; }
 
 /* The desktop window's title strip, on Windows ---------------------------
    The app draws its own, in the page's colours, and Windows lays its

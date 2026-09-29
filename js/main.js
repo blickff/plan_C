@@ -601,7 +601,47 @@ function wirePreviousCopy() {
   });
 }
 
+/* The top bar gets out of the way ------------------------------------------
+   Pinned, it sat over the top of whatever was being read and cut it off
+   mid-row. Now it slides away while the page is scrolled down, and comes
+   back the moment it is scrolled up at all — so the menu and Edit are
+   still one small movement away. It stays out while editing, where its
+   Done is the way out. Away from the top of the page it has a hairline
+   under it, so it reads as a bar over the page rather than the page
+   cut short. */
+function wireTopbar() {
+  var bar = document.querySelector('.topbar');
+  var lastY = window.scrollY;
+  var queued = false;
+
+  function update() {
+    queued = false;
+    var y = window.scrollY;
+    var delta = y - lastY;
+    var editing = document.body.classList.contains('is-editing');
+
+    bar.classList.toggle('is-stuck', y > 4);
+    if (y < bar.offsetHeight || editing || delta < -2) {
+      bar.classList.remove('is-tucked');
+    } else if (delta > 2) {
+      bar.classList.add('is-tucked');
+    }
+    lastY = y;
+  }
+
+  window.addEventListener('scroll', function () {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(update);
+  }, { passive: true });
+
+  /* Keyboard focus landing in a hidden bar brings it back. */
+  bar.addEventListener('focusin', function () { bar.classList.remove('is-tucked'); });
+}
+
 function wireChrome() {
+  wireTopbar();
+
   document.getElementById('menu-btn').addEventListener('click', function () {
     openMenu(document.getElementById('sidebar').hasAttribute('hidden'));
   });
