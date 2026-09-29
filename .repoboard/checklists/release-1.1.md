@@ -42,9 +42,10 @@ wrong is about data surviving the change and the update path working.
 
 ## Updates
 
-- [ ] latest.yml and the blockmap are attached to the release beside the installer
+- [?] latest.yml and the blockmap are attached to the release beside the installer
   - Verify: open the 1.1.0 release page — Daybook-Setup-1.1.0.exe, its .blockmap and latest.yml are all listed.
   - Source: an installed app finds and downloads an update by reading latest.yml; without it the update button never appears.
+  - Proof: release v1.1.0 lists all five files. Downloaded latest.yml and the installer without credentials: latest.yml says 1.1.0, size 80453727, and its sha512 matches the downloaded Daybook-Setup-1.1.0.exe exactly, so the updater's integrity check will pass.
 - [?] An installed 1.1.0 asks GitHub and correctly finds nothing newer
   - Verify: Settings → Updates says "Up to date".
   - Source: an updater that reports an update that is not there, or an error, trains people to ignore it.
@@ -58,6 +59,7 @@ wrong is about data surviving the change and the update path working.
 - [ ] The Mac build opens on an Apple-silicon Mac after "Open Anyway"
   - Verify: on a real Mac, open the dmg, drag to Applications, allow it in Privacy & Security, and it starts.
   - Source: built by GitHub on a Mac runner with ad-hoc signing ("identity": "-"). Nobody on this project has a Mac to try it on.
+  - Note: the build log (run 36537513803) shows "packaging platform=darwin arch=universal" and "signing file=release/mac-universal/Daybook.app ... identityName=-", so it is a universal binary and ad-hoc signed. Notarization skipped, as expected without an Apple account. Whether it opens is still for a person on a Mac to confirm.
 - [ ] Copy and paste work in the Mac version
   - Verify: Cmd+V pastes an amount into the money tab.
   - Source: on a Mac the edit shortcuts come from the app menu; the menu is kept there for exactly this.
@@ -71,4 +73,4 @@ wrong is about data surviving the change and the update path working.
 - [?] The version in package.json matches the tag and the file names
   - Verify: package.json, the tag and all three downloads say 1.1.0.
   - Source: the file names come from package.json; a mismatch means bug reports against a version that does not exist.
-  - Proof: package.json is 1.1.0; the local build produced Daybook-Setup-1.1.0.exe and Daybook-1.1.0-portable.exe.
+  - Proof: package.json is 1.1.0, the tag is v1.1.0, and the release holds Daybook-Setup-1.1.0.exe, Daybook-1.1.0-portable.exe and Daybook-1.1.0-mac.dmg.

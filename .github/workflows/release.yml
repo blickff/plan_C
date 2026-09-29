@@ -74,6 +74,8 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          # Without this the page is titled with the bare tag, "v1.2.0".
+          name: Daybook ${{ github.ref_name }}
           body_path: .github/release-notes/${{ github.ref_name }}.md
           files: dist/*
           fail_on_unmatched_files: true
