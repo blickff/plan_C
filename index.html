@@ -245,7 +245,11 @@
       <div class="card mcompare">
         <div class="card__head">
           <p class="card__title">Compared with</p>
-          <select class="input input--mode mcompare__pick" id="money-against" aria-label="Compare with"></select>
+          <div class="mpick" id="money-against">
+            <button class="mpick__btn" type="button" id="money-against-btn"
+                    aria-haspopup="listbox" aria-expanded="false" aria-label="Compare with"></button>
+            <div class="mpick__panel" id="money-against-panel" role="listbox" hidden></div>
+          </div>
         </div>
         <p class="mcompare__sum muted" id="money-against-sum"></p>
         <div class="mdiffs" id="money-diff"></div>

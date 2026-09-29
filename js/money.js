@@ -595,21 +595,57 @@ var Money = (function () {
      still there in words, but the order and the bars follow what the
      change actually cost. */
 
-  var LOOKBACK = { day: 14, week: 12, month: 12, year: 5 };
+  /* Always months — or years, when the page is on Year. Comparing one
+     week with another said little: a week is too short for spending to
+     settle, and one dinner out decides the result. So whatever the page
+     is set to, this card compares the month it falls in. */
+  var LOOKBACK = { month: 12, year: 5 };
+
+  function compareBase() {
+    if (scope === 'year') return { which: 'year', off: offset };
+    if (scope === 'month') return { which: 'month', off: offset };
+    var from = parse(range(scope, offset).from);
+    var now = parse(Storage.today());
+    return {
+      which: 'month',
+      off: (from.getFullYear() * 12 + from.getMonth()) - (now.getFullYear() * 12 + now.getMonth())
+    };
+  }
+
+  /* The list of months to compare with, drawn like the months of the
+     calendar's year view — the same pills, stacked top to bottom — with
+     the year written above each run of months, instead of the system's
+     own drop-down list. */
+  function renderPicker(base) {
+    var n = LOOKBACK[base.which];
+    var btn = document.getElementById('money-against-btn');
+    var panel = document.getElementById('money-against-panel');
+
+    btn.textContent = title(base.which, range(base.which, base.off - back));
+
+    var html = '';
+    var lastYear = null;
+    for (var k = 1; k <= n; k++) {
+      var r = range(base.which, base.off - k);
+      var y = r.from.slice(0, 4);
+      if (base.which === 'month' && y !== lastYear) {
+        html += '<p class="mpick__year">' + y + '</p>';
+        lastYear = y;
+      }
+      var name = base.which === 'month' ? MONTHS[parse(r.from).getMonth()] : y;
+      html += '<button class="mpick__opt' + (k === back ? ' is-on' : '') + '" type="button"' +
+        ' role="option" aria-selected="' + (k === back) + '" data-back="' + k + '">' +
+        escapeHtml(name) + '</button>';
+    }
+    panel.innerHTML = html;
+  }
 
   function renderCompare() {
-    var select = document.getElementById('money-against');
-    var n = LOOKBACK[scope];
-    if (back > n) back = 1;
+    var base = compareBase();
+    if (back > LOOKBACK[base.which]) back = 1;
+    renderPicker(base);
 
-    var options = '';
-    for (var k = 1; k <= n; k++) {
-      options += '<option value="' + k + '"' + (k === back ? ' selected' : '') + '>' +
-        escapeHtml(title(scope, range(scope, offset - k))) + '</option>';
-    }
-    if (document.activeElement !== select) select.innerHTML = options;
-
-    var p = pair(scope, offset, back);
+    var p = pair(base.which, base.off, back);
     var nowBy = {};
     var thenBy = {};
     within(p.now).forEach(function (e) { nowBy[e.cat] = (nowBy[e.cat] || 0) + e.cents; });
@@ -629,8 +665,7 @@ var Money = (function () {
     var totalThen = sum(within(p.other));
     var sumEl = document.getElementById('money-against-sum');
 
-    var shown = title(scope, range(scope, offset));
-    var other = title(scope, range(scope, offset - back));
+    var shown = title(base.which, range(base.which, base.off));
     var note = p.partial
       ? 'Both cut to the same ' + (Math.round((parse(p.now.to) - parse(p.now.from)) / 86400000) + 1) +
         ' days, because ' + shown.replace(/^This /, 'this ').replace(/^Today$/, 'today') + ' is not over yet.'
@@ -654,8 +689,8 @@ var Money = (function () {
 
     var head = '<div class="mdiff mdiff--head">' +
       '<span></span>' +
-      '<span class="mdiff__num">' + escapeHtml(shortTitle(scope, p.now)) + '</span>' +
-      '<span class="mdiff__num">' + escapeHtml(shortTitle(scope, range(scope, offset - back))) + '</span>' +
+      '<span class="mdiff__num">' + escapeHtml(shortTitle(base.which, p.now)) + '</span>' +
+      '<span class="mdiff__num">' + escapeHtml(shortTitle(base.which, range(base.which, base.off - back))) + '</span>' +
       '<span></span><span></span></div>';
 
     document.getElementById('money-diff').innerHTML = head + rows.map(function (r) {
@@ -855,9 +890,36 @@ var Money = (function () {
       });
     });
 
-    document.getElementById('money-against').addEventListener('change', function () {
-      back = Number(this.value) || 1;
+    var pickBtn = document.getElementById('money-against-btn');
+    var pickPanel = document.getElementById('money-against-panel');
+
+    function openPicker(open) {
+      pickPanel.hidden = !open;
+      pickBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) {
+        var on = pickPanel.querySelector('.is-on');
+        if (on) { on.focus(); on.scrollIntoView({ block: 'nearest' }); }
+      }
+    }
+
+    pickBtn.addEventListener('click', function () { openPicker(pickPanel.hidden); });
+
+    pickPanel.addEventListener('click', function (event) {
+      var opt = event.target.closest('[data-back]');
+      if (!opt) return;
+      back = Number(opt.getAttribute('data-back')) || 1;
+      openPicker(false);
       renderCompare();
+      pickBtn.focus();
+    });
+
+    /* Closes on a click anywhere else, or on Escape — the two ways
+       anybody expects a list like this to go away. */
+    document.addEventListener('click', function (event) {
+      if (!pickPanel.hidden && !event.target.closest('#money-against')) openPicker(false);
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape' && !pickPanel.hidden) { openPicker(false); pickBtn.focus(); }
     });
 
     document.getElementById('money-example').addEventListener('click', function () {
@@ -894,6 +956,20 @@ var Money = (function () {
     summary.addEventListener('mouseover', point);
     summary.addEventListener('focusin', point);
     summary.addEventListener('click', point);
+
+    /* Pointing is temporary. Once the pointer leaves — or the keyboard
+       focus moves out — the highlight goes back to the biggest piece,
+       rather than staying stuck on whatever was last passed over on the
+       way out. */
+    function release() {
+      if (focus === null) return;
+      focus = null;
+      renderSummary();
+    }
+    summary.addEventListener('mouseleave', release);
+    summary.addEventListener('focusout', function (event) {
+      if (!summary.contains(event.relatedTarget)) release();
+    });
 
     /* Pressing a bar steps to that period. */
     var bars = document.getElementById('money-bars');
