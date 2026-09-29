@@ -1,6 +1,6 @@
 {
   "name": "day-panel",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Your day, your habits, your notes and your spending, in one calm place on the desktop.",
   "main": "desktop/main.js",
