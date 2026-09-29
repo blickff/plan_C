@@ -1033,15 +1033,22 @@ body {
    belongs to a different scale — it says something is attached to the
    day, not how the day went. The dark halo keeps it legible on the pale
    yellow cells as well as the deep red ones. */
-.day__dot {
+.day__marks {
   position: absolute;
+  top: 2px;
   right: 2px;
-  top: -1px;
-  font-size: 12px;
-  font-style: normal;
-  line-height: 1.5;
-  color: #38bdf8;
-  text-shadow: 0 0 2px rgba(8, 20, 30, 0.85);
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 12px;
+}
+
+.day__dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  fill: #38bdf8;
+  filter: drop-shadow(0 0 1px rgba(8, 20, 30, 0.85));
 }
 
 /* The notes archive ---------------------------------------------------- */
@@ -1971,6 +1978,61 @@ body.is-editing #board > .block {
 .seg--full { display: flex; }
 .seg--full .seg__btn { flex: 1; }
 
+/* The theme switch in the menu: a sun, a moon and a half-lit circle for
+   "follow the clock", with one bubble that slides to the chosen one
+   instead of three buttons that each light up. :has() reads which button
+   is active, so the script that marks it needs to know nothing about
+   the bubble. */
+.seg--theme { position: relative; padding: 3px; }
+
+.seg--theme::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px - 4px) / 3);
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow), 0 0 0 1px var(--border);
+  transition: transform 0.32s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.seg--theme:has([data-theme-set="dark"].is-active)::before { transform: translateX(calc(100% + 2px)); }
+.seg--theme:has([data-theme-set="auto"].is-active)::before { transform: translateX(calc(200% + 4px)); }
+
+.seg--theme .seg__btn,
+.seg--theme .seg__btn.is-active {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 7px 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.themeic {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.4s cubic-bezier(0.3, 1.4, 0.5, 1), color 0.2s, fill 0.2s;
+}
+.themeic__half { fill: currentColor; stroke: none; }
+
+/* Each one moves in its own way when pointed at: the sun turns, the moon
+   rocks, the half circle flips day and night. */
+.seg__btn:hover .themeic--sun { transform: rotate(45deg); }
+.seg__btn:hover .themeic--moon { transform: rotate(-18deg); }
+.seg__btn:hover .themeic--auto { transform: rotate(180deg); }
+
+/* The chosen one takes its colour: a warm sun, a cool moon. Follow the
+   clock stays in the ink of the page, being neither. */
+.seg__btn.is-active .themeic--sun { color: #f59e0b; fill: rgba(245, 158, 11, 0.25); }
+.seg__btn.is-active .themeic--moon { color: #818cf8; fill: rgba(129, 140, 248, 0.25); }
+
 /* The habit editor ------------------------------------------------------------- */
 
 /* Adding your own now opens the editor rather than closing it. */
@@ -2163,19 +2225,17 @@ body.is-editing #board > .block {
 /* The calendar: a note is a small dot, where the star goes -------------
    In the ink of the page (dark on light, light on dark) so it stays out
    of the red / amber / green that score the day and the sky blue of the
-   star. A ring in the page colour keeps it clear on any cell. When the
-   day has a star too, the dot steps left of it. */
+   star. A hairline ring in the page colour keeps it apart from the pale
+   yellow cells. It shares the star's row (.day__marks), left of it, so
+   the two are centred on one line. */
 .day__note {
-  position: absolute;
-  top: 6px;
-  right: 5px;
+  flex: none;
   width: 5px;
   height: 5px;
   border-radius: 50%;
   background: var(--text);
-  box-shadow: 0 0 0 1.5px var(--bg);
+  box-shadow: 0 0 0 1px var(--bg);
 }
-.day__dot + .day__note { right: 15px; }
 
 /* Habit tiles, in edit mode: picked up and set down, not pressed ------- */
 

@@ -278,13 +278,19 @@ var Dashboard = (function () {
       var marks = marksOn(key);
       /* Two marks for two different things, where there used to be one
          star for all of them: a star for plans — tasks and events, the
-         things the day holds — and a small violet dot for a note, what was
-         written about it. Both can sit on the same day. */
+         things the day holds — and a small dot for a note, what was
+         written about it. Both can sit on the same day, side by side in one
+         row that centres them; the star is drawn rather than typed so no
+         font can lift it off that line. */
       var hasPlans = state.countdowns.some(function (c) { return c.date === key; }) ||
         state.tasks.some(function (t) { return t.date === key; });
       var hasNote = !!state.notes[key];
-      var dot = (hasPlans ? '<i class="day__dot">★</i>' : '') +
-        (hasNote ? '<i class="day__note" aria-hidden="true"></i>' : '');
+      var dot = hasPlans || hasNote
+        ? '<span class="day__marks" aria-hidden="true">' +
+          (hasNote ? '<i class="day__note"></i>' : '') +
+          (hasPlans ? '<svg class="day__dot" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>' : '') +
+          '</span>'
+        : '';
       var hint = marks.length ? key + ' — ' + marks.join(', ') : key;
 
       cells.push('<button class="day' + extra + '" data-level="' + level +
