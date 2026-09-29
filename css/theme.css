@@ -60,6 +60,11 @@
      can be mistaken for a meaning, and colour-blindness does not touch
      it. All clearly lighter than the accent, so the highlighted piece
      still stands out. */
+  /* Mono money: the two ends every category's shade is mixed between.
+     The light end stays clear of the bar track (--cell-0) so the palest
+     row still shows its bar. */
+  --viz-lo: #cdcdd4;
+  --viz-hi: #232327;
   --viz-t0: #dddde2;
   --viz-t1: #c8c8cf;
   --viz-t2: #b2b2bb;
@@ -112,6 +117,8 @@
 
   --viz-muted: #3d3d3d;
 
+  --viz-lo: #4a4a4a;
+  --viz-hi: #f2f2f2;
   --viz-t0: #353535;
   --viz-t1: #474747;
   --viz-t2: #5a5a5a;

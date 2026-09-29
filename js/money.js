@@ -34,10 +34,12 @@ var Money = (function () {
     { id: 'other', name: 'Other' }
   ];
 
-  /* A ring reads part-to-whole at a glance up to about six pieces; past
-     that the slices are too thin to compare. The largest five are drawn
-     and the rest share the sixth. The list beside it always has all. */
-  var RING_SLOTS = 6;
+  /* Every category gets its own piece of the ring, and its own shade.
+     Folding the small ones into a shared "N more" piece left several
+     rows in one grey, which is exactly what the shades are there to
+     prevent. Kept as a ceiling only for a list far longer than anyone
+     keeps. */
+  var RING_SLOTS = 16;
 
   /* How many periods the trend shows, ending at the one on screen. */
   var TREND = { day: 14, week: 8, month: 6, year: 4 };
@@ -453,24 +455,20 @@ var Money = (function () {
   var STROKE = 14;
   var GAP = 2.5;
 
-  /* Which of the six greys each piece gets, by how many pieces there
-     are. Chosen so that every two neighbours — including the last and
-     the first, which meet at twelve o'clock — are at least two steps
-     apart, and deliberately not light-to-dark by size: shade here tells
-     the pieces apart and matches each one to its row, it does not
-     repeat how big they are. The size is already the size. */
-  var TONES = {
-    1: [2],
-    2: [1, 4],
-    3: [0, 2, 4],
-    4: [0, 3, 1, 4],
-    5: [0, 3, 1, 4, 2],
-    6: [0, 3, 1, 4, 2, 5]
-  };
-
+  /* Mono: one grey per piece, spread evenly from light grey to near black
+     (near white in the dark theme) over however many pieces there are —
+     so each category has a shade of its own. Handed out alternately from
+     the light and the dark half, so any two neighbours in the ring —
+     the last and the first too, where they meet at twelve o'clock — are
+     far apart; not light-to-dark by size, since the size is already the
+     size. The two ends come from the theme (--viz-lo, --viz-hi), so the
+     shades follow light and dark without a redraw. */
   function toneFor(index, count) {
-    var order = TONES[Math.min(count, 6)] || TONES[6];
-    return 'var(--viz-t' + order[index % order.length] + ')';
+    if (count < 2) return 'color-mix(in srgb, var(--viz-lo) 50%, var(--viz-hi))';
+    var half = Math.ceil(count / 2);
+    var step = index % 2 === 0 ? index / 2 : half + (index - 1) / 2;
+    var pct = Math.round((step / (count - 1)) * 100);
+    return 'color-mix(in srgb, var(--viz-hi) ' + pct + '%, var(--viz-lo))';
   }
 
   function ringSvg(ring, total, focusId) {
@@ -536,7 +534,9 @@ var Money = (function () {
 
     var edit = document.getElementById('money-edit');
     edit.hidden = !editing;
-    document.getElementById('money-edit-toggle').textContent = editing ? 'Done' : 'Edit categories';
+    var toggle = document.getElementById('money-edit-toggle');
+    toggle.querySelector('.mtool__label').textContent = editing ? 'Done' : 'Edit categories';
+    toggle.classList.toggle('is-on', editing);
 
     if (editing) {
       document.getElementById('money-edit-list').innerHTML = cats.map(function (c) {

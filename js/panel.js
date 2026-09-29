@@ -421,7 +421,7 @@ var Panel = (function () {
       b.classList.toggle('is-active', b.getAttribute('data-kind') === kind);
     });
     document.getElementById('task-input').placeholder =
-      kind === 'event' ? 'Trip to Prague, dentist appointment…' : 'Call the dentist';
+      kind === 'event' ? 'Trip to Prague' : 'Call the dentist';
   }
 
   function start() {

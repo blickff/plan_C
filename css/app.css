@@ -1469,7 +1469,6 @@ body:has(> .rail) { padding-left: var(--rail); }
   transition: stroke 0.15s ease;
 }
 
-.mring__slice.is-focus { stroke: var(--accent); }
 
 .mring__empty {
   fill: none;
@@ -1544,7 +1543,6 @@ body:has(> .rail) { padding-left: var(--rail); }
   background: var(--tone, var(--viz-muted));
 }
 
-.msplit.is-focus .msplit__dot { background: var(--accent); }
 
 .msplit__amount,
 .msplit__share {
@@ -1569,7 +1567,6 @@ body:has(> .rail) { padding-left: var(--rail); }
   background: var(--tone, var(--viz-muted));
 }
 
-.msplit.is-focus .msplit__bar > span { background: var(--accent); }
 
 /* The trend */
 
@@ -2189,12 +2186,12 @@ body.is-editing .topbar {
 .mdiff__name { display: flex; align-items: center; gap: 8px; }
 .mdiff__name .micon { color: var(--text-faint); }
 
-/* Colour mode in the ring: pointing at a piece fades the rest, instead
-   of painting the chosen one black. */
-.is-colour .mring__slice.is-focus { stroke: var(--tone); }
-.is-colour.is-pointing .mring__slice:not(.is-focus) { opacity: 0.28; }
+/* Pointing at a piece fades the rest and leaves the chosen one in its
+   own shade or colour — in mono too, where it used to be painted black:
+   with shades running down to near black, a black highlight could no
+   longer be told from a dark piece. */
+.is-pointing .mring__slice:not(.is-focus) { opacity: 0.28; }
 .mring__slice { transition: stroke 0.15s ease, opacity 0.15s ease; }
-.is-colour .msplit.is-focus .msplit__bar > span { background: var(--tone); }
 
 .mentry__prefs { display: flex; align-items: center; gap: 14px; }
 
@@ -2422,3 +2419,39 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 .mnotice__text strong { color: var(--text); font-weight: 600; }
 
 .mnotice .pill { flex: none; }
+
+/* Money: "Edit categories", easy to find ---------------------------------
+   It was a faint outlined chip in the corner and went unnoticed. Now a
+   filled button with a pencil, in the page's ink; while editing it turns
+   solid and says Done. */
+
+.mtool {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px 7px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.mtool:hover { box-shadow: inset 0 0 0 1px var(--text-faint); }
+
+.mtool.is-on { background: var(--invert-bg); color: var(--invert-text); }
+
+.mtool__ic {
+  flex: none;
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
