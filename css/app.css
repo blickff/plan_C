@@ -110,10 +110,11 @@ body:has(> .rail) { padding-left: var(--rail); }
   letter-spacing: 0.01em;
 }
 
-/* The theme: a sun, a moon and a half-lit circle for "follow the clock",
-   stacked, with one bubble that slides to the chosen one. :has() reads
-   which button is active, so the script that marks it knows nothing of
-   the bubble. */
+/* The theme: a sun and a moon, stacked, with one bubble that slides to
+   the chosen one. :has() reads which button is active, so the script
+   that marks it knows nothing of the bubble. Following the clock is
+   chosen in Settings; while it is on, neither is marked and the bubble
+   fades out, since neither was picked here. */
 .rail__theme {
   position: relative;
   display: flex;
@@ -134,10 +135,10 @@ body:has(> .rail) { padding-left: var(--rail); }
   border-radius: 999px;
   background: var(--surface);
   box-shadow: var(--shadow), 0 0 0 1px var(--border);
-  transition: transform 0.32s cubic-bezier(0.3, 1.4, 0.5, 1);
+  transition: transform 0.32s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.2s ease;
 }
 .rail__theme:has([data-theme-set="dark"].is-active)::before { transform: translateY(36px); }
-.rail__theme:has([data-theme-set="auto"].is-active)::before { transform: translateY(72px); }
+.rail__theme:not(:has(.is-active))::before { opacity: 0; }
 
 .rail__themebtn {
   position: relative;
@@ -2014,16 +2015,13 @@ body.is-editing .topbar {
   stroke-linejoin: round;
   transition: transform 0.4s cubic-bezier(0.3, 1.4, 0.5, 1), color 0.2s, fill 0.2s;
 }
-.themeic__half { fill: currentColor; stroke: none; }
 
-/* Each one moves in its own way when pointed at: the sun turns, the moon
-   rocks, the half circle flips day and night. */
+/* Each moves in its own way when pointed at: the sun turns, the moon
+   rocks. */
 .rail__themebtn:hover .themeic--sun { transform: rotate(45deg); }
 .rail__themebtn:hover .themeic--moon { transform: rotate(-18deg); }
-.rail__themebtn:hover .themeic--auto { transform: rotate(180deg); }
 
-/* The chosen one takes its colour: a warm sun, a cool moon. Follow the
-   clock stays in the ink of the page, being neither. */
+/* The chosen one takes its colour: a warm sun, a cool moon. */
 .rail__themebtn.is-active .themeic--sun { color: #f59e0b; fill: rgba(245, 158, 11, 0.25); }
 .rail__themebtn.is-active .themeic--moon { color: #818cf8; fill: rgba(129, 140, 248, 0.25); }
 
