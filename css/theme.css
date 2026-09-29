@@ -66,6 +66,17 @@
   --viz-t3: #9c9ca6;
   --viz-t4: #868692;
   --viz-t5: #71717d;
+
+  /* Category colours, used only when Money is switched to Colour. The
+     eight hues of the validated chart palette, light-surface steps. */
+  --hue-blue: #2a78d6;
+  --hue-orange: #eb6834;
+  --hue-aqua: #1baf7a;
+  --hue-yellow: #eda100;
+  --hue-magenta: #e87ba4;
+  --hue-green: #008300;
+  --hue-violet: #4a3aa7;
+  --hue-red: #e34948;
 }
 
 /* Text is #e8e8ec rather than pure white: #ffffff on near-black glares.
@@ -107,6 +118,16 @@
   --viz-t3: #6d6d6d;
   --viz-t4: #818181;
   --viz-t5: #969696;
+
+  /* The same eight, stepped for the dark surface. */
+  --hue-blue: #3987e5;
+  --hue-orange: #d95926;
+  --hue-aqua: #199e70;
+  --hue-yellow: #c98500;
+  --hue-magenta: #d55181;
+  --hue-green: #008300;
+  --hue-violet: #9085e9;
+  --hue-red: #e66767;
 }
 
 body,

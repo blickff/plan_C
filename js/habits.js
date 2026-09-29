@@ -486,7 +486,9 @@ var Habits = (function () {
     var here = key === Storage.today();
 
     var readout = habit.goal === 1
-      ? (done ? 'Done' : 'Not yet')
+      /* A dash, not "Not yet": an empty bar under the name already says
+         it, and the words were one more line of text to read past. */
+      ? (done ? 'Done' : '—')
       : '<strong>' + value + '</strong> / ' + habit.goal + ' ' + escapeHtml(habit.unit);
 
     /* A streak is a fact about now, so it only belongs on the tile
@@ -602,17 +604,39 @@ var Habits = (function () {
       '</div>';
   }
 
+  /* Whether every suggestion is on show, or only the first row. Kept for
+     as long as the page is open, not saved. */
+  var showAllPresets = false;
+
   function renderPicker() {
     var body = document.getElementById('picker-body');
     if (!body) return;
 
-    var groups = PRESETS.map(function (group) {
-      return '' +
+    /* The catalogue folded to one row. All thirty suggestions at once
+       pushed the habits you actually have — and the Done button — a long
+       way down; most visits to the editor are to add one thing or change
+       one goal, not to browse. */
+    var groups;
+    if (showAllPresets) {
+      groups = PRESETS.map(function (group) {
+        return '' +
+          '<div class="picker__group">' +
+            '<h3 class="picker__heading">' + escapeHtml(group.category) + '</h3>' +
+            '<div class="picker__items">' + group.items.map(presetHtml).join('') + '</div>' +
+          '</div>';
+      }).join('');
+    } else {
+      var first = PRESETS[0];
+      groups = '' +
         '<div class="picker__group">' +
-          '<h3 class="picker__heading">' + escapeHtml(group.category) + '</h3>' +
-          '<div class="picker__items">' + group.items.map(presetHtml).join('') + '</div>' +
+          '<h3 class="picker__heading">Suggestions</h3>' +
+          '<div class="picker__items picker__items--one">' +
+            first.items.slice(0, 4).map(presetHtml).join('') +
+          '</div>' +
         '</div>';
-    }).join('');
+    }
+    groups += '<button class="picker__more" type="button" id="picker-more" aria-expanded="' + showAllPresets + '">' +
+      (showAllPresets ? 'Fewer suggestions' : 'All suggestions') + '</button>';
 
     /* Everything currently picked, with its goal open for editing. This
        goes first: tuning what you already track matters more than
@@ -785,18 +809,35 @@ var Habits = (function () {
       }
 
       var own = event.target.closest('[data-remove]');
-      if (own) remove(own.getAttribute('data-remove'));
+      if (own) return remove(own.getAttribute('data-remove'));
+
+      if (event.target.closest('#picker-more')) {
+        showAllPresets = !showAllPresets;
+        renderPicker();
+      }
     });
 
+    /* Edit mode: the habit editor opens, and the blocks of the dashboard
+       can be dragged into a new order. One switch for both, in the top bar
+       and again at the bottom of the editor — so finishing never means
+       scrolling back up to where it started. */
     var picker = document.getElementById('picker');
-    document.getElementById('habits-toggle').addEventListener('click', function () {
-      var open = picker.hasAttribute('hidden');
-      if (open) {
-        picker.removeAttribute('hidden');
-      } else {
-        picker.setAttribute('hidden', '');
-      }
-      this.textContent = open ? 'Done editing' : 'Edit habits';
+    var toggle = document.getElementById('habits-toggle');
+
+    function setEditing(on) {
+      if (on) picker.removeAttribute('hidden');
+      else picker.setAttribute('hidden', '');
+      toggle.textContent = on ? 'Done' : 'Edit';
+      document.body.classList.toggle('is-editing', on);
+      if (typeof onEditMode === 'function') onEditMode(on);
+    }
+
+    toggle.addEventListener('click', function () {
+      setEditing(picker.hasAttribute('hidden'));
+    });
+
+    document.getElementById('picker-done').addEventListener('click', function () {
+      setEditing(false);
     });
 
     document.getElementById('custom-form').addEventListener('submit', function (event) {

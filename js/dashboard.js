@@ -114,7 +114,9 @@ var Dashboard = (function () {
        of work with it. So the month is stated too. A broken streak is
        then a broken streak, not a verdict on how you have been doing. */
     var recent = Habits.rate(state.log, lead.habit, todayKey, 30);
-    var sub = recent.total
+    /* Only once there is a week of history to speak of: "Met on 0 of
+       the last 1 day" on the first morning said nothing but zero. */
+    var sub = recent.total >= 7
       ? 'Met on ' + recent.met + ' of the last ' + Habits.plural(recent.total, recent.unit)
       : '';
 

@@ -98,12 +98,15 @@ function renderDayHead() {
 
   /* Today is never "never filled in" — it is simply not over. Saying
      otherwise every morning would be an accusation. */
-  var note = ahead ? 'Still to come — notes and tasks only'
-    : here ? (score === null ? 'Nothing being tracked yet'
-                             : Math.round(score * 100) + '% of today done')
-    : !accounted ? 'Never filled in'
-    : score === null ? 'Nothing was being tracked yet'
-    : Math.round(score * 100) + '% of the day done';
+  /* Nothing said about today: the ring on the card above already shows
+     how it is going, and "0% of today done" every morning repeated it
+     as a small reproach. Other days get one short line, because there
+     it is the only place the number appears. */
+  var note = ahead ? 'Still to come'
+    : here ? ''
+    : !accounted ? 'Not filled in'
+    : score === null ? ''
+    : Math.round(score * 100) + '% done';
 
   /* Dates that land on this day, which used to be the day card's "on
      this date" list. One line is enough for what is usually one thing. */
@@ -125,10 +128,14 @@ function renderDayHead() {
     }
   }
 
+  /* The events of the day already show at the top of the Today card, so
+     here they are only repeated for other days. */
+  var line = esc(note) + (here ? '' : dueLine);
+
   el.innerHTML = '' +
     '<div class="dayhead__main">' +
-      '<p class="label">' + (here ? 'Today' : esc(prettyDay(key))) + '</p>' +
-      '<p class="dayhead__note muted">' + esc(note) + dueLine + '</p>' +
+      '<p class="label">' + (here ? 'Habits' : esc(prettyDay(key))) + '</p>' +
+      (line ? '<p class="dayhead__note muted">' + line + '</p>' : '') +
     '</div>' +
     '<div class="dayhead__side">' +
       mark +
@@ -193,6 +200,122 @@ function renderTheme() {
     var active = buttons[i].getAttribute('data-theme-set') === choice;
     buttons[i].classList.toggle('is-active', active);
   }
+
+  tellWindowTheme(theme);
+}
+
+/* The window's own title strip takes the page's colours, so a dark page
+   does not sit under a white bar. Only the desktop app has a window to
+   tell; the values come from the theme itself, so the two can never
+   disagree. */
+var lastWindowTheme = null;
+
+function tellWindowTheme(theme) {
+  if (!window.desktop || !window.desktop.setTheme) return;
+  var css = getComputedStyle(document.documentElement);
+  var bg = css.getPropertyValue('--bg').trim();
+  var text = css.getPropertyValue('--text').trim();
+  var key = theme + bg + text;
+  if (key === lastWindowTheme) return;
+  lastWindowTheme = key;
+  window.desktop.setTheme({ theme: theme, bg: bg, text: text });
+}
+
+/* The dashboard's blocks, in the order the person put them -------------
+
+   In edit mode each block shows a handle, and dragging by it moves the
+   block. Only the handle starts a drag: a whole block made draggable
+   would steal the mouse from every text box inside it, and the habit
+   editor is full of them. */
+
+function applyBoardOrder() {
+  var board = document.getElementById('board');
+  var order = Storage.load().settings.boardOrder;
+  if (!board || !Array.isArray(order)) return;
+  order.forEach(function (name) {
+    var block = board.querySelector('[data-block="' + name + '"]');
+    if (block) board.appendChild(block);
+  });
+}
+
+function saveBoardOrder() {
+  var board = document.getElementById('board');
+  Storage.load().settings.boardOrder = Array.prototype.map.call(
+    board.querySelectorAll(':scope > [data-block]'),
+    function (b) { return b.getAttribute('data-block'); }
+  );
+  Storage.save();
+}
+
+/* Called by habits.js whenever edit mode is switched. */
+function onEditMode(on) {
+  var blocks = document.querySelectorAll('#board > [data-block]');
+  for (var i = 0; i < blocks.length; i++) {
+    var grip = blocks[i].querySelector(':scope > .block__grip');
+    if (on && !grip) {
+      grip = document.createElement('button');
+      grip.type = 'button';
+      grip.className = 'block__grip';
+      grip.setAttribute('aria-label', 'Drag to move this block');
+      grip.innerHTML = '<span aria-hidden="true">&#8942;&#8942;</span> Move';
+      blocks[i].insertBefore(grip, blocks[i].firstChild);
+    }
+    if (!on && grip) grip.remove();
+    blocks[i].removeAttribute('draggable');
+  }
+}
+
+function wireBoard() {
+  var board = document.getElementById('board');
+  if (!board) return;
+  var dragging = null;
+
+  /* Pressing the handle arms that one block; letting go disarms it. */
+  board.addEventListener('mousedown', function (event) {
+    var grip = event.target.closest('.block__grip');
+    if (grip) grip.parentNode.setAttribute('draggable', 'true');
+  });
+  document.addEventListener('mouseup', function () {
+    if (dragging) return;
+    var armed = board.querySelectorAll('[data-block][draggable]');
+    for (var i = 0; i < armed.length; i++) armed[i].removeAttribute('draggable');
+  });
+
+  board.addEventListener('dragstart', function (event) {
+    var block = event.target;
+    if (!block.matches || !block.matches('#board > [data-block][draggable]')) return;
+    dragging = block;
+    block.classList.add('is-moving');
+    event.dataTransfer.effectAllowed = 'move';
+    try { event.dataTransfer.setData('text/plain', block.getAttribute('data-block')); } catch (err) {}
+  });
+
+  board.addEventListener('dragover', function (event) {
+    if (!dragging) return;
+    var target = event.target.closest('#board > [data-block]');
+    if (!target || target === dragging) return;
+    event.preventDefault();
+
+    /* Before or after, by which half of the target the pointer is in:
+       left or right for a half-width block, top or bottom for a full one. */
+    var r = target.getBoundingClientRect();
+    var half = target.classList.contains('block--full')
+      ? event.clientY < r.top + r.height / 2
+      : event.clientX < r.left + r.width / 2;
+    board.insertBefore(dragging, half ? target : target.nextSibling);
+  });
+
+  board.addEventListener('drop', function (event) {
+    if (dragging) event.preventDefault();
+  });
+
+  board.addEventListener('dragend', function () {
+    if (!dragging) return;
+    dragging.classList.remove('is-moving');
+    dragging.removeAttribute('draggable');
+    dragging = null;
+    saveBoardOrder();
+  });
 }
 
 function setTheme(choice) {
@@ -563,6 +686,15 @@ function wireChrome() {
 }
 
 function start() {
+  /* The desktop app draws its own title strip (see css), so the page
+     needs to know it is inside one, and on which system. */
+  if (window.desktop) {
+    document.documentElement.classList.add('is-desktop');
+    if (window.desktop.platform) document.documentElement.classList.add('is-' + window.desktop.platform);
+  }
+
+  applyBoardOrder();
+  wireBoard();
   renderDate();
   renderClock();
   renderTheme();

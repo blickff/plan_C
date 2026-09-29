@@ -17,7 +17,7 @@
    in the panel knows it is running inside Electron. */
 
 const { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu,
-        nativeImage, Notification, protocol, shell, Tray } = require('electron');
+        nativeImage, nativeTheme, Notification, protocol, shell, Tray } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const vault = require('./vault');
@@ -59,6 +59,9 @@ let widget = null;
 let panel = null;
 let origin = null;
 let tray = null;
+/* The page's colours, as last reported, so a window opened later starts
+   in them instead of flashing the wrong ones. */
+let lastTheme = null;
 
 /* Where the widget was left, and how it was set to behave. Kept in
    Electron's own data folder rather than in the page's storage: it is
@@ -223,11 +226,26 @@ function openPanel() {
     return;
   }
 
+  const theme = lastTheme || { bg: '#0b0b0b', text: '#ededed' };
+
   panel = new BrowserWindow({
     width: 1100,
     height: 820,
+    /* Below this the two-column layout folds into one and the controls
+       start to crowd; below that again it simply broke. A floor, not a
+       size anyone has to use. */
+    minWidth: 760,
+    minHeight: 560,
     title: 'Daybook',
-    backgroundColor: '#08080a',
+    backgroundColor: theme.bg,
+    /* On Windows the title bar is drawn by the page, in the page's own
+       colours, with Windows' buttons laid over it — a white bar above a
+       dark page, or the reverse, is what the person asked to get rid of.
+       On a Mac the system bar stays and simply follows light or dark. */
+    ...(process.platform === 'win32' ? {
+      titleBarStyle: 'hidden',
+      titleBarOverlay: { color: theme.bg, symbolColor: theme.text, height: 36 }
+    } : {}),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -330,6 +348,22 @@ function wireMessages() {
   ipcMain.handle('open-external', (_event, url) => shell.openExternal(url));
 
   ipcMain.handle('app-version', () => app.getVersion());
+
+  /* The page's theme changed: repaint the window chrome to match. */
+  ipcMain.handle('window-theme', (event, theme) => {
+    if (!theme || typeof theme !== 'object') return;
+    lastTheme = { bg: String(theme.bg || '#0b0b0b'), text: String(theme.text || '#ededed') };
+    nativeTheme.themeSource = theme.theme === 'light' ? 'light' : 'dark';
+
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (!win || win.isDestroyed()) return;
+    win.setBackgroundColor(lastTheme.bg);
+    if (process.platform === 'win32' && win === panel) {
+      try {
+        win.setTitleBarOverlay({ color: lastTheme.bg, symbolColor: lastTheme.text, height: 36 });
+      } catch (err) { /* a window made without an overlay */ }
+    }
+  });
   ipcMain.handle('update-state', () => updates.current());
   ipcMain.handle('update-check', () => updates.check());
   ipcMain.handle('update-act', () => updates.act());

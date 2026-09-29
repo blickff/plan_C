@@ -222,7 +222,7 @@ var Panel = (function () {
        being true the moment another day is opened. */
     var head = document.getElementById('tasks-title');
     if (head) {
-      head.textContent = Storage.viewingToday() ? "Today's tasks" : 'Tasks that day';
+      head.textContent = Storage.viewingToday() ? 'Today' : 'That day';
     }
 
     /* A new task lands on the day you are looking at unless the date
@@ -255,9 +255,10 @@ var Panel = (function () {
         '<button class="undo__btn" type="button" id="undo-btn">Undo</button></p>'
       : '';
 
+    /* Nothing planned is an empty list, not a sentence announcing one —
+       the box to type in is right below. */
     document.getElementById('tasks').innerHTML =
-      (rows ? '<ul class="tasks__list" id="tasks-list">' + rows + '</ul>'
-            : '<p class="soft">Nothing planned yet.</p>') +
+      (rows ? '<ul class="tasks__list" id="tasks-list">' + rows + '</ul>' : '') +
       carry + laterHtml + undoHtml;
 
     if (old.length) {
@@ -308,35 +309,33 @@ var Panel = (function () {
     render();
   }
 
+  /* Events — the dates that used to live in their own Countdowns card —
+     sit at the top of the same card as the tasks. On today: everything
+     still to come, nearest first. On another day: whatever falls on it.
+     A date that has gone by leaves this list and stays findable on its
+     own day in the calendar. */
   function renderCountdowns() {
-    var items = state().countdowns.slice();
+    var key = Storage.viewingDay();
+    var items = state().countdowns.filter(function (c) {
+      return Storage.viewingToday() ? c.date >= key : c.date === key;
+    }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
 
-    /* Upcoming first and nearest at the top; dates that have gone by sink
-       to the bottom rather than disappearing — a passed anniversary is
-       still worth seeing. */
-    items.sort(function (a, b) {
-      var da = daysUntil(a.date);
-      var db = daysUntil(b.date);
-      if (da >= 0 && db < 0) return -1;
-      if (da < 0 && db >= 0) return 1;
-      return da - db;
-    });
-
+    var box = document.getElementById('countdowns');
     if (!items.length) {
-      document.getElementById('countdowns').innerHTML = '<p class="soft">No dates yet.</p>';
+      box.innerHTML = '';
       return;
     }
 
-    document.getElementById('countdowns').innerHTML = '<ul class="cds">' + items.map(function (item) {
+    box.innerHTML = '<ul class="cds">' + items.map(function (item) {
       var left = daysUntil(item.date);
       var label;
       if (left === 0) label = 'today';
       else if (left === 1) label = 'tomorrow';
-      else if (left > 0) label = left + ' days';
+      else if (left > 0) label = 'in ' + left + ' days';
       else label = 'passed';
 
       return '' +
-        '<li class="cd' + (left < 0 ? ' is-past' : '') + '">' +
+        '<li class="cd' + (left < 0 ? ' is-past' : '') + (left === 0 ? ' is-today' : '') + '">' +
           '<span class="cd__title">' + escapeHtml(item.title) + '</span>' +
           '<span class="cd__left">' + label + '</span>' +
           '<button class="task__drop" type="button" data-cd="' + escapeHtml(item.id) + '"' +
@@ -360,6 +359,7 @@ var Panel = (function () {
     if (document.activeElement !== box) {
       box.value = state().notes[key] || '';
     }
+    grow(box);
 
     var lastYear = String(Number(key.slice(0, 4)) - 1) + key.slice(4);
     var then = state().notes[lastYear];
@@ -403,15 +403,45 @@ var Panel = (function () {
     }
   }
 
+  /* The note box grows with what is written in it. A list of four points
+     in a three-line box meant scrolling inside a box inside a page. */
+  function grow(box) {
+    box.style.height = 'auto';
+    box.style.height = Math.max(box.scrollHeight + 2, 72) + 'px';
+  }
+
+  /* What the add box makes: a task, ticked off on its day, or an event —
+     a date to count down to, like a trip or a Termin. One box and a
+     switch, rather than two cards with two forms. */
+  var kind = 'task';
+
+  function setKind(next) {
+    kind = next;
+    document.querySelectorAll('[data-kind]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-kind') === kind);
+    });
+    document.getElementById('task-input').placeholder =
+      kind === 'event' ? 'Trip to Prague, dentist appointment…' : 'Call the dentist';
+  }
+
   function start() {
     var taskDate = document.getElementById('task-date');
 
     render();
 
+    document.querySelectorAll('[data-kind]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        setKind(this.getAttribute('data-kind'));
+        document.getElementById('task-input').focus();
+      });
+    });
+
     document.getElementById('task-form').addEventListener('submit', function (event) {
       event.preventDefault();
       var input = document.getElementById('task-input');
-      var error = addTask(input.value, taskDate.value);
+      var error = kind === 'event'
+        ? addCountdown(input.value, taskDate.value)
+        : addTask(input.value, taskDate.value);
       document.getElementById('task-error').textContent = error || '';
       if (!error) input.value = '';
     });
@@ -500,24 +530,6 @@ var Panel = (function () {
       }
     });
 
-    /* The date box shows dd/mm/yyyy and a calendar icon so small and
-       so dark that on this theme it may as well not be there. Clicking
-       anywhere in the box opens the picker instead, which is what people
-       try first anyway. */
-    document.getElementById('cd-date').addEventListener('click', function () {
-      openPicker(this);
-    });
-
-    document.getElementById('cd-form').addEventListener('submit', function (event) {
-      event.preventDefault();
-      var error = addCountdown(
-        document.getElementById('cd-title').value,
-        document.getElementById('cd-date').value
-      );
-      document.getElementById('cd-error').textContent = error || '';
-      if (!error) this.reset();
-    });
-
     document.getElementById('countdowns').addEventListener('click', function (event) {
       var drop = event.target.closest('[data-cd]');
       if (drop) removeCountdown(drop.getAttribute('data-cd'));
@@ -525,8 +537,10 @@ var Panel = (function () {
 
     /* Saved a beat after typing stops, not on every keystroke — writing
        the whole state to storage on each letter is needless work. */
-    document.getElementById('note').addEventListener('input', function () {
+    var note = document.getElementById('note');
+    note.addEventListener('input', function () {
       var text = this.value;
+      grow(this);
       clearTimeout(noteTimer);
       noteTimer = setTimeout(function () { saveNote(text); }, 500);
     });

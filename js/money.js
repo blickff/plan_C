@@ -30,6 +30,7 @@ var Money = (function () {
     { id: 'travel', name: 'Travel' },
     { id: 'home', name: 'Home & bills' },
     { id: 'health', name: 'Health' },
+    { id: 'hobbies', name: 'Hobbies' },
     { id: 'other', name: 'Other' }
   ];
 
@@ -78,6 +79,102 @@ var Money = (function () {
 
   function liveCategories() {
     return data().categories.filter(function (c) { return !c.archived; });
+  }
+
+  function findCategory(id) {
+    var list = data().categories;
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i];
+    return null;
+  }
+
+  /* Icons ------------------------------------------------------------------
+
+     Line drawings on a 24-unit grid, in the text colour, so a category
+     can be found by shape before its name is read. Drawn here rather
+     than loaded: the app runs with no network access to anything but the
+     weather, and a font of icons would be a megabyte for eleven shapes.
+
+     Categories you make yourself all get the tag — unless their name is
+     one these already know ("Car", "Hobbies"), in which case they get
+     that drawing. */
+
+  var ICONS = {
+    food: '<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 21V3c-2 1.5-3 4-3 7v3h3"/>',
+    shopping: '<path d="M5.5 8h13l-1 12.5h-11z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8"/>',
+    'going-out': '<path d="M5 4h14l-7 8.5z"/><path d="M12 12.5V20M8 20h8"/>',
+    transport: '<rect x="5" y="3.5" width="14" height="14" rx="3"/><path d="M5 11h14M8.5 20.5v-3M15.5 20.5v-3"/><circle cx="8.5" cy="14.3" r="0.6"/><circle cx="15.5" cy="14.3" r="0.6"/>',
+    car: '<path d="M4.5 16.5v-4.5l2.2-5h10.6l2.2 5v4.5"/><path d="M4.5 12h15"/><circle cx="8" cy="16.5" r="1.8"/><circle cx="16" cy="16.5" r="1.8"/>',
+    travel: '<rect x="4" y="8" width="16" height="12" rx="2"/><path d="M9 8V5.5h6V8M4 13.5h16"/>',
+    home: '<path d="M4 11.5 12 4.5l8 7"/><path d="M6.5 10v10h11V10"/><path d="M10 20v-5h4v5"/>',
+    health: '<path d="M12 20s-7.5-4.6-7.5-10.2A4.2 4.2 0 0 1 12 7.3a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>',
+    hobbies: '<path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.4 0 1.9-.9 1.9-1.8 0-1.4-1.3-1.8-1.3-3.1s1.1-2.1 2.4-2.1h2.2a2.8 2.8 0 0 0 2.8-2.8c0-3.9-3.6-7.2-8-7.2z"/><circle cx="7.8" cy="11" r="0.9"/><circle cx="10" cy="7.6" r="0.9"/><circle cx="14.2" cy="7.6" r="0.9"/>',
+    other: '<circle cx="6" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="18" cy="12" r="1.2"/>',
+    custom: '<path d="M3.5 11.8V4.5a1 1 0 0 1 1-1h7.3l8.7 8.7-8.3 8.3z"/><circle cx="8" cy="8" r="1.3"/>'
+  };
+
+  /* Names that mean one of the drawings above, whatever the category was
+     called when it was made. */
+  var ICON_NAMES = {
+    car: 'car', auto: 'car', petrol: 'car', fuel: 'car',
+    hobby: 'hobbies', hobbies: 'hobbies',
+    food: 'food', groceries: 'food', restaurants: 'food',
+    shopping: 'shopping', clothes: 'shopping',
+    travel: 'travel', trips: 'travel', holidays: 'travel',
+    home: 'home', rent: 'home', bills: 'home',
+    health: 'health', pharmacy: 'health', sport: 'health', gym: 'health',
+    transport: 'transport', 'going out': 'going-out', fun: 'going-out'
+  };
+
+  function iconKey(catId) {
+    if (ICONS[catId] && catId !== 'custom') return catId;
+    var cat = findCategory(catId);
+    var name = cat ? cat.name.toLowerCase().trim() : '';
+    return ICON_NAMES[name] || 'custom';
+  }
+
+  function icon(catId) {
+    return '<svg class="micon" viewBox="0 0 24 24" aria-hidden="true">' + ICONS[iconKey(catId)] + '</svg>';
+  }
+
+  /* Colours, for whoever switches them on --------------------------------
+
+     Off by default, and the reason stands: measured against these card
+     colours, no more than three hues stay tell-apart-able once any two
+     categories can land side by side in the ring. With colour on, every
+     category still keeps its name, its icon and its row in the list, so
+     colour is a help to the eye and never the only way to know which is
+     which.
+
+     The hues are the eight of the documented, validated chart palette,
+     one per category and fixed to it — a category keeps its colour from
+     month to month however the ranking changes. */
+
+  var CATEGORY_HUE = {
+    food: 'orange', shopping: 'magenta', 'going-out': 'violet', transport: 'blue',
+    car: 'blue', travel: 'aqua', home: 'yellow', health: 'red', hobbies: 'green'
+  };
+
+  var HUE_ORDER = ['blue', 'orange', 'aqua', 'yellow', 'magenta', 'green', 'violet', 'red'];
+
+  function coloured() {
+    return data().colours === 'colour';
+  }
+
+  /* A category's colour, or null for "Other" and anything past the
+     eight hues — those stay grey rather than getting a ninth colour
+     nobody could tell from one of the first eight. */
+  function hueFor(catId) {
+    if (catId === 'other' || catId === '__rest') return null;
+    var name = CATEGORY_HUE[iconKey(catId)];
+    if (!name) {
+      var list = data().categories.filter(function (c) { return !CATEGORY_HUE[iconKey(c.id)] && c.id !== 'other'; });
+      var at = list.findIndex(function (c) { return c.id === catId; });
+      name = at >= 0 && at < HUE_ORDER.length ? HUE_ORDER[at] : null;
+    }
+    if (!name) return null;
+    /* A theme variable, not a hex: the light and dark steps live in
+       theme.css, so switching theme recolours the chart with no redraw. */
+    return 'var(--hue-' + name + ')';
   }
 
   function categoryName(id) {
@@ -384,7 +481,7 @@ var Money = (function () {
       var dash = Math.max(0.01, len - gap);
       var el = '<circle cx="' + c + '" cy="' + c + '" r="' + R + '"' +
         ' class="mring__slice' + (slice.id === focusId ? ' is-focus' : '') + '"' +
-        ' style="--tone:' + toneFor(i, ring.length) + '"' +
+        ' style="--tone:' + (coloured() ? (hueFor(slice.id) || 'var(--viz-t2)') : toneFor(i, ring.length)) + '"' +
         ' data-slice="' + escapeHtml(slice.id) + '"' +
         ' stroke-dasharray="' + dash.toFixed(2) + ' ' + (circ - dash).toFixed(2) + '"' +
         ' stroke-dashoffset="' + (-start).toFixed(2) + '">' +
@@ -408,17 +505,22 @@ var Money = (function () {
 
     document.getElementById('money-cats').innerHTML = cats.map(function (c) {
       return '<button class="mchip' + (c.id === picked ? ' is-on' : '') + '" type="button"' +
-        ' data-pick="' + escapeHtml(c.id) + '" aria-pressed="' + (c.id === picked) + '">' +
+        ' data-pick="' + escapeHtml(c.id) + '" aria-pressed="' + (c.id === picked) + '"' +
+        (coloured() && hueFor(c.id) ? ' style="--hue:' + hueFor(c.id) + '"' : '') + '>' + icon(c.id) +
         escapeHtml(c.name) + '</button>';
     }).join('');
 
     var todays = sum(within({ from: Storage.today(), to: Storage.today() }));
     document.getElementById('money-today').textContent = todays
       ? 'Today so far: ' + format(todays)
-      : 'Nothing spent today yet.';
+      : '';
 
     var cur = document.getElementById('money-currency');
     if (document.activeElement !== cur) cur.value = data().currency;
+
+    document.querySelectorAll('[data-mcolours]').forEach(function (b) {
+      b.classList.toggle('is-active', b.getAttribute('data-mcolours') === (coloured() ? 'colour' : 'mono'));
+    });
 
     var edit = document.getElementById('money-edit');
     edit.hidden = !editing;
@@ -472,6 +574,13 @@ var Money = (function () {
 
     document.getElementById('money-ring').innerHTML = ringSvg(s.ring, total, focusId);
 
+    /* With colours on, pointing at a category fades the others rather
+       than painting the chosen one black — the colour is what the person
+       asked to see. */
+    var summaryEl = document.getElementById('money-summary');
+    summaryEl.classList.toggle('is-colour', coloured());
+    summaryEl.classList.toggle('is-pointing', focus !== null);
+
     var centre = document.getElementById('money-centre');
     if (!total) {
       centre.innerHTML = '<span class="mcentre__label">Nothing yet</span>';
@@ -494,7 +603,9 @@ var Money = (function () {
        bar — so the two can be matched by eye without pointing at
        anything. The name itself stays in ordinary ink. */
     var tones = {};
-    s.ring.forEach(function (x, i) { tones[x.id] = toneFor(i, s.ring.length); });
+    s.ring.forEach(function (x, i) {
+      tones[x.id] = coloured() ? (hueFor(x.id) || 'var(--viz-t2)') : toneFor(i, s.ring.length);
+    });
 
     list.innerHTML = s.all.map(function (row) {
       var sliceId = tones[row.id] ? row.id : '__rest';
@@ -502,7 +613,7 @@ var Money = (function () {
       return '<button class="msplit' + (sliceId === focusId ? ' is-focus' : '') + '" type="button"' +
         ' style="--tone:' + tones[sliceId] + '"' +
         ' data-slice="' + escapeHtml(sliceId) + '">' +
-        '<span class="msplit__name"><i class="msplit__dot" aria-hidden="true"></i>' +
+        '<span class="msplit__name">' + icon(row.id) +
           escapeHtml(row.name) + '</span>' +
         '<span class="msplit__amount">' + escapeHtml(format(row.cents)) + '</span>' +
         '<span class="msplit__share">' + share + '%</span>' +
@@ -524,6 +635,15 @@ var Money = (function () {
 
     var word = { day: 'days', week: 'weeks', month: 'months', year: 'years' }[scope];
     document.getElementById('money-trend-title').textContent = 'The last ' + n + ' ' + word;
+
+    /* Nothing spent in any of them: no bars to point at, and no line of
+       month names reading out zeroes as the pointer passes over empty
+       space — which was all a new user saw of this card. */
+    if (!max) {
+      document.getElementById('money-bars').innerHTML = '<p class="mtrend__empty">Nothing spent yet</p>';
+      document.getElementById('money-read').textContent = '';
+      return;
+    }
 
     /* One grey, the period on screen in the accent: the story is "this
        one against the ones before", and a colour per bar would say
@@ -569,7 +689,7 @@ var Money = (function () {
         return '<li class="mrow">' +
           '<span class="mrow__when">' + escapeHtml(fmt.format(parse(e.date))) + '</span>' +
           '<span class="mrow__what">' +
-            '<span class="mrow__cat">' + escapeHtml(categoryName(e.cat)) + '</span>' +
+            '<span class="mrow__cat">' + icon(e.cat) + escapeHtml(categoryName(e.cat)) + '</span>' +
             (e.note ? '<span class="mrow__note">' + escapeHtml(e.note) + '</span>' : '') +
             (e.sample ? '<span class="mrow__tag">example</span>' : '') +
           '</span>' +
@@ -721,7 +841,7 @@ var Money = (function () {
       var arrow = up ? '&#8593; ' : down ? '&#8595; ' : '';
 
       return '<div class="mdiff">' +
-        '<span class="mdiff__name">' + escapeHtml(r.name) + '</span>' +
+        '<span class="mdiff__name">' + icon(r.id) + escapeHtml(r.name) + '</span>' +
         '<span class="mdiff__num">' + escapeHtml(format(r.now)) + '</span>' +
         '<span class="mdiff__num mdiff__then">' + escapeHtml(format(r.then)) + '</span>' +
         '<span class="mdiff__bar" aria-hidden="true">' + bar + '</span>' +
@@ -1039,6 +1159,14 @@ var Money = (function () {
       var error = addCategory(input.value);
       document.getElementById('money-newcat-error').textContent = error || '';
       if (!error) { input.value = ''; render(); }
+    });
+
+    document.querySelectorAll('[data-mcolours]').forEach(function (b) {
+      b.addEventListener('click', function () {
+        data().colours = this.getAttribute('data-mcolours');
+        Storage.save();
+        render();
+      });
     });
 
     cur.addEventListener('change', function () {

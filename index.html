@@ -10,6 +10,11 @@
 </head>
 <body>
 
+  <!-- The window's title strip in the desktop app on Windows: the part
+       you drag the window by, drawn in the page's own colours. Hidden
+       everywhere else. -->
+  <div class="titlebar" aria-hidden="true"><span class="titlebar__name">Daybook</span></div>
+
   <div class="scrim" id="scrim" hidden></div>
 
   <aside class="sidebar" id="sidebar" hidden>
@@ -21,6 +26,17 @@
       <button class="nav__item" type="button" data-view="money">Money</button>
       <button class="nav__item" type="button" data-view="settings">Settings</button>
     </nav>
+
+    <!-- The theme, one press away rather than three screens down in
+         Settings. -->
+    <div class="sidebar__foot">
+      <p class="sidebar__label">Theme</p>
+      <div class="seg seg--full" role="group" aria-label="Theme">
+        <button class="seg__btn" type="button" data-theme-set="light">Light</button>
+        <button class="seg__btn" type="button" data-theme-set="dark">Dark</button>
+        <button class="seg__btn" type="button" data-theme-set="auto">Auto</button>
+      </div>
+    </div>
   </aside>
 
   <main class="main">
@@ -44,7 +60,7 @@
         </div>
         <!-- Appears only when a newer version is out. -->
         <button class="pill upd" type="button" id="update-btn" hidden></button>
-        <button class="pill pill--solid" type="button" id="habits-toggle">Edit habits</button>
+        <button class="pill pill--solid" type="button" id="habits-toggle">Edit</button>
       </div>
     </header>
 
@@ -73,68 +89,90 @@
 
       <div class="ask ask--warn" id="replaced-note" hidden></div>
 
-      <div class="cards">
-        <div class="stack">
+      <!-- The dashboard is a set of blocks. In edit mode each one can be
+           dragged to a new place; the order is remembered. -->
+      <div class="board" id="board">
+
+        <div class="block block--wide" data-block="streak">
           <div class="card card--dark" id="streak-card"></div>
+        </div>
+
+        <!-- Tasks and dated events in one card: both are "things that
+             belong to a day", and two cards for them split one list. -->
+        <div class="block block--narrow block--tall" data-block="plans">
+          <div class="card card--fill plans">
+            <div class="card__head">
+              <p class="card__title" id="tasks-title">Today</p>
+            </div>
+            <div class="plans__events" id="countdowns"></div>
+            <div class="fill plans__list" id="tasks"></div>
+            <form class="taskform" id="task-form">
+              <div class="seg seg--small" role="group" aria-label="Kind">
+                <button class="seg__btn is-active" type="button" data-kind="task">Task</button>
+                <button class="seg__btn" type="button" data-kind="event">Event</button>
+              </div>
+              <div class="row">
+                <input class="input input--wide" id="task-input" type="text" placeholder="Call the dentist" autocomplete="off">
+                <button class="pill" type="submit">Add</button>
+              </div>
+              <div class="row row--sub">
+                <button class="chipbtn" type="button" data-when="today">Today</button>
+                <button class="chipbtn" type="button" data-when="tomorrow">Tomorrow</button>
+                <input class="input input--date" id="task-date" type="date" aria-label="Date">
+              </div>
+              <p class="custom__error" id="task-error"></p>
+            </form>
+          </div>
+        </div>
+
+        <div class="block block--wide" data-block="calendar">
           <div class="card" id="year-card"></div>
         </div>
 
-        <div class="card card--fill">
-          <p class="card__title" id="tasks-title">Today's tasks</p>
-          <div class="fill" id="tasks"></div>
-          <form class="taskform" id="task-form">
-            <div class="row">
-              <input class="input input--wide" id="task-input" type="text" placeholder="Call the dentist" autocomplete="off">
-              <button class="pill" type="submit">Add</button>
+        <!-- Which day the habits, the tasks and the note belong to. Today
+             unless one was pressed on the calendar. -->
+        <div class="block block--full" data-block="habits">
+          <div class="dayhead" id="dayhead"></div>
+          <div class="tiles" id="tiles"></div>
+
+          <div class="picker" id="picker" hidden>
+            <!-- Your own first: making the habit you came to make is the
+                 reason the editor was opened. -->
+            <form class="custom" id="custom-form">
+              <h3 class="picker__heading">Add your own</h3>
+              <div class="custom__row">
+                <label class="field field--wide">
+                  <span class="field__label">Habit</span>
+                  <input class="input input--wide" id="custom-name" type="text" placeholder="e.g. Meditation" autocomplete="off">
+                </label>
+                <label class="field">
+                  <span class="field__label">Goal per day</span>
+                  <input class="input input--small" id="custom-goal" type="number" min="1" step="1" value="1">
+                </label>
+                <label class="field">
+                  <span class="field__label">Counted in</span>
+                  <input class="input input--small" id="custom-unit" type="text" placeholder="minutes" autocomplete="off">
+                </label>
+                <button class="pill pill--solid custom__add" type="submit">Add</button>
+              </div>
+              <p class="custom__error" id="custom-error"></p>
+              <p class="custom__hint muted">What you count it in: minutes, pages, glasses, steps. A goal of 1 means yes / no.</p>
+            </form>
+
+            <div id="picker-body"></div>
+
+            <div class="picker__foot">
+              <button class="pill pill--solid" type="button" id="picker-done">Done</button>
             </div>
-            <div class="row row--sub">
-              <span class="soft">For</span>
-              <button class="chipbtn" type="button" data-when="today">Today</button>
-              <button class="chipbtn" type="button" data-when="tomorrow">Tomorrow</button>
-              <input class="input input--date" id="task-date" type="date" aria-label="Date">
-            </div>
-            <p class="custom__error" id="task-error"></p>
-          </form>
-        </div>
-      </div>
-
-      <!-- Which day the habits, the tasks and the note below belong to.
-           Today unless one was pressed on the calendar. -->
-      <div class="dayhead" id="dayhead"></div>
-      <div class="tiles" id="tiles"></div>
-
-      <div class="picker" id="picker" hidden>
-        <div id="picker-body"></div>
-
-        <form class="custom" id="custom-form">
-          <h3 class="picker__heading">Add your own</h3>
-          <div class="custom__row">
-            <input class="input input--wide" id="custom-name" type="text" placeholder="Meditation" autocomplete="off">
-            <input class="input input--small" id="custom-goal" type="number" min="1" step="1" value="1" aria-label="Goal">
-            <input class="input input--small" id="custom-unit" type="text" placeholder="min" autocomplete="off" aria-label="Unit">
-            <button class="pill pill--solid" type="submit">Add</button>
           </div>
-          <p class="custom__error" id="custom-error"></p>
-          <p class="custom__hint muted">A goal of 1 makes it a yes / no habit.</p>
-        </form>
-      </div>
-
-      <div class="cards cards--lower">
-        <div class="card">
-          <p class="card__title">Countdowns</p>
-          <div id="countdowns"></div>
-          <form class="row" id="cd-form">
-            <input class="input input--wide" id="cd-title" type="text" placeholder="Trip" autocomplete="off">
-            <input class="input" id="cd-date" type="date" aria-label="Date">
-            <button class="pill" type="submit">Add</button>
-          </form>
-          <p class="custom__error" id="cd-error"></p>
         </div>
 
-        <div class="card">
-          <p class="card__title">Note</p>
-          <textarea class="note" id="note" rows="3" placeholder="How did today go?"></textarea>
-          <div id="year-ago" hidden></div>
+        <div class="block block--full" data-block="note">
+          <div class="card">
+            <p class="card__title">Note</p>
+            <textarea class="note" id="note" rows="3" placeholder="How did today go?"></textarea>
+            <div id="year-ago" hidden></div>
+          </div>
         </div>
       </div>
     </section>
@@ -187,9 +225,15 @@
             <button class="chipbtn" type="button" id="money-example" hidden>Try it with example data</button>
             <button class="chipbtn" type="button" id="money-example-drop" hidden>Remove example data</button>
           </div>
-          <label class="mcurrency muted">Currency
-            <select class="input input--mode" id="money-currency"></select>
-          </label>
+          <div class="mentry__prefs">
+            <div class="seg seg--small" role="group" aria-label="Chart colours">
+              <button class="seg__btn" type="button" data-mcolours="mono">Mono</button>
+              <button class="seg__btn" type="button" data-mcolours="colour">Colour</button>
+            </div>
+            <label class="mcurrency muted">Currency
+              <select class="input input--mode" id="money-currency"></select>
+            </label>
+          </div>
         </div>
 
         <div class="medit" id="money-edit" hidden>

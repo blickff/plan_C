@@ -23,6 +23,10 @@ contextBridge.exposeInMainWorld('desktop', {
   setTrayNote: (text) => ipcRenderer.invoke('tray-note', text),
 
   version: () => ipcRenderer.invoke('app-version'),
+  platform: process.platform,
+
+  /* The page's theme, so the window's title strip can match it. */
+  setTheme: (theme) => ipcRenderer.invoke('window-theme', theme),
 
   /* A newer version on GitHub: its state, a way to ask again, and the
      one button that downloads, installs, or opens the download page —

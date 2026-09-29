@@ -1749,7 +1749,6 @@ body {
   border-radius: 16px;
   background: var(--surface);
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
-  scrollbar-width: thin;
 }
 
 .mpick__panel[hidden] { display: none; }
@@ -1787,3 +1786,352 @@ body {
   box-shadow: inset 0 0 0 1.5px var(--accent);
   color: var(--text);
 }
+
+/* =====================================================================
+   Round of changes after the first outside tester
+   ===================================================================== */
+
+/* The dashboard as blocks ---------------------------------------------
+   Three columns. A block's width belongs to the block, not to the spot
+   it is dropped in: the streak and the calendar always take two columns,
+   the Today card one column and two rows, the habits and the note the
+   full width. That way any order the blocks are dragged into still
+   packs into a tidy page instead of a wide list and a squeezed card. */
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.block { position: relative; display: flex; flex-direction: column; min-width: 0; }
+.block > .card { flex: 1; margin: 0; }
+.block--wide { grid-column: span 2; }
+.block--narrow { grid-column: span 1; }
+.block--full { grid-column: 1 / -1; }
+.block--tall { grid-row: span 2; }
+
+.block[data-block="habits"] { margin-top: 12px; }
+.block[data-block="note"] { margin-top: 12px; }
+
+@media (max-width: 820px) {
+  .board { grid-template-columns: minmax(0, 1fr); }
+  .block--wide, .block--narrow, .block--full { grid-column: 1 / -1; }
+  .block--tall { grid-row: auto; }
+}
+
+/* Edit mode: every block gets an outline and a handle to drag it by. */
+body.is-editing #board > .block {
+  outline: 1.5px dashed var(--border);
+  outline-offset: 5px;
+  border-radius: 22px;
+}
+
+.block__grip {
+  position: absolute;
+  top: -13px;
+  left: 50%;
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 11px;
+  transform: translateX(-50%);
+  cursor: grab;
+  box-shadow: var(--shadow);
+}
+
+.block__grip:active { cursor: grabbing; }
+.block.is-moving { opacity: 0.45; }
+
+/* The Today card: tasks and events together ---------------------------- */
+
+.plans .card__head { margin-bottom: 4px; }
+
+.plans__events:empty { display: none; }
+.plans__events .cds { margin: 4px 0 10px; }
+.cd.is-today .cd__left { color: var(--text); font-weight: 600; }
+
+/* A long list scrolls inside the card instead of pushing the whole page
+   down under it. */
+.plans__list {
+  flex: 1;
+  min-height: 40px;
+  max-height: 340px;
+  margin-right: -10px;
+  padding-right: 10px;
+  overflow-y: auto;
+}
+
+.plans .taskform {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.plans .taskform .row { margin-top: 0; }
+.taskform .seg { align-self: flex-start; }
+
+.seg--small .seg__btn { padding: 3px 12px; font-size: 12px; }
+
+/* The top bar stays -------------------------------------------------------
+   Pinned while the page scrolls, so the menu and Edit / Done are always
+   in reach. Scrolling back up to finish editing was the complaint. */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: -28px -28px 26px;
+  padding: 18px 28px 14px;
+  background: var(--bg);
+  transition: background-color var(--fade);
+}
+
+/* The desktop window's title strip, on Windows ---------------------------
+   The app draws its own, in the page's colours, and Windows lays its
+   three buttons over the right end of it. */
+
+.titlebar { display: none; }
+
+.is-desktop.is-win32 .titlebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  height: 36px;
+  padding-left: 16px;
+  background: var(--bg);
+  -webkit-app-region: drag;
+  transition: background-color var(--fade);
+}
+
+.titlebar__name { font-size: 12px; color: var(--text-faint); }
+
+.is-desktop.is-win32 body { padding-top: 36px; }
+.is-desktop.is-win32 .topbar { top: 36px; }
+.is-desktop.is-win32 .sidebar,
+.is-desktop.is-win32 .scrim { top: 36px; }
+.is-desktop.is-win32 .sidebar { height: calc(100% - 36px); }
+
+/* Scrollbars ----------------------------------------------------------------
+   Thin, rounded and in the theme's greys, instead of the Windows grey
+   gutter with an arrow at each end. */
+
+:root { --scroll: #c9c9cf; }
+:root[data-theme="dark"] { --scroll: #3a3a3a; }
+
+::-webkit-scrollbar { width: 11px; height: 11px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-corner { background: transparent; }
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: var(--scroll);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-faint);
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+
+/* The menu's theme switch ---------------------------------------------------- */
+
+.sidebar { display: flex; flex-direction: column; }
+
+.sidebar__foot {
+  margin-top: auto;
+  padding: 16px 10px 6px;
+}
+
+.sidebar__label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.seg--full { display: flex; }
+.seg--full .seg__btn { flex: 1; }
+
+/* The habit editor ------------------------------------------------------------- */
+
+/* Adding your own now opens the editor rather than closing it. */
+.picker .custom {
+  margin: 0 0 22px;
+  padding: 0 0 20px;
+  border-top: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.custom__row { align-items: flex-end; }
+
+/* Each box says what goes in it. A tester read the lone "min" in the
+   third box as something already filled in, and could not tell it was
+   asking what the habit is counted in. */
+.field { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.field--wide { flex: 1 1 200px; }
+.field .input--wide { width: 100%; }
+/* .input--wide grows by flex along a row; inside a labelled field the
+   axis is vertical, and the same rule made the box 180px tall. */
+.field .input { flex: none; }
+
+.field__label {
+  padding-left: 13px;
+  font-size: 11px;
+  color: var(--text-faint);
+}
+
+.custom__row .input--small { width: 116px; }
+
+.custom__row .input--small,
+.custom__row .input--small:placeholder-shown { text-align: center; }
+
+.picker__items--one { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+@media (max-width: 760px) {
+  .picker__items--one { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+.picker__more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 6px 2px;
+  border: 0;
+  background: none;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.picker__more::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  margin-top: -3px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg);
+  transition: transform 0.15s ease;
+}
+
+.picker__more[aria-expanded="true"]::after { margin-top: 3px; transform: rotate(-135deg); }
+.picker__more:hover { color: var(--text); }
+
+.picker__foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* The note grows with what is written ------------------------------------------ */
+
+.note {
+  min-height: 72px;
+  overflow: hidden;
+  resize: none;
+}
+
+/* The notes archive: dates you can find ------------------------------------------ */
+
+.note-row { padding: 14px 0; }
+
+.note-row__date {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text);
+}
+
+/* Money: the two cards side by side are the same height ---------------------------- */
+
+/* The trend card sat lower and shorter than the one beside it: the
+   page-wide gap between stacked cards was being applied inside the grid. */
+.mgrid > .card { margin-top: 0; }
+
+.mtrend { padding-bottom: 20px; }
+.mbars { border-bottom: 0; }
+.mbar__track { border-bottom: 1px solid var(--border); }
+.mbar__tick { margin: 6px 0 0; }
+
+.mtrend__empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-faint);
+}
+
+/* Money: icons and colour mode ------------------------------------------- */
+
+.micon {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -3px;
+}
+
+/* The small dots inside a few drawings are filled, not outlined. */
+.micon circle[r="0.6"],
+.micon circle[r="0.9"],
+.micon circle[r="1.2"],
+.micon circle[r="1.3"] { fill: currentColor; stroke: none; }
+
+.mchip { display: inline-flex; align-items: center; gap: 7px; }
+.mchip .micon { color: var(--text-faint); }
+.mchip:hover .micon { color: var(--text); }
+.mchip.is-on .micon { color: var(--invert-text); }
+
+/* Colour mode: each chip's drawing takes its category's colour. */
+.mchip[style*="--hue"] .micon { color: var(--hue); }
+.mchip.is-on[style*="--hue"] .micon { color: var(--invert-text); }
+
+.msplit__name .micon { color: var(--text-faint); margin-right: 2px; }
+.msplit.is-focus .msplit__name .micon { color: var(--text); }
+.is-colour .msplit__name .micon { color: var(--tone); }
+
+.mrow__cat { display: inline-flex; align-items: center; gap: 7px; }
+.mrow__cat .micon { color: var(--text-faint); }
+
+.mdiff__name { display: flex; align-items: center; gap: 8px; }
+.mdiff__name .micon { color: var(--text-faint); }
+
+/* Colour mode in the ring: pointing at a piece fades the rest, instead
+   of painting the chosen one black. */
+.is-colour .mring__slice.is-focus { stroke: var(--tone); }
+.is-colour.is-pointing .mring__slice:not(.is-focus) { opacity: 0.28; }
+.mring__slice { transition: stroke 0.15s ease, opacity 0.15s ease; }
+.is-colour .msplit.is-focus .msplit__bar > span { background: var(--tone); }
+
+.mentry__prefs { display: flex; align-items: center; gap: 14px; }
