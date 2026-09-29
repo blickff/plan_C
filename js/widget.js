@@ -243,7 +243,7 @@ var Widget = (function () {
 
   function tellTray(percent) {
     if (!window.desktop || !window.desktop.setTrayNote) return;
-    window.desktop.setTrayNote('Day Panel — ' + percent + '% of today done');
+    window.desktop.setTrayNote('Daybook — ' + percent + '% of today done');
   }
 
   /* habits.js calls repaint() after a tick; on the panel that redraws the
@@ -301,6 +301,8 @@ var Widget = (function () {
     checkReminder();
 
     if (!window.desktop) return;
+
+    UpdateUI.start({ buttons: [document.getElementById('wg-update')] });
 
     document.getElementById('wg-open').addEventListener('click', function () {
       window.desktop.openPanel();

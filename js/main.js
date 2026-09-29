@@ -159,11 +159,15 @@ function renderDayHead() {
 
 /* Clock and theme ---------------------------------------------------- */
 
+/* Hours and minutes only. A seconds counter ticking in the corner of
+   something you glance at all day is movement that means nothing, and
+   the eye goes to movement. Still checked every second, so the minute
+   turns over on time rather than up to a minute late. */
 function renderClock() {
   var now = new Date();
-  document.getElementById('clock-time').textContent =
-    pad(now.getHours()) + ':' + pad(now.getMinutes());
-  document.getElementById('clock-seconds').textContent = pad(now.getSeconds());
+  var text = pad(now.getHours()) + ':' + pad(now.getMinutes());
+  var el = document.getElementById('clock-time');
+  if (el.textContent !== text) el.textContent = text;
 }
 
 function renderDate() {
@@ -450,7 +454,7 @@ function wirePreviousCopy() {
     var url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     var link = document.createElement('a');
     link.href = url;
-    link.download = 'day-panel-before-upgrade.json';
+    link.download = 'daybook-before-upgrade.json';
     link.click();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   });
@@ -495,6 +499,14 @@ function wireChrome() {
 
   if (window.desktop) {
     wireReminder();
+
+    UpdateUI.start({
+      buttons: [document.getElementById('update-btn'), document.getElementById('updates-act')],
+      status: document.getElementById('updates-status'),
+      checkBtn: document.getElementById('updates-check'),
+      card: document.getElementById('updates-card'),
+      version: document.getElementById('updates-version')
+    });
 
     var card = document.getElementById('desktop-card');
     var autoBtn = document.getElementById('autostart-btn');

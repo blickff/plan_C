@@ -1,68 +1,112 @@
-# Day Panel
+# Daybook
 
-A start page and habit tracker that also lives on the desktop. Habits,
-a month calendar, tasks, countdowns, a note, and patterns it finds in
-your own history.
+Your day, your habits, your notes and your spending, in one calm place
+on the desktop. Habits on a schedule, a month calendar you can fill in
+after the fact, tasks, countdowns, a note for every day, a record of
+what you spent, and patterns it finds in your own history.
 
 Everything is stored on your own machine — no account, no server,
 nothing leaves the computer.
 
-## Installing it on Windows
+## Installing it
 
 Download from [the latest
-release](https://github.com/blickff/plan_C/releases/latest):
+release](https://github.com/blickff/plan_C/releases/latest).
 
-- **`DayPanel-Setup-1.0.0.exe`** — installs it properly, with a Start
+### Windows
+
+- **`Daybook-Setup-1.1.0.exe`** — installs it properly, with a Start
   menu entry and a desktop shortcut. Installs for you alone, so it does
-  not ask for an administrator.
-- **`DayPanel-1.0.0-portable.exe`** — no installation. Double-click and
+  not ask for an administrator. **This is the one that updates itself.**
+- **`Daybook-1.1.0-portable.exe`** — no installation. Double-click and
   it runs. Handy for trying it, or for a USB stick.
 
 Both keep their data in the same place, so you can start with the
 portable one and install later without losing anything.
 
-### Windows will warn you about it
-
 The first time you run either file, Windows shows a blue box:
 *"Windows protected your PC"*. Press **More info**, then **Run anyway**.
 
-This is not a sign that something is wrong with the download. Windows
+That is not a sign that something is wrong with the download. Windows
 says it about every program that has not been signed with a code
-signing certificate, and those certificates are bought yearly from a
-handful of companies. This one is not signed, and the warning is
-Windows being honest about that rather than about the program.
+signing certificate, and those are bought yearly from a handful of
+companies. This one is not signed, and the warning is Windows being
+honest about that rather than about the program.
 
-If you would rather not take that on faith, the source is all here and
-you can build it yourself with the two commands under
-[Building](#building-it-yourself) below — the result is the same file.
+### Mac
 
-### What you get
+- **`Daybook-1.1.0-mac.dmg`** — one file for every Mac, Intel or Apple
+  silicon. Open it and drag Daybook into Applications.
 
-A small widget on the desktop and an icon by the clock.
+The first time, macOS will refuse to open it: *"Daybook cannot be
+opened because Apple cannot check it for malicious software."* Press
+**Done**, then open **System Settings → Privacy & Security**, scroll
+down to the line about Daybook and press **Open Anyway**. It only asks
+once.
 
-- Click the icon by the clock to hide or show the widget; right-click it
-  for the full panel, or to quit.
-- `Ctrl+Shift+D` also hides and brings back the widget.
+The reason is the same as on Windows, with a bigger bill: Apple only
+vouches for apps signed with its developer certificate, which costs a
+yearly fee. This one is signed without it — enough for the Mac to run
+it, not enough for the Mac to vouch for it.
+
+If *Open Anyway* is not offered, this in the Terminal does the same
+thing:
+
+```
+xattr -dr com.apple.quarantine /Applications/Daybook.app
+```
+
+### Either way
+
+If you would rather not take any of that on faith, the source is all
+here and the two commands under [Building](#building-it-yourself)
+produce the same files.
+
+## Updating
+
+When a newer version is out, a button appears — in the panel next to
+*Edit habits*, and in the corner of the widget. On Windows with the
+installer, pressing it downloads the update and pressing it again
+restarts into it. The portable exe and the Mac version cannot replace
+themselves, so there the button opens the download page instead.
+*Settings → Updates* shows the version you have and checks on demand.
+
+Your data is never part of an update: it lives in its own folder, and
+a new version opens onto the same history.
+
+## What you get
+
+A small widget on the desktop and an icon by the clock (on a Mac, in
+the menu bar).
+
+- Click the icon to hide or show the widget; right-click it for the
+  full panel, or to quit.
+- `Ctrl+Shift+D` (`Cmd+Shift+D` on a Mac) also hides and brings back
+  the widget.
 - The widget's own buttons appear when the pointer is over it: keep
   above other windows, open the panel, hide.
 - Settings → *Desktop widget* → **Pin to the desktop** takes it out of
   the taskbar and Alt+Tab, keeps it behind whatever you are working in
-  rather than over it, and brings it back after "show desktop". Windows has no
-  real way to fasten a window to the wallpaper, so this is as close as
-  it gets without machinery this app does not otherwise need.
+  rather than over it, and brings it back after "show desktop". Windows
+  has no real way to fasten a window to the wallpaper, so this is as
+  close as it gets without machinery this app does not otherwise need.
 - Drag the widget by any empty part of it.
 
-### Uninstalling
+## Uninstalling
 
-Settings → Apps → Day Panel, as with anything else. **Your history is
-left behind on purpose** — uninstalling an app should not delete what
-you wrote in it. It sits in `%APPDATA%\day-panel`, and installing again
-picks it back up. To be rid of it as well, delete that folder by hand.
+Windows: Settings → Apps → Daybook. Mac: drag it from Applications to
+the Bin. **Your history is left behind on purpose** — uninstalling an
+app should not delete what you wrote in it. It sits in
+`%APPDATA%day-panel` on Windows and
+`~/Library/Application Support/day-panel` on a Mac, and installing
+again picks it back up. (The folder keeps the app's first name, Day
+Panel, so that renaming the app never lost anyone's data.) To be rid of
+it as well, delete that folder by hand.
 
 ## Running it without installing
 
 **In a browser.** Open `index.html`. That is the whole setup, though
-there is no widget and no reminder that way.
+there is no widget, no reminder and no updates that way.
 
 **From the source.** Needs Node.js 20 or later:
 
@@ -77,6 +121,11 @@ npm start
 npm install
 npm run dist
 ```
+
+That builds for the system you are on. Windows builds on Windows; the
+Mac version has to be built on a Mac, because only there can it be
+signed well enough to open. Releases are built by GitHub on both (see
+`.github/workflows/release.yml`) whenever a version tag is pushed.
 
 The two files land in `release/`. `npm run icon` redraws the app icon
 from `scripts/make-icon.js` if you want a different one.
@@ -185,9 +234,12 @@ js/insights.js   the patterns, and the rules for staying quiet
 js/money.js      spending: entry, the ring, the trend, categories
 js/weather.js    Open-Meteo
 js/widget.js     the widget, and the daily reminder
+js/update-ui.js  the update button, shared by the panel and the widget
 js/main.js       clock, theme, menu, views
 desktop/main.js  Electron: windows, tray, the app:// scheme
 desktop/vault.js the data file in a folder you choose
+desktop/updates.js  finding, downloading and installing a new version
+.github/         the release build for Windows and Mac
 scripts/         the icon, drawn in code
 ```
 

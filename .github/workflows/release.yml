@@ -1,0 +1,79 @@
+# Builds the Windows and macOS versions and publishes them as one release.
+#
+# Runs when a version tag is pushed (git tag v1.2.0 && git push --tags).
+# The macOS build has to happen on a Mac: electron-builder only signs Mac
+# apps on macOS, and an unsigned app does not start on Apple-silicon Macs
+# at all. GitHub's Mac runners are free for public repositories.
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      # One platform failing should not hide whether the other worked.
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            target: --win
+          - os: macos-latest
+            target: --mac
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # --publish never: build only. The release job below uploads
+      # everything at once, so two runners never race to create it.
+      - name: Build
+        run: npx electron-builder ${{ matrix.target }} --publish never
+        env:
+          # No keychain search: there is no paid certificate to find. The
+          # Mac build is ad-hoc signed through "identity": "-" instead.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ matrix.os }}
+          if-no-files-found: error
+          # latest.yml and the blockmap are what the installed Windows app
+          # reads to find and download an update; without them the update
+          # button never appears.
+          path: |
+            release/*.exe
+            release/*.exe.blockmap
+            release/*.dmg
+            release/latest.yml
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: List what will be published
+        run: ls -la dist
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          body_path: .github/release-notes/${{ github.ref_name }}.md
+          files: dist/*
+          fail_on_unmatched_files: true

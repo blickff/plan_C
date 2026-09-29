@@ -156,6 +156,44 @@ function toIco(images) {
   return Buffer.concat([header, dir, ...blobs]);
 }
 
+/* The tray / menu-bar icon: just the ring, a white band with a dark
+   edge on either side, so it reads on a light taskbar and a dark one
+   without needing a separate image for each. */
+function renderTray(size) {
+  const px = Buffer.alloc(size * size * 4);
+  const c = size / 2;
+  const scale = size / 32;
+  const bands = [
+    { from: 7.9 * scale, to: 9.2 * scale, rgba: [20, 20, 20, 235] },
+    { from: 9.2 * scale, to: 12.2 * scale, rgba: [255, 255, 255, 255] },
+    { from: 12.2 * scale, to: 13.6 * scale, rgba: [20, 20, 20, 235] }
+  ];
+
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      let r = 0, g = 0, b = 0, a = 0;
+      for (let sy = 0; sy < SS; sy++) {
+        for (let sx = 0; sx < SS; sx++) {
+          const d = Math.hypot(x + (sx + 0.5) / SS - c, y + (sy + 0.5) / SS - c);
+          const band = bands.find((k) => d >= k.from && d < k.to);
+          if (!band) continue;
+          const al = band.rgba[3] / 255;
+          r += band.rgba[0] * al; g += band.rgba[1] * al; b += band.rgba[2] * al; a += al;
+        }
+      }
+      const n = SS * SS;
+      const i = (y * size + x) * 4;
+      if (a > 0) {
+        px[i] = Math.round(r / a);
+        px[i + 1] = Math.round(g / a);
+        px[i + 2] = Math.round(b / a);
+      }
+      px[i + 3] = Math.round((a / n) * 255);
+    }
+  }
+  return px;
+}
+
 const out = path.join(process.cwd(), 'build');
 fs.mkdirSync(out, { recursive: true });
 
@@ -163,7 +201,19 @@ const sizes = [16, 24, 32, 48, 64, 128, 256];
 const images = sizes.map((size) => ({ size, png: toPng(render(size), size) }));
 
 fs.writeFileSync(path.join(out, 'icon.ico'), toIco(images));
-fs.writeFileSync(path.join(out, 'icon.png'), images[images.length - 1].png);
 
-console.log('build/icon.ico', fs.statSync(path.join(out, 'icon.ico')).size, 'bytes');
-console.log('build/icon.png', fs.statSync(path.join(out, 'icon.png')).size, 'bytes');
+/* 1024 for macOS: the Mac build turns it into an .icns and refuses
+   anything under 512. Windows uses the .ico above and never reads this. */
+fs.writeFileSync(path.join(out, 'icon.png'), toPng(render(1024), 1024));
+
+/* The tray icon at its real size and at double, for sharp screens.
+   Electron picks up the @2x file on its own when it loads tray.png — and
+   on a Mac, where the menu bar is 22 points tall, the old 32 pixel
+   single image came out twice the height of everything beside it. */
+const desk = path.join(process.cwd(), 'desktop');
+fs.writeFileSync(path.join(desk, 'tray.png'), toPng(renderTray(16), 16));
+fs.writeFileSync(path.join(desk, 'tray@2x.png'), toPng(renderTray(32), 32));
+
+['build/icon.ico', 'build/icon.png', 'desktop/tray.png', 'desktop/tray@2x.png'].forEach((f) => {
+  console.log(f, fs.statSync(path.join(process.cwd(), f)).size, 'bytes');
+});

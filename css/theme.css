@@ -54,6 +54,18 @@
      when any two categories can end up side by side in the ring, and a
      spending list needs six or eight. */
   --viz-muted: #cfcfd5;
+
+  /* Six neutral greys so the pieces of the ring can be told apart and
+     matched to their rows. Lightness only — no hue, so nothing here
+     can be mistaken for a meaning, and colour-blindness does not touch
+     it. All clearly lighter than the accent, so the highlighted piece
+     still stands out. */
+  --viz-t0: #dddde2;
+  --viz-t1: #c8c8cf;
+  --viz-t2: #b2b2bb;
+  --viz-t3: #9c9ca6;
+  --viz-t4: #868692;
+  --viz-t5: #71717d;
 }
 
 /* Text is #e8e8ec rather than pure white: #ffffff on near-black glares.
@@ -88,6 +100,13 @@
   --cell-0: #26262c;
 
   --viz-muted: #3d3d3d;
+
+  --viz-t0: #353535;
+  --viz-t1: #474747;
+  --viz-t2: #5a5a5a;
+  --viz-t3: #6d6d6d;
+  --viz-t4: #818181;
+  --viz-t5: #969696;
 }
 
 body,

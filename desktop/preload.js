@@ -22,6 +22,18 @@ contextBridge.exposeInMainWorld('desktop', {
   notify: (title, body) => ipcRenderer.invoke('notify', title, body),
   setTrayNote: (text) => ipcRenderer.invoke('tray-note', text),
 
+  version: () => ipcRenderer.invoke('app-version'),
+
+  /* A newer version on GitHub: its state, a way to ask again, and the
+     one button that downloads, installs, or opens the download page —
+     whichever this system allows. */
+  updates: {
+    state: () => ipcRenderer.invoke('update-state'),
+    check: () => ipcRenderer.invoke('update-check'),
+    act: () => ipcRenderer.invoke('update-act'),
+    onChange: (fn) => ipcRenderer.on('update-state', (_event, state) => fn(state))
+  },
+
   /* The vault: the data file in a folder of the person's choosing. */
   vault: {
     info: () => ipcRenderer.invoke('vault-info'),

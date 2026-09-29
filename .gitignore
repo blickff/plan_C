@@ -14,6 +14,7 @@ Desktop.ini
 
 # Backups exported from the panel contain personal history
 day-panel-*.json
+daybook-*.json
 
 # Local Claude Code settings are per-machine; the launch config is not
 .claude/settings.local.json

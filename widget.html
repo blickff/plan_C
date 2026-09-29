@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://api.open-meteo.com https://geocoding-api.open-meteo.com https://ipwho.is; form-action 'none'; base-uri 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Day Panel</title>
+  <title>Daybook</title>
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/widget.css">
@@ -21,6 +21,9 @@
       <p class="wg__meta">
         <span id="wg-date"></span><span class="wg__weather" id="weather"></span>
       </p>
+      <!-- Only there when a newer version is out. Unlike the other
+           buttons it does not wait for the pointer: it is news. -->
+      <button class="wg__upd" type="button" id="wg-update" hidden></button>
       <div class="wg__tools">
         <button class="wg__btn" type="button" id="wg-top" title="Keep above other windows">&#9650;</button>
         <button class="wg__btn" type="button" id="wg-open" title="Open the full panel">&#10530;</button>
@@ -50,6 +53,7 @@
   <script src="js/presets.js"></script>
   <script src="js/habits.js"></script>
   <script src="js/weather.js"></script>
+  <script src="js/update-ui.js"></script>
   <script src="js/widget.js"></script>
 </body>
 </html>

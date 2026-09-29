@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src https://api.open-meteo.com https://geocoding-api.open-meteo.com https://ipwho.is; form-action 'none'; base-uri 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Day Panel</title>
+  <title>Daybook</title>
   <link rel="stylesheet" href="css/theme.css">
   <link rel="stylesheet" href="css/app.css">
 </head>
@@ -13,7 +13,7 @@
   <div class="scrim" id="scrim" hidden></div>
 
   <aside class="sidebar" id="sidebar" hidden>
-    <p class="sidebar__brand">Day Panel</p>
+    <p class="sidebar__brand">Daybook</p>
     <nav class="nav">
       <button class="nav__item is-active" type="button" data-view="dashboard">Dashboard</button>
       <button class="nav__item" type="button" data-view="history">History</button>
@@ -38,10 +38,12 @@
       <div class="topbar__right">
         <div class="topbar__now">
           <p class="clock">
-            <span class="clock__time" id="clock-time">--:--</span><span class="clock__seconds" id="clock-seconds">--</span>
+            <span class="clock__time" id="clock-time">--:--</span>
           </p>
           <p class="weather" id="weather">&nbsp;</p>
         </div>
+        <!-- Appears only when a newer version is out. -->
+        <button class="pill upd" type="button" id="update-btn" hidden></button>
         <button class="pill pill--solid" type="button" id="habits-toggle">Edit habits</button>
       </div>
     </header>
@@ -180,7 +182,11 @@
         <p class="custom__error" id="money-error"></p>
 
         <div class="mentry__foot">
-          <button class="chipbtn" type="button" id="money-edit-toggle">Edit categories</button>
+          <div class="mentry__tools">
+            <button class="chipbtn" type="button" id="money-edit-toggle">Edit categories</button>
+            <button class="chipbtn" type="button" id="money-example" hidden>Try it with example data</button>
+            <button class="chipbtn" type="button" id="money-example-drop" hidden>Remove example data</button>
+          </div>
           <label class="mcurrency muted">Currency
             <select class="input input--mode" id="money-currency"></select>
           </label>
@@ -214,7 +220,7 @@
 
       <div class="mgrid">
         <div class="card msummary" id="money-summary">
-          <p class="label">Spent</p>
+          <p class="label">Spent <span class="mflag" id="money-example-flag" hidden>includes example data</span></p>
           <p class="mtotal" id="money-total"></p>
           <p class="mcmp" id="money-compare"></p>
 
@@ -232,6 +238,17 @@
           <p class="mread muted" id="money-read"></p>
           <div class="mbars" id="money-bars"></div>
         </div>
+      </div>
+
+      <!-- Two periods side by side, category by category: where more
+           went, and where less. -->
+      <div class="card mcompare">
+        <div class="card__head">
+          <p class="card__title">Compared with</p>
+          <select class="input input--mode mcompare__pick" id="money-against" aria-label="Compare with"></select>
+        </div>
+        <p class="mcompare__sum muted" id="money-against-sum"></p>
+        <div class="mdiffs" id="money-diff"></div>
       </div>
 
       <div class="card">
@@ -299,6 +316,18 @@
         </div>
       </div>
 
+      <div class="card" id="updates-card" hidden>
+        <div class="card__head">
+          <p class="card__title">Updates</p>
+          <span class="muted upd__version" id="updates-version"></span>
+        </div>
+        <p class="card__note muted" id="updates-status"></p>
+        <div class="row">
+          <button class="pill" type="button" id="updates-check">Check now</button>
+          <button class="pill pill--solid" type="button" id="updates-act" hidden></button>
+        </div>
+      </div>
+
       <div class="card" id="desktop-card" hidden>
         <p class="card__title">Desktop widget</p>
         <p class="card__note muted">
@@ -340,6 +369,7 @@
   <script src="js/panel.js"></script>
   <script src="js/insights.js"></script>
   <script src="js/money.js"></script>
+  <script src="js/update-ui.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

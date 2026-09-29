@@ -45,6 +45,9 @@ var Money = (function () {
 
   var scope = 'month';
   var offset = 0;
+  /* How many periods back the comparison card looks: 1 is the one
+     straight before the period on screen. */
+  var back = 1;
   var picked = null;
   var focus = null;
   var editing = false;
@@ -198,23 +201,32 @@ var Money = (function () {
      lie the arithmetic tells without meaning to. While a period is still
      running it is set against the same stretch of the one before: the
      1st to the 29th against the 1st to the 29th. */
-  function comparison(which, off) {
+  /* Two periods to set side by side: the one on screen, and the one
+     `back` steps before it. When the one on screen is still running,
+     both are cut to the same number of days — see comparison(). */
+  function pair(which, off, back) {
     var now = range(which, off);
-    var before = range(which, off - 1);
+    var other = range(which, off - back);
     var today = Storage.today();
     var partial = now.from <= today && today < now.to;
 
     if (partial) {
       var elapsed = Math.round((parse(today) - parse(now.from)) / 86400000);
-      var cut = parse(before.from);
+      var cut = parse(other.from);
       cut.setDate(cut.getDate() + elapsed);
       var cutKey = Storage.dateKey(cut);
-      before = { from: before.from, to: cutKey < before.to ? cutKey : before.to };
+      other = { from: other.from, to: cutKey < other.to ? cutKey : other.to };
       now = { from: now.from, to: today };
     }
 
-    var a = sum(within(now));
-    var b = sum(within(before));
+    return { now: now, other: other, partial: partial };
+  }
+
+  function comparison(which, off) {
+    var p = pair(which, off, 1);
+    var a = sum(within(p.now));
+    var b = sum(within(p.other));
+    var partial = p.partial;
 
     var word = { day: 'day', week: 'week', month: 'month', year: 'year' }[which];
     /* Worded to fit all three sentences below: "48% more than at this
@@ -332,6 +344,26 @@ var Money = (function () {
   var STROKE = 14;
   var GAP = 2.5;
 
+  /* Which of the six greys each piece gets, by how many pieces there
+     are. Chosen so that every two neighbours — including the last and
+     the first, which meet at twelve o'clock — are at least two steps
+     apart, and deliberately not light-to-dark by size: shade here tells
+     the pieces apart and matches each one to its row, it does not
+     repeat how big they are. The size is already the size. */
+  var TONES = {
+    1: [2],
+    2: [1, 4],
+    3: [0, 2, 4],
+    4: [0, 3, 1, 4],
+    5: [0, 3, 1, 4, 2],
+    6: [0, 3, 1, 4, 2, 5]
+  };
+
+  function toneFor(index, count) {
+    var order = TONES[Math.min(count, 6)] || TONES[6];
+    return 'var(--viz-t' + order[index % order.length] + ')';
+  }
+
   function ringSvg(ring, total, focusId) {
     var size = (R + STROKE) * 2;
     var c = size / 2;
@@ -343,7 +375,7 @@ var Money = (function () {
     }
 
     var start = 0;
-    var parts = ring.map(function (slice) {
+    var parts = ring.map(function (slice, i) {
       var share = slice.cents / total;
       var len = share * circ;
       /* A 2.5px gap of card colour between pieces, taken out of the
@@ -352,6 +384,7 @@ var Money = (function () {
       var dash = Math.max(0.01, len - gap);
       var el = '<circle cx="' + c + '" cy="' + c + '" r="' + R + '"' +
         ' class="mring__slice' + (slice.id === focusId ? ' is-focus' : '') + '"' +
+        ' style="--tone:' + toneFor(i, ring.length) + '"' +
         ' data-slice="' + escapeHtml(slice.id) + '"' +
         ' stroke-dasharray="' + dash.toFixed(2) + ' ' + (circ - dash).toFixed(2) + '"' +
         ' stroke-dashoffset="' + (-start).toFixed(2) + '">' +
@@ -457,15 +490,20 @@ var Money = (function () {
       return;
     }
 
-    var inRing = {};
-    s.ring.forEach(function (x) { inRing[x.id] = true; });
+    /* Each row wears the grey of its piece of the ring — the dot and the
+       bar — so the two can be matched by eye without pointing at
+       anything. The name itself stays in ordinary ink. */
+    var tones = {};
+    s.ring.forEach(function (x, i) { tones[x.id] = toneFor(i, s.ring.length); });
 
     list.innerHTML = s.all.map(function (row) {
-      var sliceId = inRing[row.id] ? row.id : '__rest';
+      var sliceId = tones[row.id] ? row.id : '__rest';
       var share = Math.round((row.cents / total) * 100);
       return '<button class="msplit' + (sliceId === focusId ? ' is-focus' : '') + '" type="button"' +
+        ' style="--tone:' + tones[sliceId] + '"' +
         ' data-slice="' + escapeHtml(sliceId) + '">' +
-        '<span class="msplit__name">' + escapeHtml(row.name) + '</span>' +
+        '<span class="msplit__name"><i class="msplit__dot" aria-hidden="true"></i>' +
+          escapeHtml(row.name) + '</span>' +
         '<span class="msplit__amount">' + escapeHtml(format(row.cents)) + '</span>' +
         '<span class="msplit__share">' + share + '%</span>' +
         '<span class="msplit__bar"><span style="width:' + Math.max(1, share) + '%"></span></span>' +
@@ -533,6 +571,7 @@ var Money = (function () {
           '<span class="mrow__what">' +
             '<span class="mrow__cat">' + escapeHtml(categoryName(e.cat)) + '</span>' +
             (e.note ? '<span class="mrow__note">' + escapeHtml(e.note) + '</span>' : '') +
+            (e.sample ? '<span class="mrow__tag">example</span>' : '') +
           '</span>' +
           '<span class="mrow__amount">' + escapeHtml(format(e.cents)) + '</span>' +
           '<button class="task__drop" type="button" data-mdrop="' + escapeHtml(e.id) + '" aria-label="Delete">&#215;</button>' +
@@ -544,13 +583,220 @@ var Money = (function () {
     if (u) u.addEventListener('click', undoRemove);
   }
 
+  /* Two periods, category by category -----------------------------------
+
+     "Where did more go, and where less" is a question about categories,
+     not about the total: the total can hold level while shopping doubles
+     and food halves. So each category gets its own line with both
+     amounts and the change.
+
+     Sorted and sized by the change in money, not in percent. +200% on a
+     three-euro coffee habit is noise beside +15% on rent; the percent is
+     still there in words, but the order and the bars follow what the
+     change actually cost. */
+
+  var LOOKBACK = { day: 14, week: 12, month: 12, year: 5 };
+
+  function renderCompare() {
+    var select = document.getElementById('money-against');
+    var n = LOOKBACK[scope];
+    if (back > n) back = 1;
+
+    var options = '';
+    for (var k = 1; k <= n; k++) {
+      options += '<option value="' + k + '"' + (k === back ? ' selected' : '') + '>' +
+        escapeHtml(title(scope, range(scope, offset - k))) + '</option>';
+    }
+    if (document.activeElement !== select) select.innerHTML = options;
+
+    var p = pair(scope, offset, back);
+    var nowBy = {};
+    var thenBy = {};
+    within(p.now).forEach(function (e) { nowBy[e.cat] = (nowBy[e.cat] || 0) + e.cents; });
+    within(p.other).forEach(function (e) { thenBy[e.cat] = (thenBy[e.cat] || 0) + e.cents; });
+
+    var ids = {};
+    Object.keys(nowBy).forEach(function (id) { ids[id] = true; });
+    Object.keys(thenBy).forEach(function (id) { ids[id] = true; });
+
+    var rows = Object.keys(ids).map(function (id) {
+      var a = nowBy[id] || 0;
+      var b = thenBy[id] || 0;
+      return { id: id, name: categoryName(id), now: a, then: b, diff: a - b };
+    }).sort(function (x, y) { return Math.abs(y.diff) - Math.abs(x.diff); });
+
+    var totalNow = sum(within(p.now));
+    var totalThen = sum(within(p.other));
+    var sumEl = document.getElementById('money-against-sum');
+
+    var shown = title(scope, range(scope, offset));
+    var other = title(scope, range(scope, offset - back));
+    var note = p.partial
+      ? 'Both cut to the same ' + (Math.round((parse(p.now.to) - parse(p.now.from)) / 86400000) + 1) +
+        ' days, because ' + shown.replace(/^This /, 'this ').replace(/^Today$/, 'today') + ' is not over yet.'
+      : '';
+
+    if (!rows.length) {
+      sumEl.textContent = '';
+      document.getElementById('money-diff').innerHTML =
+        '<p class="soft">Nothing spent in either — nothing to compare.</p>';
+      return;
+    }
+
+    var d = totalNow - totalThen;
+    sumEl.textContent = (d === 0 ? 'The same in total'
+      : (d > 0 ? format(d) + ' more' : format(-d) + ' less') + ' in total' +
+        (totalThen ? ' (' + (d > 0 ? '+' : '−') + Math.abs(Math.round((d / totalThen) * 100)) + '%)' : '')) +
+      (note ? ' · ' + note : '');
+
+    var maxDiff = 0;
+    rows.forEach(function (r) { if (Math.abs(r.diff) > maxDiff) maxDiff = Math.abs(r.diff); });
+
+    var head = '<div class="mdiff mdiff--head">' +
+      '<span></span>' +
+      '<span class="mdiff__num">' + escapeHtml(shortTitle(scope, p.now)) + '</span>' +
+      '<span class="mdiff__num">' + escapeHtml(shortTitle(scope, range(scope, offset - back))) + '</span>' +
+      '<span></span><span></span></div>';
+
+    document.getElementById('money-diff').innerHTML = head + rows.map(function (r) {
+      var change;
+      var pct = r.then ? Math.round((r.diff / r.then) * 100) : 0;
+      if (!r.then) change = 'new';
+      else if (!r.now) change = 'nothing now';
+      /* A euro and a half either way on the rent is not "0% less". */
+      else if (pct === 0) change = 'about the same';
+      else change = Math.abs(pct) + '% ' + (r.diff > 0 ? 'more' : 'less');
+
+      /* Direction carries the sign — right is more, left is less — so
+         no colour is needed for it, and the words say it again. */
+      var len = maxDiff ? Math.round((Math.abs(r.diff) / maxDiff) * 50) : 0;
+      var bar = r.diff === 0 ? ''
+        : '<span class="mdiff__fill ' + (r.diff > 0 ? 'is-up' : 'is-down') + '" style="width:' + len + '%"></span>';
+
+      var up = r.then ? pct > 0 : r.now > 0;
+      var down = r.then ? pct < 0 : false;
+      var arrow = up ? '&#8593; ' : down ? '&#8595; ' : '';
+
+      return '<div class="mdiff">' +
+        '<span class="mdiff__name">' + escapeHtml(r.name) + '</span>' +
+        '<span class="mdiff__num">' + escapeHtml(format(r.now)) + '</span>' +
+        '<span class="mdiff__num mdiff__then">' + escapeHtml(format(r.then)) + '</span>' +
+        '<span class="mdiff__bar" aria-hidden="true">' + bar + '</span>' +
+        '<span class="mdiff__change">' + arrow + escapeHtml(change) + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* A column heading short enough for a narrow column. */
+  function shortTitle(which, r) {
+    var from = parse(r.from);
+    if (which === 'day') return SHORT[from.getMonth()] + ' ' + from.getDate();
+    if (which === 'week') return SHORT[from.getMonth()] + ' ' + from.getDate();
+    if (which === 'month') return SHORT[from.getMonth()] + ' ' + String(from.getFullYear()).slice(2);
+    return String(from.getFullYear());
+  }
+
+  /* Example data ---------------------------------------------------------
+
+     A chart with nothing in it shows nothing about how it works. This
+     fills the last five months with made-up but plausible spending so
+     the ring, the bars and the comparison can be seen doing their job.
+
+     Every example entry is marked, so "Remove example data" takes out
+     exactly those and never touches a real one. Seeded, so it comes out
+     the same every time. */
+
+  function hasExample() {
+    return data().entries.some(function (e) { return e.sample; });
+  }
+
+  function hasReal() {
+    return data().entries.some(function (e) { return !e.sample; });
+  }
+
+  function loadExample() {
+    var seed = 20260929;
+    function rand() {
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+    function between(lo, hi) { return Math.round((lo + rand() * (hi - lo)) * 100); }
+
+    var ids = {};
+    data().categories.forEach(function (c) { ids[c.id] = true; });
+    function cat(id) { return ids[id] ? id : (liveCategories()[0] || {}).id; }
+
+    var today = parse(Storage.today());
+    var start = new Date(today.getFullYear(), today.getMonth() - 4, 1);
+    var stamp = Date.now();
+    var n = 0;
+    var entries = data().entries;
+
+    function put(date, id, cents, note) {
+      entries.push({ id: 'm-ex-' + stamp + '-' + (n++), date: Storage.dateKey(date), cat: cat(id),
+        cents: cents, note: note || '', sample: true });
+    }
+
+    for (var d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+      var dow = (d.getDay() + 6) % 7;
+      var dom = d.getDate();
+      /* Spending creeps up over the five months, so the arrows and the
+         comparison have a direction to show. */
+      var drift = 1 + (d - start) / (today - start || 1) * 0.35;
+
+      if (dom === 1) put(d, 'home', 45000, 'Rent');
+      if (dom === 15) put(d, 'home', between(55, 80), 'Electricity & internet');
+      if (dom === 2) put(d, 'transport', 4900, 'Monthly ticket');
+
+      if (rand() < 0.62) put(d, 'food', Math.round(between(3, 14) * drift), rand() < 0.5 ? 'Coffee' : 'Lunch');
+      if (dow === 5 || (dow === 2 && rand() < 0.4)) put(d, 'food', between(28, 62), 'Groceries');
+      if ((dow >= 4 && rand() < 0.55) || rand() < 0.08) {
+        put(d, 'going-out', Math.round(between(9, 38) * drift), rand() < 0.5 ? 'Drinks' : 'Cinema');
+      }
+      if (rand() < 0.09) put(d, 'shopping', Math.round(between(15, 85) * drift), rand() < 0.5 ? 'Clothes' : 'Online order');
+      if (rand() < 0.04) put(d, 'health', between(6, 32), 'Pharmacy');
+      if (rand() < 0.05) put(d, 'transport', between(3, 18), 'Taxi');
+      if (rand() < 0.03) put(d, 'other', between(4, 25));
+    }
+
+    /* One trip, in the second month. */
+    var trip = new Date(start.getFullYear(), start.getMonth() + 1, 18);
+    put(trip, 'travel', 18900, 'Train tickets');
+    put(new Date(trip.getFullYear(), trip.getMonth(), 19), 'travel', 26400, 'Hotel');
+
+    Storage.save();
+  }
+
+  function removeExample() {
+    var m = data();
+    m.entries = m.entries.filter(function (e) { return !e.sample; });
+    Storage.save();
+  }
+
+  function renderExampleControls() {
+    var load = document.getElementById('money-example');
+    var drop = document.getElementById('money-example-drop');
+    var flag = document.getElementById('money-example-flag');
+    var ex = hasExample();
+
+    /* Offered only while there is nothing real to look at: once there
+       is, example data would only muddy it. */
+    load.hidden = ex || hasReal();
+    drop.hidden = !ex;
+    flag.hidden = !within(range(scope, offset)).some(function (e) { return e.sample; });
+  }
+
   function render() {
     if (!document.getElementById('money-view')) return;
     renderEntry();
     renderPeriod();
     renderSummary();
     renderTrend();
+    renderCompare();
     renderEntries();
+    renderExampleControls();
   }
 
   /* Wiring ------------------------------------------------------------------- */
@@ -603,9 +849,26 @@ var Money = (function () {
       b.addEventListener('click', function () {
         scope = this.getAttribute('data-mscope');
         offset = 0;
+        back = 1;
         focus = null;
         render();
       });
+    });
+
+    document.getElementById('money-against').addEventListener('change', function () {
+      back = Number(this.value) || 1;
+      renderCompare();
+    });
+
+    document.getElementById('money-example').addEventListener('click', function () {
+      loadExample();
+      render();
+    });
+
+    document.getElementById('money-example-drop').addEventListener('click', function () {
+      if (!window.confirm('Take out all the example spending? Anything you wrote down yourself stays.')) return;
+      removeExample();
+      render();
     });
 
     document.getElementById('money-prev').addEventListener('click', function () {

@@ -1,8 +1,8 @@
 {
   "name": "day-panel",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
-  "description": "A day panel and habit tracker that lives on your desktop.",
+  "description": "Your day, your habits, your notes and your spending, in one calm place on the desktop.",
   "main": "desktop/main.js",
   "scripts": {
     "start": "electron .",
@@ -22,7 +22,7 @@
   "license": "MIT",
   "build": {
     "appId": "com.dayPanel.app",
-    "productName": "Day Panel",
+    "productName": "Daybook",
     "directories": {
       "output": "release",
       "buildResources": "build"
@@ -36,7 +36,8 @@
       "!release/**",
       "!scripts/**",
       "!.repoboard/**",
-      "!.claude/**"
+      "!.claude/**",
+      "!.github/**"
     ],
     "npmRebuild": false,
     "win": {
@@ -62,13 +63,42 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Day Panel",
-      "uninstallDisplayName": "Day Panel",
+      "shortcutName": "Daybook",
+      "uninstallDisplayName": "Daybook",
       "deleteAppDataOnUninstall": false,
-      "artifactName": "DayPanel-Setup-${version}.${ext}"
+      "artifactName": "Daybook-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "DayPanel-${version}-portable.${ext}"
+      "artifactName": "Daybook-${version}-portable.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "blickff",
+        "repo": "plan_C",
+        "releaseType": "release"
+      }
+    ],
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "universal"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "public.app-category.productivity",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "artifactName": "Daybook-${version}-mac.${ext}"
+    },
+    "dmg": {
+      "title": "${productName} ${version}"
     }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9"
   }
 }

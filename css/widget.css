@@ -298,3 +298,21 @@
 }
 
 .wg .ring__inner i { margin-top: 10px; font-size: 8px; }
+
+/* A newer version is out. Small, but always there rather than waiting
+   for the pointer like the other buttons — it is the one thing in this
+   strip that is news. */
+.wg__upd {
+  flex: none;
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--invert-bg);
+  color: var(--invert-text);
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+}
+
+.wg__upd:disabled { opacity: 0.7; cursor: default; }

@@ -87,7 +87,7 @@ var Storage = (function () {
     } catch (err) {
       /* Corrupt or unreadable storage must not take the page down with it —
          a blank panel beats a blank screen. */
-      console.warn('Day Panel: stored data could not be read, starting fresh.', err);
+      console.warn('Daybook: stored data could not be read, starting fresh.', err);
       stored = null;
     }
 
@@ -165,7 +165,7 @@ var Storage = (function () {
     try {
       window.localStorage.setItem(KEY, JSON.stringify(state));
     } catch (err) {
-      console.warn('Day Panel: could not save.', err);
+      console.warn('Daybook: could not save.', err);
     }
 
     mirror();
@@ -193,7 +193,7 @@ var Storage = (function () {
     clearTimeout(vaultTimer);
     vaultTimer = setTimeout(function () {
       window.desktop.vault.write(JSON.stringify(state, null, 2)).catch(function (err) {
-        console.warn('Day Panel: could not write to the vault.', err);
+        console.warn('Daybook: could not write to the vault.', err);
       });
     }, 400);
   }
@@ -251,7 +251,7 @@ var Storage = (function () {
       try {
         incoming = JSON.parse(text);
       } catch (err) {
-        console.warn('Day Panel: the vault file is not readable JSON.', err);
+        console.warn('Daybook: the vault file is not readable JSON.', err);
         return done(false);
       }
 
@@ -284,7 +284,7 @@ var Storage = (function () {
       if (here > there) mirror();
       done(false);
     }).catch(function (err) {
-      console.warn('Day Panel: could not read the vault.', err);
+      console.warn('Daybook: could not read the vault.', err);
       done(false);
     });
   }
@@ -348,7 +348,7 @@ var Storage = (function () {
 
     var link = document.createElement('a');
     link.href = url;
-    link.download = 'day-panel-' + today() + '.json';
+    link.download = 'daybook-' + today() + '.json';
     link.click();
 
     /* Revoking straight away can cancel the download in some browsers. */
@@ -366,7 +366,7 @@ var Storage = (function () {
 
     if (!incoming || typeof incoming !== 'object' ||
         !Array.isArray(incoming.habits) || typeof incoming.log !== 'object') {
-      return 'That does not look like a Day Panel backup.';
+      return 'That does not look like a Daybook backup.';
     }
 
     state = normalise(incoming);

@@ -21,17 +21,19 @@ const { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu,
 const fs = require('node:fs');
 const path = require('node:path');
 const vault = require('./vault');
+const updates = require('./updates');
 
 const ROOT = path.join(__dirname, '..');
 
 /* Pinned rather than left to Electron.
 
-   Electron names this folder after the product, so an installed build
-   called "Day Panel" would look in one place and a development run
-   called "day-panel" in another — two profiles, two sets of habits,
-   and no hint to the person that their history is still on the disk
-   under a different name. Naming it once here keeps the two the same
-   for good. Must run before the app is ready. */
+   Electron names this folder after the product, so every rename of the
+   product would move where it looks for the data. The app started as
+   "Day Panel" and is now "Daybook"; left to Electron, 1.1.0 would have
+   opened onto an empty profile while everyone's history sat untouched
+   in the old folder, with nothing on screen to say so. The folder keeps
+   its first name for good, whatever the app is called. Must run before
+   the app is ready. */
 app.setPath('userData', path.join(app.getPath('appData'), 'day-panel'));
 const STATE_FILE = () => path.join(app.getPath('userData'), 'window-state.json');
 
@@ -224,7 +226,7 @@ function openPanel() {
   panel = new BrowserWindow({
     width: 1100,
     height: 820,
-    title: 'Day Panel',
+    title: 'Daybook',
     backgroundColor: '#08080a',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -253,12 +255,12 @@ function createTray() {
   if (icon.isEmpty()) return;
 
   tray = new Tray(icon);
-  tray.setToolTip('Day Panel');
+  tray.setToolTip('Daybook');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Show the widget', click: showWidget },
     { label: 'Open the panel', click: openPanel },
     { type: 'separator' },
-    { label: 'Quit Day Panel', click: () => { app.isQuitting = true; app.quit(); } }
+    { label: 'Quit Daybook', click: () => { app.isQuitting = true; app.quit(); } }
   ]));
 
   tray.on('click', () => {
@@ -327,6 +329,11 @@ function wireMessages() {
 
   ipcMain.handle('open-external', (_event, url) => shell.openExternal(url));
 
+  ipcMain.handle('app-version', () => app.getVersion());
+  ipcMain.handle('update-state', () => updates.current());
+  ipcMain.handle('update-check', () => updates.check());
+  ipcMain.handle('update-act', () => updates.act());
+
   /* The page decides when to send this, because the page is the only
      side that knows whether the day is finished. */
   ipcMain.handle('notify', (_event, title, body) => {
@@ -351,7 +358,7 @@ function wireMessages() {
 
   ipcMain.handle('vault-pick', async () => {
     const picked = await dialog.showOpenDialog({
-      title: 'Choose a folder for your Day Panel data',
+      title: 'Choose a folder for your Daybook data',
       properties: ['openDirectory', 'createDirectory'],
       buttonLabel: 'Keep data here'
     });
@@ -391,11 +398,36 @@ app.whenReady().then(async () => {
   /* No File / Edit / View / Window / Help. Electron puts that bar on
      every window by default, and not one of its entries does anything
      this app needs — it is a strip of chrome announcing that this is a
-     browser in a coat. */
-  Menu.setApplicationMenu(null);
+     browser in a coat.
+
+     Except on a Mac, where removing the menu would quietly break more
+     than it tidies: there, Cmd+C, Cmd+V and Cmd+Q are not handled by the
+     page but by the menu, and without one you cannot paste an amount into
+     the money tab or quit with the keyboard. The Mac menu lives in the
+     bar at the top of the screen rather than in the window, so keeping
+     a minimal one costs the window nothing. */
+  if (process.platform === 'darwin') {
+    Menu.setApplicationMenu(Menu.buildFromTemplate([
+      { role: 'appMenu' },
+      { role: 'editMenu' },
+      { role: 'windowMenu' }
+    ]));
+  } else {
+    Menu.setApplicationMenu(null);
+  }
 
   origin = serve();
   wireMessages();
+
+  /* Every open window hears about a new version as soon as the main
+     process does, so the button can appear wherever the person is
+     looking. */
+  updates.onChange((state) => {
+    [widget, panel].forEach((win) => {
+      if (win && !win.isDestroyed()) win.webContents.send('update-state', state);
+    });
+  });
+  updates.start();
   createTray();
   createWidget();
 
