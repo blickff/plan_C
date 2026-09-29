@@ -18,6 +18,9 @@ var Storage = (function () {
       tasks: [],
       countdowns: [],
       notes: {},
+      /* Spending: { currency, categories, entries }. Filled in by
+         money.js the first time it is opened. */
+      money: {},
       settings: {}
     };
   }

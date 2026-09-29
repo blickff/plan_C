@@ -120,6 +120,26 @@ two-proportion z-test at z ≥ 3. Without that last gate a panel with four
 habits invents a pattern almost every time. When it has nothing to say
 it says what it is still counting towards.
 
+**Money.** A tab of its own for what you spend. Pick a category, type
+the amount — `12.50`, `12,50` and `1 240,50` all work — add a word about
+what it was if you like, and press Enter. The category stays picked, so
+three coffees in a row are three quick entries.
+
+Below that, Day / Week / Month / Year with arrows to step back. The total
+leads, with how it compares: while a period is still running it is set
+against the same stretch of the one before — this month so far against
+last month *to the same date* — because comparing a half-finished month
+with a whole one says "you spent less" every day until the month ends.
+A ring shows where it went, one piece highlighted and the rest in grey;
+point at a category in the list beside it and the centre says what share
+it took. Bars show the periods before, the current one in the accent.
+
+The ring is grey on purpose. Measured against these card colours, no
+more than three hues stay reliably tell-apart-able once any two
+categories can land side by side — and a spending list needs six or
+eight. So the names are in the list, where colour never has to carry
+them. Amounts are kept in whole cents, so nothing drifts.
+
 **A reminder.** Settings → *Daily reminder*: one notification a day, at
 an hour you pick, and only if the day is unfinished when it arrives.
 
@@ -162,6 +182,7 @@ js/history.js    the grid and the figures
 js/notes.js      the notes archive
 js/panel.js      tasks, countdowns, the note
 js/insights.js   the patterns, and the rules for staying quiet
+js/money.js      spending: entry, the ring, the trend, categories
 js/weather.js    Open-Meteo
 js/widget.js     the widget, and the daily reminder
 js/main.js       clock, theme, menu, views

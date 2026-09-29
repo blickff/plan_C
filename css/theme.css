@@ -47,6 +47,13 @@
   --lv-1: #eab543;
   --lv-2: #2f8f52;
   --cell-0: #e7e7eb;
+
+  /* Money charts. One highlighted mark in the accent, everything else in
+     this grey. Deliberately not a colour per category: measured against
+     these card surfaces, no more than three hues stay tell-apart-able
+     when any two categories can end up side by side in the ring, and a
+     spending list needs six or eight. */
+  --viz-muted: #cfcfd5;
 }
 
 /* Text is #e8e8ec rather than pure white: #ffffff on near-black glares.
@@ -79,6 +86,8 @@
   --lv-1: #d1a03c;
   --lv-2: #2c8a51;
   --cell-0: #26262c;
+
+  --viz-muted: #3d3d3d;
 }
 
 body,

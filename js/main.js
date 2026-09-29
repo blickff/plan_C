@@ -561,6 +561,7 @@ function start() {
   Panel.start();
   Notes.start();
   Insights.render();
+  Money.start();
   Weather.start();
 
   wireChrome();
@@ -580,6 +581,7 @@ function start() {
     Habits.render();
     Panel.render();
     Notes.render();
+    Money.render();
     renderTheme();
     showReplacedNote();
   });
@@ -595,6 +597,7 @@ function start() {
     Panel.render();
     Notes.render();
     if (typeof Insights !== 'undefined') Insights.render();
+    Money.render();
   });
 
   setInterval(renderClock, 1000);

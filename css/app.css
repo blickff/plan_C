@@ -1265,3 +1265,318 @@ body {
 }
 
 .waiting__row:last-child { border-bottom: 0; }
+
+/* Money ---------------------------------------------------------------
+   Same cards, same pills, same one-accent-on-grey as the rest of the
+   panel. The charts follow the data-viz rules: thin marks, a gap of card
+   colour between pieces, one highlighted mark and the rest in grey, and
+   every number readable in the list without hovering anything. */
+
+/* Writing it down */
+
+.mentry .card__head { margin-bottom: 14px; }
+.mentry__today { font-size: 12px; }
+
+.mchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.mchip {
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.14s ease, color 0.14s ease, border-color 0.14s ease;
+}
+
+.mchip:hover { border-color: var(--text-faint); color: var(--text); }
+
+.mchip.is-on {
+  background: var(--invert-bg);
+  border-color: var(--invert-bg);
+  color: var(--invert-text);
+}
+
+.mform {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The amount is the one thing that has to be typed every time, so it is
+   the biggest box and its digits line up. */
+.mform__amount {
+  width: 128px;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.mentry__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.mcurrency { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.mcurrency .input--mode { width: 86px; }
+
+.medit { margin-top: 12px; }
+.medit__list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; margin-bottom: 10px; }
+.mcat { display: flex; align-items: center; gap: 6px; }
+.mcat .input { padding: 6px 12px; font-size: 13px; }
+
+/* The period */
+
+.mfilter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 22px 0 12px;
+}
+
+.mfilter__title { min-width: 150px; text-align: center; }
+
+.mgrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 820px) {
+  .mgrid { grid-template-columns: 1fr; }
+}
+
+/* The total, and where it went */
+
+.msummary .label { margin-bottom: 6px; }
+
+/* The one number this page leads with. Proportional figures: tabular
+   ones space a large "1,111" out like a ransom note. */
+.mtotal {
+  margin: 0;
+  font-size: 48px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.mcmp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 18px;
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.mcmp__arrow { font-size: 14px; color: var(--text); }
+
+.msplitwrap {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+@media (max-width: 520px) {
+  .msplitwrap { grid-template-columns: 1fr; justify-items: center; }
+}
+
+.mringbox { position: relative; width: 150px; height: 150px; flex: none; }
+.mringbox #money-ring, .mring { display: block; width: 100%; height: 100%; }
+
+.mring__slice {
+  fill: none;
+  stroke: var(--viz-muted);
+  stroke-width: 14;
+  cursor: pointer;
+  transition: stroke 0.15s ease;
+}
+
+.mring__slice.is-focus { stroke: var(--accent); }
+
+.mring__empty {
+  fill: none;
+  stroke: var(--cell-0);
+  stroke-width: 14;
+}
+
+/* The centre describes whichever piece is highlighted. */
+.mcentre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.mcentre__share { font-size: 24px; font-weight: 600; letter-spacing: -0.02em; line-height: 1; }
+
+.mcentre__label {
+  max-width: 88px;
+  margin-top: 4px;
+  overflow: hidden;
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The list: legend and table in one. */
+
+.msplits { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.msplit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 38px;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.msplit:hover,
+.msplit:focus-visible,
+.msplit.is-focus { background: var(--accent-bg); }
+
+.msplit__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.msplit__amount,
+.msplit__share {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.msplit__share { color: var(--text-faint); font-size: 12px; }
+
+.msplit__bar {
+  grid-column: 1 / -1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--cell-0);
+  overflow: hidden;
+}
+
+.msplit__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--viz-muted);
+}
+
+.msplit.is-focus .msplit__bar > span { background: var(--accent); }
+
+/* The trend */
+
+.mtrend { display: flex; flex-direction: column; }
+.mread { margin: 4px 0 14px; font-size: 12px; min-height: 16px; }
+
+.mbars {
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  flex: 1;
+  min-height: 150px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mbar {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mbar__track {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+/* Thin, rounded only at the top, sitting on the baseline. */
+.mbar__fill {
+  display: block;
+  width: min(22px, 70%);
+  border-radius: 4px 4px 0 0;
+  background: var(--viz-muted);
+  transition: background-color 0.15s ease, height 0.25s ease;
+}
+
+.mbar:hover .mbar__fill,
+.mbar:focus-visible .mbar__fill { background: var(--text-faint); }
+.mbar.is-current .mbar__fill { background: var(--accent); }
+
+.mbar__tick {
+  margin: 6px 0 -22px;
+  overflow: hidden;
+  font-size: 10px;
+  color: var(--text-faint);
+  text-align: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mbar.is-current .mbar__tick { color: var(--text); font-weight: 600; }
+
+/* The ticks hang below the baseline; this is their room, so the card
+   grows to fit them instead of clipping them. */
+.mtrend { padding-bottom: 36px; }
+
+/* What was written down */
+
+.mlist { margin: 6px 0 0; padding: 0; list-style: none; }
+
+.mrow {
+  display: grid;
+  grid-template-columns: 62px minmax(0, 1fr) auto 24px;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+
+.mrow:last-child { border-bottom: 0; }
+.mrow__when { font-size: 12px; color: var(--text-faint); }
+.mrow__what { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.mrow__cat { flex: none; }
+.mrow__note { overflow: hidden; color: var(--text-dim); font-size: 13px; white-space: nowrap; text-overflow: ellipsis; }
+.mrow__amount { font-variant-numeric: tabular-nums; }
+.mrow .task__drop { opacity: 0.4; }
+.mrow:hover .task__drop { opacity: 1; }

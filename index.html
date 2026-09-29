@@ -18,6 +18,7 @@
       <button class="nav__item is-active" type="button" data-view="dashboard">Dashboard</button>
       <button class="nav__item" type="button" data-view="history">History</button>
       <button class="nav__item" type="button" data-view="notes">Notes</button>
+      <button class="nav__item" type="button" data-view="money">Money</button>
       <button class="nav__item" type="button" data-view="settings">Settings</button>
     </nav>
   </aside>
@@ -155,6 +156,90 @@
       </div>
     </section>
 
+    <!-- Money ----------------------------------------------------- -->
+    <section class="view" data-view="money" id="money-view" hidden>
+
+      <!-- Writing down what was just spent comes first: it is the thing
+           done every day. Looking at where it all went comes after. -->
+      <div class="card mentry">
+        <div class="card__head">
+          <p class="card__title">Spent something?</p>
+          <span class="mentry__today muted" id="money-today"></span>
+        </div>
+
+        <div class="mchips" id="money-cats"></div>
+
+        <form class="mform" id="money-form">
+          <input class="input mform__amount" id="money-amount" type="text" inputmode="decimal"
+                 placeholder="0.00" autocomplete="off" aria-label="Amount">
+          <input class="input input--wide" id="money-note" type="text"
+                 placeholder="What was it? (optional)" autocomplete="off">
+          <input class="input input--date" id="money-date" type="date" aria-label="Date">
+          <button class="pill pill--solid" type="submit">Add</button>
+        </form>
+        <p class="custom__error" id="money-error"></p>
+
+        <div class="mentry__foot">
+          <button class="chipbtn" type="button" id="money-edit-toggle">Edit categories</button>
+          <label class="mcurrency muted">Currency
+            <select class="input input--mode" id="money-currency"></select>
+          </label>
+        </div>
+
+        <div class="medit" id="money-edit" hidden>
+          <div class="medit__list" id="money-edit-list"></div>
+          <form class="row" id="money-newcat">
+            <input class="input input--wide" id="money-newcat-name" type="text"
+                   placeholder="New category" autocomplete="off">
+            <button class="pill" type="submit">Add</button>
+          </form>
+          <p class="custom__error" id="money-newcat-error"></p>
+        </div>
+      </div>
+
+      <!-- One row that sets the period for everything below it. -->
+      <div class="mfilter">
+        <div class="seg" role="group" aria-label="Period">
+          <button class="seg__btn" type="button" data-mscope="day">Day</button>
+          <button class="seg__btn" type="button" data-mscope="week">Week</button>
+          <button class="seg__btn" type="button" data-mscope="month">Month</button>
+          <button class="seg__btn" type="button" data-mscope="year">Year</button>
+        </div>
+        <div class="period">
+          <button class="period__arrow" type="button" id="money-prev" aria-label="Earlier">&#8249;</button>
+          <p class="card__title mfilter__title" id="money-title"></p>
+          <button class="period__arrow" type="button" id="money-next" aria-label="Later">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="mgrid">
+        <div class="card msummary" id="money-summary">
+          <p class="label">Spent</p>
+          <p class="mtotal" id="money-total"></p>
+          <p class="mcmp" id="money-compare"></p>
+
+          <div class="msplitwrap">
+            <div class="mringbox">
+              <div id="money-ring"></div>
+              <div class="mcentre" id="money-centre"></div>
+            </div>
+            <div class="msplits" id="money-split"></div>
+          </div>
+        </div>
+
+        <div class="card mtrend">
+          <p class="card__title" id="money-trend-title"></p>
+          <p class="mread muted" id="money-read"></p>
+          <div class="mbars" id="money-bars"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <p class="card__title">Written down</p>
+        <div class="mlistwrap" id="money-list"></div>
+      </div>
+    </section>
+
     <!-- Settings -------------------------------------------------- -->
     <section class="view" data-view="settings" hidden>
       <div class="card">
@@ -254,6 +339,7 @@
   <script src="js/notes.js"></script>
   <script src="js/panel.js"></script>
   <script src="js/insights.js"></script>
+  <script src="js/money.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
