@@ -586,14 +586,18 @@ var Money = (function () {
         escapeHtml(cmp.text);
     }
 
-    document.getElementById('money-ring').innerHTML = ringSvg(s.ring, total, focusId);
+    /* Only a piece being pointed at is marked. At rest the centre still
+       names the biggest, but nothing is lit — lighting it looked as if
+       the pointer were still resting on it. */
+    var pointing = focus !== null && known;
+    document.getElementById('money-ring').innerHTML = ringSvg(s.ring, total, pointing ? focusId : null);
 
     /* With colours on, pointing at a category fades the others rather
        than painting the chosen one black — the colour is what the person
        asked to see. */
     var summaryEl = document.getElementById('money-summary');
     summaryEl.classList.toggle('is-colour', coloured());
-    summaryEl.classList.toggle('is-pointing', focus !== null);
+    summaryEl.classList.toggle('is-pointing', pointing);
 
     var centre = document.getElementById('money-centre');
     if (!total) {
@@ -624,7 +628,7 @@ var Money = (function () {
     list.innerHTML = s.all.map(function (row) {
       var sliceId = sliceOf(row.id);
       var share = Math.round((row.cents / total) * 100);
-      var lit = row.id === focusCat || (focusCat === '__rest' && inTail[row.id]);
+      var lit = pointing && (row.id === focusCat || (focusCat === '__rest' && inTail[row.id]));
       return '<button class="msplit' + (lit ? ' is-focus' : '') + '" type="button"' +
         ' style="--tone:' + tones[sliceId] + '"' +
         ' data-slice="' + escapeHtml(row.id) + '">' +
@@ -1144,9 +1148,9 @@ var Money = (function () {
     summary.addEventListener('click', point);
 
     /* Pointing is temporary. Once the pointer leaves — or the keyboard
-       focus moves out — the highlight goes back to the biggest piece,
-       rather than staying stuck on whatever was last passed over on the
-       way out. */
+       focus moves out — the highlight goes away and the centre goes back
+       to the biggest piece, rather than staying stuck on whatever was last
+       passed over on the way out. */
     function release() {
       if (focus === null) return;
       focus = null;
