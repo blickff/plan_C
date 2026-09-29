@@ -210,15 +210,31 @@ function renderTheme() {
    disagree. */
 var lastWindowTheme = null;
 
+var menuOpen = false;
+
 function tellWindowTheme(theme) {
   if (!window.desktop || !window.desktop.setTheme) return;
+  theme = theme || document.documentElement.getAttribute('data-theme');
   var css = getComputedStyle(document.documentElement);
   var bg = css.getPropertyValue('--bg').trim();
   var text = css.getPropertyValue('--text').trim();
+  /* With the menu open the page is dimmed, and Windows' own buttons in
+     the corner must be too, or they stay a bright block at the top. The
+     same black at 40% the scrim lays over the page. */
+  if (menuOpen) { bg = dimmed(bg); text = dimmed(text); }
   var key = theme + bg + text;
   if (key === lastWindowTheme) return;
   lastWindowTheme = key;
   window.desktop.setTheme({ theme: theme, bg: bg, text: text });
+}
+
+function dimmed(hex) {
+  var m = /^#([0-9a-f]{6})$/i.exec(hex);
+  if (!m) return hex;
+  var n = parseInt(m[1], 16);
+  return '#' + [n >> 16, (n >> 8) & 255, n & 255].map(function (c) {
+    return ('0' + Math.round(c * 0.6).toString(16)).slice(-2);
+  }).join('');
 }
 
 /* The dashboard's blocks, in the order the person put them -------------
@@ -337,6 +353,8 @@ function openMenu(open) {
     sidebar.setAttribute('hidden', '');
     scrim.setAttribute('hidden', '');
   }
+  menuOpen = !!open;
+  tellWindowTheme();
 }
 
 /* The menu always starts closed — it is a way in, not a fixture. */

@@ -1914,23 +1914,26 @@ body.is-editing #board > .block {
   top: 0;
   right: 0;
   left: 0;
-  z-index: 40;
-  display: flex;
-  align-items: center;
+  z-index: 22;
   height: 36px;
-  padding-left: 16px;
   background: var(--bg);
   -webkit-app-region: drag;
   transition: background-color var(--fade);
 }
 
-.titlebar__name { font-size: 12px; color: var(--text-faint); }
+/* The strip carries no name: the window's own caption already says it,
+   and a word up there only competes with the page.
 
+   Above the pinned top bar (20), but under the dimming (25) and the menu
+   (30), which both run to the very top of the window. With the menu
+   open there is no bright line left across it; main.js dims Windows'
+   buttons in the corner to match. While the menu is open the strip
+   stops being a drag handle, so a click on it closes the menu like a
+   click anywhere else on the dimmed page. */
 .is-desktop.is-win32 body { padding-top: 36px; }
 .is-desktop.is-win32 .topbar { top: 36px; }
-.is-desktop.is-win32 .sidebar,
-.is-desktop.is-win32 .scrim { top: 36px; }
-.is-desktop.is-win32 .sidebar { height: calc(100% - 36px); }
+.is-desktop.is-win32 .sidebar { padding-top: 62px; }
+.is-desktop.is-win32:has(#scrim:not([hidden])) .titlebar { -webkit-app-region: no-drag; }
 
 /* Scrollbars ----------------------------------------------------------------
    Thin, rounded and in the theme's greys, instead of the Windows grey
@@ -1959,7 +1962,7 @@ body.is-editing #board > .block {
 
 /* The menu's theme switch ---------------------------------------------------- */
 
-.sidebar { display: flex; flex-direction: column; }
+.sidebar { display: flex; flex-direction: column; user-select: none; }
 
 .sidebar__foot {
   margin-top: auto;
