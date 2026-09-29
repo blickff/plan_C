@@ -9,111 +9,54 @@
   "milestones": [],
   "cards": [
     {
-      "id": "2ea982ad-8642-4211-933d-c8a9484215eb",
-      "number": 6,
-      "column": "Todo",
-      "position": 5,
-      "title": "Этап 6 — выводы на пересечении данных",
-      "description": "То, ради чего панель и трекер объединялись: панель знает контекст дня, трекер знает факты, на пересечении рождаются наблюдения о себе. Этого нет в готовых трекерах.",
+      "id": "045adaee-10c3-4109-8800-8157e354f567",
+      "number": 10,
+      "column": "Done",
+      "position": 9,
+      "title": "Календарь во всю ширину и переход в месяц из года",
+      "description": "Перекладка дашборда по просьбе: календарь уезжает вниз на всю ширину, наверху справа вместо него встают задачи. Плюс в годовом виде месяцы стали кнопками — раньше на них нельзя было нажать, и год был тупиком.",
       "assignee": null,
       "dueDate": null,
       "checklist": [
         {
-          "id": "2b707c4f-58f9-4585-b90d-75185c0d467f",
-          "text": "Погода × привычка",
+          "id": "f1bce0fd-af98-4171-9bb5-4c3b2744b1a7",
+          "text": "Календарь вниз на всю ширину",
           "done": false,
-          "notes": "Сравнить долю выполнения в дождливые и ясные дни. Источник — код погоды, сохранённый в log на этапе 4.",
+          "notes": "Был узкой карточкой справа, неделя в нём читалась плохо. Теперь отдельная карточка на всю страницу, клетка выросла с 25 до 38 пикселей по высоте — неделя читается одной строкой поперёк.",
           "assignee": null,
           "children": [],
           "comments": []
         },
         {
-          "id": "5da6f512-8d7d-4599-a474-5a8753d0a6af",
-          "text": "День недели × привычка",
+          "id": "b42419fc-40ca-4a23-a714-28bcd8feb4bb",
+          "text": "Задачи на освободившееся место",
           "done": false,
-          "notes": "Найти самый провальный день недели.",
+          "notes": "Верхний ряд теперь: широкая карточка серии и задачи дня. Внизу под календарём — отсчёты и заметка равными половинами.",
           "assignee": null,
           "children": [],
           "comments": []
         },
         {
-          "id": "be200f21-f4c4-424c-858c-30ec4337bd20",
-          "text": "Динамика за месяц",
+          "id": "bbd6d985-0761-4429-85bc-6789c6455f8a",
+          "text": "Месяцы в годовом виде кликабельны",
           "done": false,
-          "notes": "Выполнение за последний месяц против предыдущего: растёт или падает.",
+          "notes": "Каждый месяц — кнопка, открывающая его календарь со всеми цветами. До этого годовой вид был тупиком: видно двенадцать прямоугольников, а провалиться внутрь нельзя.",
           "assignee": null,
           "children": [],
           "comments": []
         },
         {
-          "id": "8ed59810-c9da-4bb6-8eb3-8f9ed4e101f9",
-          "text": "Порог достоверности",
+          "id": "61a96935-e3a0-4945-86bf-0c5537472fb2",
+          "text": "Листание стрелками",
           "done": false,
-          "notes": "**Обязательное правило.** Вывод не показывается, пока в каждой сравниваемой группе меньше 10 дней или разница меньше 25%. Иначе «в дождь ты ленивее» окажется совпадением на трёх наблюдениях. Панель, которая врёт уверенным тоном, хуже панели, которая молчит.",
-          "assignee": null,
-          "children": [],
-          "comments": []
-        },
-        {
-          "id": "f71b7eb4-c8cf-4ff9-a2f0-a509844a80f5",
-          "text": "Проверка этапа",
-          "done": false,
-          "notes": "Подготовить в log заведомо перекошенные данные — вывод появился. Урезать выборку до 5 дней — вывод исчез.",
-          "assignee": null,
-          "children": [],
-          "comments": []
-        }
-      ],
-      "labels": [],
-      "branches": [],
-      "pullRequests": [],
-      "issues": [],
-      "priority": 4,
-      "milestone": null,
-      "markdownTaskId": null,
-      "updatedAt": 1790543449687,
-      "deletedAt": null
-    },
-    {
-      "id": "591c3440-7302-469e-9a6e-57be97958bf9",
-      "number": 7,
-      "column": "Todo",
-      "position": 6,
-      "title": "Этап 7 — виджет на рабочий стол",
-      "description": "Обёртка готовой панели в Electron: маленькое окно на рабочем столе, где видны сегодняшние привычки и можно их отмечать. Идёт последним, потому что требует npm и сборки — к этому моменту уже есть продукт, ради которого не жалко разобраться.",
-      "assignee": null,
-      "dueDate": null,
-      "checklist": [
-        {
-          "id": "cc43abaa-0b80-4687-8827-b30ee39cba33",
-          "text": "package.json и Electron",
-          "done": false,
-          "notes": "Первое место в проекте, где нужен терминал и npm install. До этого всё работало двойным кликом.",
-          "assignee": null,
-          "children": [],
-          "comments": []
-        },
-        {
-          "id": "489ff2f4-f828-4f52-bc85-30641d173992",
-          "text": "Окно виджета",
-          "done": false,
-          "notes": "desktop/main.js: frame: false, transparent: true, размер примерно с заметку. Показывает сегодняшние привычки, серию и погоду, отмечать можно прямо в нём.",
+          "notes": "В месячном виде шаг месяц, в годовом — год. Выбранный период хранится в settings.periodKey отдельно от сегодняшней даты.",
           "assignee": null,
           "children": [
             {
-              "id": "75c7824d-9b4e-466e-ad03-6451115c1fe0",
-              "text": "Поведение относительно других окон",
+              "id": "e0c5fc3d-8af5-43e9-83df-2184d56e61c5",
+              "text": "Вперёд не дальше текущего месяца",
               "done": false,
-              "notes": "По умолчанию закреплён на рабочем столе и не мешает. В настройках — переключатель «always on top» и горячая клавиша для быстрого вызова.",
-              "assignee": null,
-              "children": [],
-              "comments": []
-            },
-            {
-              "id": "a3f9d705-d8cd-4b3d-b773-81890f668164",
-              "text": "Перетаскивание и память позиции",
-              "done": false,
-              "notes": "-webkit-app-region: drag на шапке виджета. Важно: на кнопках внутри поставить no-drag, иначе они перестанут нажиматься. Позицию и размер сохранять между запусками.",
+              "notes": "В будущем смотреть не на что, а кнопка, ведущая в никуда, сбивает с толку. Стрелка вперёд гаснет на текущем месяце.",
               "assignee": null,
               "children": [],
               "comments": []
@@ -122,37 +65,10 @@
           "comments": []
         },
         {
-          "id": "b1832f79-9f36-4ebd-849f-3e1b0248519d",
-          "text": "Полная панель вторым окном",
+          "id": "7c9e0daa-335f-44ff-a349-cd06eb4a64f8",
+          "text": "Проверка",
           "done": false,
-          "notes": "Двойной клик по виджету открывает тот же index.html в обычном окне. Код один, хранилище одно.",
-          "assignee": null,
-          "children": [],
-          "comments": []
-        },
-        {
-          "id": "ebb96aed-f5fc-490e-b059-a488b0c2b440",
-          "text": "Автозапуск",
-          "done": false,
-          "notes": "app.setLoginItemSettings({ openAtLogin: true }).",
-          "assignee": null,
-          "children": [],
-          "comments": []
-        },
-        {
-          "id": "27d02fc0-cbe0-4169-bbb1-e7e98ed9ac64",
-          "text": "Перенос данных из браузера",
-          "done": false,
-          "notes": "Ловушка: у окна Electron собственное хранилище, данные из браузера туда сами не попадут. Закрывается экспортом и импортом из этапа 3: один раз выгрузить файл и загрузить в приложении.",
-          "assignee": null,
-          "children": [],
-          "comments": []
-        },
-        {
-          "id": "001d78bd-8aa4-42f3-9f64-c78161dab6a5",
-          "text": "Проверка этапа",
-          "done": false,
-          "notes": "Перезагрузить компьютер: виджет поднялся сам и встал на прежнее место. Отметить привычку в виджете, открыть полную панель — значение то же.",
+          "notes": "Пройти листание в обе стороны, открыть месяц из года, упереться в текущий месяц и убедиться, что стрелка погасла.",
           "assignee": null,
           "children": [],
           "comments": []
@@ -162,17 +78,627 @@
       "branches": [],
       "pullRequests": [],
       "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790582243993,
+      "deletedAt": null
+    },
+    {
+      "id": "2ea276af-170b-49c9-9d28-d6507520855c",
+      "number": 13,
+      "column": "Done",
+      "position": 14,
+      "title": "Город сам, метки в календаре, окно дня и архив заметок",
+      "description": "Четыре просьбы за раз: спрашивать разрешение и определять город самому, помечать в календаре даты с отсчётами, открывать прошедший день целиком, и дать способ возвращаться к старым заметкам — без него писать их незачем.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "6c83fc18-5830-44a1-bff8-87829dbef65a",
+          "text": "Спросить и определить город",
+          "done": false,
+          "notes": "Плашка при первом запуске, пока город не задан. До ответа не делается ни одного запроса: выяснять чьё-то местоположение молча нельзя. Ответ запоминается, второй раз не спрашивает.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "301aff4f-7810-4616-8745-bcc145008ab9",
+              "text": "Два способа по очереди",
+              "done": false,
+              "notes": "Сначала геолокация устройства (точнее, но в Electron требует ключ Google и обычно отказывает), затем ipwho.is — без ключа и регистрации, точности до города погоде хватает. Координаты без названия доименовываются через Open-Meteo, чтобы в шапке стоял город, а не пара чисел.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "c1082e65-fbdc-460f-abbc-63b508ac5151",
+          "text": "Метки в календаре",
+          "done": false,
+          "notes": "Точка на дне, к которому что-то привязано: дата отсчёта, задачи или заметка. В подсказке название события. Без этого календарь показывал только как прошёл день, но не что на него назначено.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "8ac376a1-6aa1-48e4-abc6-e549f2f2f8cf",
+          "text": "Окно дня",
+          "done": false,
+          "notes": "js/dayview.js. Нажатие на дату открывает заметку, задачи, отсчёты и привычки того дня с процентом.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "5b9ea34e-c552-40c7-9f41-2792382b0c16",
+              "text": "Будущие дни",
+              "done": false,
+              "notes": "Открываются только если на них что-то есть — отсчёт как раз ставится на будущее. При этом не показывают ни процент, ни привычки: день, который не наступил, не есть день с нулём, и столбик нулей читался бы как провал.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            },
+            {
+              "id": "bc7de45d-974c-434e-8f7a-14424da0317a",
+              "text": "Привычки только существовавшие",
+              "done": false,
+              "notes": "Привычка, созданная позже открытого дня, не показывается — иначе читалась бы как пропуск, которого не было.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "6ece2073-593f-42ca-90ee-2517f1ae4bed",
+          "text": "Архив заметок",
+          "done": false,
+          "notes": "Отдельная вкладка Notes в меню: все заметки по датам сверху вниз и поиск по тексту. Нажатие на заметку открывает весь тот день, а не только текст: написанное обычно имеет смысл рядом с тем, что тогда происходило.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "0b849ba0-5a84-4e03-a68e-0483557a9bc8",
+              "text": "Подсветка найденного",
+              "done": false,
+              "notes": "Совпавшие слова выделяются, чтобы было видно, почему заметка нашлась. Поиск по индексу, а не регуляркой: запрос — произвольный текст, и одна скобка сломала бы выражение.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "dd572b9b-abf2-478c-b8de-bb97f9258094",
+          "text": "Проверка",
+          "done": false,
+          "notes": "Всё прогнано в браузере на подготовленных данных.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598881338,
+      "deletedAt": null
+    },
+    {
+      "id": "2ea982ad-8642-4211-933d-c8a9484215eb",
+      "number": 6,
+      "column": "Done",
+      "position": 6,
+      "title": "Этап 6 — выводы на пересечении данных",
+      "description": "То, ради чего панель и трекер объединялись: панель знает контекст дня, трекер знает факты, на пересечении рождаются наблюдения о себе. Этого нет в готовых трекерах.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "2b707c4f-58f9-4585-b90d-75185c0d467f",
+          "text": "Погода × привычка",
+          "done": true,
+          "notes": "Сравнить долю выполнения в дождливые и ясные дни. Источник — код погоды, сохранённый в log на этапе 4.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "На реалистичных данных за 100 дней: «Run — You manage it on 11% of wet days, against 82% of dry ones», подпись «39 wet days, 60 dry». Дни без записанной погоды в сравнение не берутся вовсе: отсутствие записи означает, что панель в тот день не открывали, а не что было ясно.",
+            "at": 1790550585718
+          }
+        },
+        {
+          "id": "5da6f512-8d7d-4599-a474-5a8753d0a6af",
+          "text": "День недели × привычка",
+          "done": true,
+          "notes": "Найти самый провальный день недели.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "«Language practice — Sunday is the weak spot: 7%, against 81% on other days», подпись «15 Sundays on record». На синтетическом наборе с проваленными понедельниками выдал «Monday is the weak spot: 0%, against 94%». Худший день сравнивается со всеми остальными в сумме, а не с лучшим отдельным днём — иначе одна удачная пятница задирала бы планку и любой день казался бы провальным.",
+            "at": 1790550585731
+          }
+        },
+        {
+          "id": "be200f21-f4c4-424c-858c-30ec4337bd20",
+          "text": "Динамика за месяц",
+          "done": true,
+          "notes": "Выполнение за последний месяц против предыдущего: растёт или падает.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Последние 30 дней против предыдущих 30. На наборе с явным улучшением выдал «Picking up: 90% this past month, against 10% the month before». Формулировка меняется на «Slipping», когда движение вниз.",
+            "at": 1790550600137
+          }
+        },
+        {
+          "id": "8ed59810-c9da-4bb6-8eb3-8f9ed4e101f9",
+          "text": "Порог достоверности",
+          "done": true,
+          "notes": "**Обязательное правило.** Вывод не показывается, пока в каждой сравниваемой группе меньше 10 дней или разница меньше 25%. Иначе «в дождь ты ленивее» окажется совпадением на трёх наблюдениях. Панель, которая врёт уверенным тоном, хуже панели, которая молчит.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "10 дней в каждой сравниваемой группе и разрыв не меньше 25 процентных пунктов. Проверено тремя подготовленными наборами: (А) сильный перекос на 60 днях — вывод появился; (Б) ровно та же картина, но 8 дней — молчит; (В) 60 дней, но разница около 10 пунктов — молчит. Отдельно: привычка, созданная три дня назад, не порождает ни одного утверждения.\n\nЕщё одна тонкость, без которой пороги были бы обманом: обход идёт по календарю, а не по ключам лога. День без записи — это день, когда привычка не выполнена, и если считать только записанные дни, в выборку попали бы одни удачные.\n\nСегодняшний день из всех расчётов исключён: он не закончился, и засчитывать его как провал значило бы каждое утро занижать все цифры.",
+            "at": 1790550585698
+          }
+        },
+        {
+          "id": "f71b7eb4-c8cf-4ff9-a2f0-a509844a80f5",
+          "text": "Проверка этапа",
+          "done": true,
+          "notes": "Подготовить в log заведомо перекошенные данные — вывод появился. Урезать выборку до 5 дней — вывод исчез.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Ровно по сценарию карточки: перекошенные данные дали вывод, урезанная выборка (8 дней вместо 60 при той же картине) его убрала. Дополнительно проверен третий случай, которого в карточке не было, — большая выборка при слабой разнице: тоже молчит. Блок «Patterns» живёт в History под сеткой; когда сказать нечего, вместо пустоты объясняет, почему молчит.",
+            "at": 1790550600152
+          }
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
       "priority": 4,
       "milestone": null,
       "markdownTaskId": null,
-      "updatedAt": 1790543518978,
+      "doneBy": {
+        "name": "Claude",
+        "kind": "agent",
+        "reason": "verified",
+        "note": "Три вида выводов работают и проверены на подготовленных данных: погода, день недели, динамика за месяц. Порог достоверности проверен в обе стороны — сильный сигнал проходит, малая выборка и слабая разница отсекаются.",
+        "at": 1790550600163
+      },
+      "updatedAt": 1790550600163,
+      "deletedAt": null
+    },
+    {
+      "id": "381f7239-663b-4c54-a84e-c42cd06c3dcc",
+      "number": 19,
+      "column": "Done",
+      "position": 13,
+      "title": "Tasks you can plan, edit, reorder and undo",
+      "description": "The list only accepted today, could not be corrected once typed, had no order of your choosing, and deleting was final. Most of planning is planning tomorrow, so a list that cannot hold tomorrow is doing half the job.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "057194ed-e5ed-469c-8980-0d087b85bdd7",
+          "text": "A task can be put on today, tomorrow or any date; later ones appear under \"Later\"",
+          "done": false,
+          "notes": "Verify: press Tomorrow, add a task, it shows under Later with the day shown",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "42d10fb6-e985-4549-94ae-0222c19a23e5",
+          "text": "Double-click a task to correct its text; Enter saves, Escape drops the edit",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "ba5c8b49-3cfe-469d-b0d7-1a7c4f91ca5d",
+          "text": "Drag one task onto another to reorder today's list, and the order survives a reload",
+          "done": false,
+          "notes": "An order field per task. Verify with a real mouse — only exercised through the code path so far",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "6d35c0b4-6cf6-47a6-bbc7-658ebd396b06",
+          "text": "Deleting is undoable for ten seconds",
+          "done": false,
+          "notes": "Verify: delete a task, press Undo, it comes back in the same place",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "e719a31b-5837-40d5-871e-f7fae74b1390",
+          "text": "Carrying work forward still copies rather than moves, so a past day keeps the three tasks it really had",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598879969,
+      "deletedAt": null
+    },
+    {
+      "id": "4c33f865-c457-47a7-97d2-7a5988a1af4f",
+      "number": 18,
+      "column": "Done",
+      "position": 22,
+      "title": "The app stops being passive: tray icon and one daily reminder",
+      "description": "Until now the only thing that ever prompted you was happening to glance at the desktop, and the only way back to a hidden widget was a keyboard shortcut you had to already know. A habit tracker that never speaks first is the one thing a habit tracker cannot be.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "f71b3f38-2333-4852-a553-4b26960660ad",
+          "text": "Icon by the clock: click to show or hide the widget, right-click for the panel and Quit",
+          "done": false,
+          "notes": "desktop/main.js createTray, icon at desktop/tray.png. Verify: the icon is there after starting, and clicking it brings the widget back",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "8b191fc2-f6af-42fe-a5d9-a0207c30769b",
+          "text": "Its tooltip carries today's figure",
+          "done": false,
+          "notes": "Verified in a harness: \"Day Panel — 0% of today done\", and 100% once the day was finished",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "217dc6da-aff7-4fab-bc8d-73dc54fa12dd",
+          "text": "One notification a day, at a time you choose, only if the day is unfinished",
+          "done": false,
+          "notes": "Settings → Daily reminder. Verified in a harness: fired once with \"2 things left today — Reading, Workout\", skipped the habit not scheduled for today, did not fire again on reload, and did not fire at all once the day was complete",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "c6b8fb8a-726f-49de-bedf-a7752c07d28e",
+          "text": "Closing every window no longer quits the app, now that the tray is somewhere to come back from",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "f06611ef-cb9d-4706-b2ab-f9ea70f516be",
+          "text": "The widget's timers are exempt from background throttling, or the reminder would miss its hour while hidden",
+          "done": false,
+          "notes": "backgroundThrottling: false",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "7817f920-20b1-4bb3-bd42-878262a67f62",
+          "text": "BUG found while testing: the time field always fell back to 21:00",
+          "done": false,
+          "notes": "A backslash was lost from the validating regex during an edit, so every valid time failed it. All four regex literals in js/ checked afterwards",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790626824959,
+      "deletedAt": null
+    },
+    {
+      "id": "58baf974-14f4-49a0-ba1c-8b8a9169a430",
+      "number": 17,
+      "column": "Done",
+      "position": 17,
+      "title": "Habits that are not every day",
+      "description": "Every habit was daily, so \"gym three times a week\" could not be said. A perfect week of three sessions read as 43% and painted four calendar days as failures. Habits now carry a schedule, and everything that scores a day respects it.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "8afba0f5-fb51-4555-89d9-b55bd6e3c44f",
+          "text": "Three shapes: every day, certain weekdays, or N times a week",
+          "done": false,
+          "notes": "Set in Edit habits. Verify: pick Certain days, tick Mon/Wed/Fri, reopen the editor — it is still Mon, Wed, Fri",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "a034e8cf-855c-4798-97bb-98d4e754d159",
+          "text": "A weekly habit only counts against you once the week can no longer be made",
+          "done": false,
+          "notes": "Habits.dueOn. Three times a week does not mean Monday; it means the week is not lost yet",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "1bf28b1d-286c-4fcc-8092-dd8c306b2080",
+          "text": "A habit counts on a day if it was asked for, or if it was done anyway",
+          "done": false,
+          "notes": "Habits.countingOn. Going to the gym on a rest day must never make the day look worse",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "4bd05f5d-cc9f-4a3d-b784-73f422338521",
+          "text": "Streaks count occurrences, not calendar days — weeks for a weekly habit",
+          "done": false,
+          "notes": "Habits.occurrences. Verify: a Mon/Wed/Fri habit does not lose its streak on Tuesday",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "6108babb-0b55-4d70-9042-8a91217451d2",
+          "text": "Habits not due today sort below the rest and are dimmed, in the panel and the widget",
+          "done": false,
+          "notes": "tile.is-off / wgh.is-off",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "11b79fc8-ec45-4194-a9a6-01fde370f0b8",
+          "text": "The week dots on the streak card show rest days as hollow, not as misses",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "dcf3fc81-04d6-4bfd-a059-b796929e22f7",
+          "text": "The widget's chip counts only what today actually asks for",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "d876b4f3-e4f9-40c8-a7d6-7e6b9b37db07",
+          "text": "BUG found while testing: choosing \"Certain days\" snapped straight back to \"Every day\"",
+          "done": false,
+          "notes": "Saving on the mode change read zero ticked days as daily and redrew the row. The mode now waits for the first day to be ticked",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598884840,
+      "deletedAt": null
+    },
+    {
+      "id": "591c3440-7302-469e-9a6e-57be97958bf9",
+      "number": 7,
+      "column": "Done",
+      "position": 7,
+      "title": "Этап 7 — виджет на рабочий стол",
+      "description": "Обёртка готовой панели в Electron: маленькое окно на рабочем столе, где видны сегодняшние привычки и можно их отмечать. Идёт последним, потому что требует npm и сборки — к этому моменту уже есть продукт, ради которого не жалко разобраться.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "cc43abaa-0b80-4687-8827-b30ee39cba33",
+          "text": "package.json и Electron",
+          "done": true,
+          "notes": "Первое место в проекте, где нужен терминал и npm install. До этого всё работало двойным кликом.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "package.json с main: desktop/main.js и скриптом start. Electron 33.4.11 установлен. Ловушка: npm по умолчанию заблокировал postinstall пакета, а именно он качает сам бинарник — пришлось разрешить через npm install-scripts approve electron и доставить install.js. Без этого npm start падает. Проверено: node_modules/electron/dist/electron.exe на месте, npm start поднимает 4-5 процессов без ошибок в выводе.",
+            "at": 1790551521253
+          }
+        },
+        {
+          "id": "489ff2f4-f828-4f52-bc85-30641d173992",
+          "text": "Окно виджета",
+          "done": true,
+          "notes": "desktop/main.js: frame: false, transparent: true, размер примерно с заметку. Показывает сегодняшние привычки, серию и погоду, отмечать можно прямо в нём.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "75c7824d-9b4e-466e-ad03-6451115c1fe0",
+              "text": "Поведение относительно других окон",
+              "done": true,
+              "notes": "По умолчанию закреплён на рабочем столе и не мешает. В настройках — переключатель «always on top» и горячая клавиша для быстрого вызова.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "widget.html плюс css/widget.css и js/widget.js: дата, серия, кольцо дня и список привычек полосками. Страница проверена в браузере при размере окна 320×380 — компоновка верная, ошибок нет. Отметки работают прямо в виджете: клик 9→10, правый клик обратно в 9.\n\nКлючевое архитектурное решение, которого не было в плане: Electron отдаёт страницы по http с крошечного локального сервера на случайном порту, а не через file://. Причина в том, что при file:// у страниц непрозрачное происхождение, и два окна НЕ делят один localStorage — виджет и панель вели бы каждый свой список привычек. Побочная выгода: запрос погоды по http работает без оговорок, то есть заодно снимается вопрос из этапа 4.\n\nСамо окно на рабочем столе я не видел — в этой среде нет доступа к экрану. Проверял страницу в браузере и факт запуска процессов.",
+                "at": 1790551521272
+              }
+            },
+            {
+              "id": "a3f9d705-d8cd-4b3d-b773-81890f668164",
+              "text": "Перетаскивание и память позиции",
+              "done": true,
+              "notes": "-webkit-app-region: drag на шапке виджета. Важно: на кнопках внутри поставить no-drag, иначе они перестанут нажиматься. Позицию и размер сохранять между запусками.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "widget.html плюс css/widget.css и js/widget.js: дата, серия, кольцо дня и список привычек полосками. Страница проверена в браузере при размере окна 320×380 — компоновка верная, ошибок нет. Отметки работают прямо в виджете: клик 9→10, правый клик обратно в 9.\n\nКлючевое архитектурное решение, которого не было в плане: Electron отдаёт страницы по http с крошечного локального сервера на случайном порту, а не через file://. Причина в том, что при file:// у страниц непрозрачное происхождение, и два окна НЕ делят один localStorage — виджет и панель вели бы каждый свой список привычек. Побочная выгода: запрос погоды по http работает без оговорок, то есть заодно снимается вопрос из этапа 4.\n\nСамо окно на рабочем столе я не видел — в этой среде нет доступа к экрану. Проверял страницу в браузере и факт запуска процессов.",
+                "at": 1790551521272
+              }
+            }
+          ],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "widget.html плюс css/widget.css и js/widget.js: дата, серия, кольцо дня и список привычек полосками. Страница проверена в браузере при размере окна 320×380 — компоновка верная, ошибок нет. Отметки работают прямо в виджете: клик 9→10, правый клик обратно в 9.\n\nКлючевое архитектурное решение, которого не было в плане: Electron отдаёт страницы по http с крошечного локального сервера на случайном порту, а не через file://. Причина в том, что при file:// у страниц непрозрачное происхождение, и два окна НЕ делят один localStorage — виджет и панель вели бы каждый свой список привычек. Побочная выгода: запрос погоды по http работает без оговорок, то есть заодно снимается вопрос из этапа 4.\n\nСамо окно на рабочем столе я не видел — в этой среде нет доступа к экрану. Проверял страницу в браузере и факт запуска процессов.",
+            "at": 1790551521272
+          }
+        },
+        {
+          "id": "b1832f79-9f36-4ebd-849f-3e1b0248519d",
+          "text": "Полная панель вторым окном",
+          "done": true,
+          "notes": "Двойной клик по виджету открывает тот же index.html в обычном окне. Код один, хранилище одно.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Кнопка в шапке виджета открывает index.html вторым окном через IPC. Общее хранилище проверено на двух вкладках одного происхождения, что в точности повторяет ситуацию двух окон Electron: отметил Language practice в панели (0→5) — виджет тут же показал «5/20», кольцо сменилось с 67% на 75%. Работает через событие storage, которое браузер шлёт во все остальные окна этого происхождения; в widget.js на него подписка со сбросом кэша Storage.reload().",
+            "at": 1790551521282
+          }
+        },
+        {
+          "id": "ebb96aed-f5fc-490e-b059-a488b0c2b440",
+          "text": "Автозапуск",
+          "done": true,
+          "notes": "app.setLoginItemSettings({ openAtLogin: true }).",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "cannot_be_checked",
+            "note": "Код написан: app.setLoginItemSettings через IPC, кнопка «Start with Windows» в Settings панели (карточка Desktop widget видна только внутри Electron, в браузере скрыта). Сам я его НЕ включал намеренно — это изменение системных настроек машины, и решать должен владелец, а не агент. Проверить тоже нечем: подтверждение требует перезагрузки компьютера. Пользователю: нажать кнопку в Settings и перезагрузиться.",
+            "at": 1790551539018
+          }
+        },
+        {
+          "id": "27d02fc0-cbe0-4169-bbb1-e7e98ed9ac64",
+          "text": "Перенос данных из браузера",
+          "done": true,
+          "notes": "Ловушка: у окна Electron собственное хранилище, данные из браузера туда сами не попадут. Закрывается экспортом и импортом из этапа 3: один раз выгрузить файл и загрузить в приложении.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Ловушка подтвердилась и осталась в силе: у окна Electron своё хранилище, данные из браузера туда сами не попадут. Закрывается экспортом и импортом из этапа 3 — оба проверены там полным циклом «копия, стирание, восстановление» с побайтовым совпадением. Пользователю: выгрузить файл в браузере через Settings → Export, затем в приложении Settings → Restore from file.",
+            "at": 1790551539035
+          }
+        },
+        {
+          "id": "001d78bd-8aa4-42f3-9f64-c78161dab6a5",
+          "text": "Проверка этапа",
+          "done": true,
+          "notes": "Перезагрузить компьютер: виджет поднялся сам и встал на прежнее место. Отметить привычку в виджете, открыть полную панель — значение то же.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "cannot_be_checked",
+            "note": "Проверено, что смог: npm start поднимает приложение без ошибок, страница виджета работает в размере окна и отмечает привычки, общее хранилище между двумя окнами подтверждено.\n\nНе проверено, потому что нужен настоящий рабочий стол: вид окна без рамки с прозрачным фоном, перетаскивание за шапку, запоминание позиции между запусками, переключатель «поверх окон», горячая клавиша Ctrl+Shift+D, автозапуск после перезагрузки. В этой среде нет доступа к экрану и нельзя перезагрузить машину.\n\nПриложение оставлено запущенным, чтобы пользователь увидел виджет сам. Пункты выше — его проверка.",
+            "at": 1790551539044
+          }
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 4,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790552600390,
       "deletedAt": null
     },
     {
       "id": "5c5e80a6-216e-4604-8993-5f98a7339dd5",
       "number": 4,
-      "column": "Todo",
-      "position": 3,
+      "column": "Done",
+      "position": 4,
       "title": "Этап 4 — погода",
       "description": "Первые внешние данные в проекте. Панель начинает знать контекст дня — это же станет основой для выводов на шестом этапе.",
       "assignee": null,
@@ -181,56 +707,104 @@
         {
           "id": "15ef9fe9-667c-4b59-8720-ea8d886dbfb2",
           "text": "Запрос к Open-Meteo",
-          "done": false,
+          "done": true,
           "notes": "Ключ и регистрация не нужны. Берём температуру, код погоды и осадки на сегодня. Код погоды сохранять в log по дате — без этого этап 6 не сможет ничего сопоставить.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Запрос к api.open-meteo.com без ключа и регистрации вернул для Киева 10.9° и код 0. В шапке отрисовалось «11° Clear · Kyiv». Коды WMO свёрнуты в девять понятных групп — полная таблица на 28 строк на панели не нужна. Код погоды пишется в log за сегодня рядом с привычками (проверено: log['2026-09-28'].weather = 0) — без этого этап 6 не с чем будет сопоставлять, а прогноз задним числом бесплатно не поднять.",
+            "at": 1790548952129
+          }
         },
         {
           "id": "74f1ae6d-9fce-4864-917e-9c0f0d2ede5a",
           "text": "Определение города",
-          "done": false,
+          "done": true,
           "notes": "Сначала геолокация браузера, при отказе — поиск города руками через geocoding Open-Meteo. Выбор сохраняется в settings.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Сначала геолокация браузера: в тестовой среде она недоступна, и панель корректно показала «Weather: set a city in Settings» вместо ошибки. Поиск руками через geocoding Open-Meteo: «Kyiv» дал координаты 50.45466, 30.5238 — верные, они сохранились в settings.place. Несуществующий город «Zzzxqqq» вернул «No city by that name.» Поле для города живёт в Settings.",
+            "at": 1790548952148
+          }
         },
         {
           "id": "144aac5d-79f2-42cc-9e16-f541d8f8dc4c",
           "text": "Кэш на час",
-          "done": false,
+          "done": true,
           "notes": "Иначе каждое открытие вкладки бьёт в сеть. Хранить ответ и метку времени в localStorage.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Ответ и метка времени лежат в settings.weather. Перезагрузил страницу и посмотрел список сетевых запросов с фильтром open-meteo — их ноль, строка погоды отрисовалась из кэша. Свежесть считается за час.",
+            "at": 1790548952158
+          }
         },
         {
           "id": "b278ba62-0eea-4a3e-87ac-a19f92f8d952",
           "text": "Поведение без сети",
-          "done": false,
+          "done": true,
           "notes": "Показать последнее известное значение с пометкой, что оно устарело. Ошибка сети не должна ломать остальную панель.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Подменил window.fetch на отказ и состарил кэш на три часа. Панель показала «11° Clear · Kyiv (old)» с классом is-stale (приглушённый курсив), привычки и остальное остались на месте — четыре плитки живы. То есть ошибка сети не роняет страницу, а последнее известное значение честно помечено устаревшим.",
+            "at": 1790548971461
+          }
         },
         {
           "id": "193ba6ce-581a-4b52-9da0-1843f45908d3",
           "text": "Проверить ограничение file://",
-          "done": false,
+          "done": true,
           "notes": "Ключевая развилка этапа. Запросы с file:// обычно проходят (сервер отдаёт CORS *), но браузер может заблокировать. Если заблокирован — переходим на `npx --yes serve .` и http://localhost:3000.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "cannot_be_checked",
+            "note": "Проверить в этой среде нечем: встроенная панель предпросмотра отдаёт локальные файлы статическим снимком и вообще не исполняет их скрипты, поэтому запрос с file:// оттуда не отправить. Всё тестировалось на локальном сервере http://localhost:8137. Ограничение снято с меня, но не с проекта: пользователю нужно открыть D:\\plan c\\index.html двойным кликом в своём браузере и посмотреть, появится ли строка погоды. Если нет — запасной путь из плана в силе: `npx --yes serve .` и открывать через localhost. Остальная панель от этого не зависит: при неудачном запросе она просто покажет подсказку про город.",
+            "at": 1790548971475
+          }
         },
         {
           "id": "ad2c5df5-614b-4f1b-93b7-a78f1ea24a2c",
           "text": "Проверка этапа",
-          "done": false,
+          "done": true,
           "notes": "Сверить температуру с любым прогнозом. Отключить сеть — панель не падает. В DevTools → Network убедиться, что при повторной загрузке в течение часа запроса нет.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Температура для Киева 10.9° при ясном небе — правдоподобно для конца сентября, координаты сверены. Повторная загрузка в пределах часа не даёт ни одного сетевого запроса. Отключение сети не ломает панель. Единственный непроверенный пункт — поведение при открытии через file://, он отдельно помечен.",
+            "at": 1790548971484
+          }
         }
       ],
       "labels": [],
@@ -240,13 +814,237 @@
       "priority": 3,
       "milestone": null,
       "markdownTaskId": null,
-      "updatedAt": 1790543355632,
+      "doneBy": {
+        "name": "Claude",
+        "kind": "agent",
+        "reason": "verified",
+        "note": "Погода работает: Kyiv 11° Clear в шапке, код погоды пишется в лог рядом с привычками для этапа 6, кэш на час подтверждён отсутствием сетевых запросов при перезагрузке, офлайн показывает устаревшее значение и не роняет панель, несуществующий город отвергается. Один пункт — поведение при открытии через file:// — помечен как непроверяемый в этой среде, его нужно проверить на машине пользователя.",
+        "at": 1790548981893
+      },
+      "updatedAt": 1790548981893,
+      "deletedAt": null
+    },
+    {
+      "id": "6b7dd0cf-20ec-4d21-ad21-c65704dfb30c",
+      "number": 14,
+      "column": "Done",
+      "position": 16,
+      "title": "Widget: a proper look, and the theme it never applied",
+      "description": "The desktop widget worked but looked like a cut-down web page. Reworked into the same language as the panel — a page colour with cards on it — and given the chrome-free feel of a macOS widget. Two real bugs turned up on the way.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "8b08640b-3d54-4e7e-9def-fa5ad0dcb8eb",
+          "text": "Controls hidden until the pointer is over the widget; their width stays reserved so the date does not jump",
+          "done": false,
+          "notes": "Verify: hover the widget — the three buttons fade in top right and nothing else moves",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "d2c9a78e-3c7c-472c-9ff2-52b72e37f099",
+          "text": "Whole surface drags; only the habit rows and the buttons opt out",
+          "done": false,
+          "notes": "Verify: drag from any empty spot, and clicking a habit row still counts it",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "236c5ea2-3eff-4924-be89-c3f09873a759",
+          "text": "Hero card: streak, a \"N of 5 done\" chip and the ring, on a surface card with the panel's radius and border",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "40f5616f-de71-43a5-8b65-3a231de48530",
+          "text": "Last seven days as a strip inside the hero card, coloured by the same scale as the calendar, today slightly taller",
+          "done": false,
+          "notes": "Verify: the strip matches the calendar's colours for the same days",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "14745855-d02e-460c-aede-7827e636876f",
+          "text": "Habit rows are surface cards with rounded tracks; the fill is grey while in progress and green only once the goal is met",
+          "done": false,
+          "notes": "Why: a bar that is green from the first click says nothing when it finally fills",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "2f2a2bae-50f2-4279-9f59-1181c68ca9fa",
+          "text": "Scrollbar removed, replaced by a fade at the bottom that appears only when something is hidden below",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "7eae5eb7-278c-4991-b51d-a4202bd49317",
+          "text": "BUG: the widget never applied the chosen theme — it was always light, inside a window Electron paints black",
+          "done": false,
+          "notes": "Verify: set Always dark in the panel, reopen the widget, it is dark",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "e0cdb8ec-7d24-43e2-bfbb-fd53094e016b",
+          "text": "BUG: weather.js was loaded in the widget but never started, so the line was permanently blank",
+          "done": false,
+          "notes": "Started only when a city is already saved, since the widget has no Settings to send you to",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "c9e8d89b-1f11-4373-9b4b-c064d791c2d3",
+          "text": "Window defaults 340x440, background matched to the dark theme's #0b0b0b",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598884122,
+      "deletedAt": null
+    },
+    {
+      "id": "847cf796-b2cb-48d9-8bd9-d9c29790ebb3",
+      "number": 15,
+      "column": "Done",
+      "position": 15,
+      "title": "Hide the habit editor button outside the dashboard",
+      "description": "\"Edit habits\" / \"Done editing\" stayed in the top bar on Settings, Notes and History, offering to finish an edit that was not on screen. It now appears only on the dashboard, where the picker actually lives.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "cc7f2aae-2a37-4968-bde0-9861687751ea",
+          "text": "showView() shows the button on the dashboard and hides it everywhere else",
+          "done": false,
+          "notes": "js/main.js, in showView. Verify: open Settings or Notes — no button; go back to Dashboard — it is there again",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598883553,
+      "deletedAt": null
+    },
+    {
+      "id": "8c45d6c2-bc5c-4cbf-bcd5-5311a637aaea",
+      "number": 12,
+      "column": "Done",
+      "position": 11,
+      "title": "Хранение данных в файле и двусторонняя синхронизация окон",
+      "description": "Данные жили только в localStorage и умирали вместе с переустановкой Windows. Нужно было пережить смену системы и переезд на другой компьютер, но без сервера и без оплаты. Плюс починка: отметка в виджете не доходила до полной панели.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "3dcc93b5-8f90-4745-810b-da447f70c0eb",
+          "text": "Файл в папке на выбор пользователя",
+          "done": false,
+          "notes": "desktop/vault.js. Своего сервера нет и не нужно: человек указывает папку внутри OneDrive, Google Drive или любого уже синхронизируемого места, и чужоё облако везёт файл за него. Обычный JSON — ничего не заперто внутри приложения.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "89544944-1634-4ce8-8b0c-609a74329964",
+              "text": "Атомарная запись",
+              "done": false,
+              "notes": "Пишем во временный файл и переименовываем. Переименование атомарно: выдернутый шнур посреди записи оставляет целым предыдущий файл, а не половину нового.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            },
+            {
+              "id": "85b74383-eae5-445e-9a47-872577a1f79e",
+              "text": "Запасная копия и проверка целостности",
+              "done": false,
+              "notes": "Перед каждой записью предыдущая версия копируется в .prev. При чтении файл ПАРСИТСЯ, а не просто открывается: оборванная на полпути облачная синхронизация оставляет файл, который отлично читается и при этом является половиной файла.",
+              "assignee": null,
+              "children": [],
+              "comments": []
+            }
+          ],
+          "comments": []
+        },
+        {
+          "id": "c50141bc-01a1-4e9d-8417-50a6516bf63b",
+          "text": "Что побеждает при расхождении",
+          "done": false,
+          "notes": "В состояние добавлен updatedAt. При старте сравниваются метки времени файла и локальной копии, побеждает более поздняя. Слияние сознательно НЕ делается: автоматическое слияние двух разошедшихся историй придумало бы дни, которых не было.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "da1b77f2-ffe9-4b7d-b1b1-06529e062ff3",
+          "text": "Настройки с путём",
+          "done": false,
+          "notes": "Карточка Where your data lives: полный путь моноширинным шрифтом, время последней записи и размер, кнопки выбрать папку, скопировать путь, открыть папку и перестать использовать. Отказ от папки НЕ удаляет файл.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "4077fc8c-b2cb-482c-a895-e9d61b731358",
+          "text": "Починка: виджет → панель",
+          "done": false,
+          "notes": "Подписка на событие storage была только в widget.js. Поэтому виджет видел правки панели, а панель правки виджета — нет. Добавлена такая же подписка в main.js.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "3fff4dae-b81a-4df0-b9a5-962b35fdcddf",
+          "text": "Проверка",
+          "done": false,
+          "notes": "Синхронизация в обе стороны на двух окнах, хранилище — на реальных файлах, включая обрезанный файл и два битых файла сразу.",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790582255872,
       "deletedAt": null
     },
     {
       "id": "9c8a9ddc-0d8c-47e4-a7c4-dad68b921800",
       "number": 1,
-      "column": "In Progress",
+      "column": "Done",
       "position": 0,
       "title": "Этап 1 — каркас, часы, тема суток",
       "description": "Основа панели: структура файлов, разметка, тикающие часы и четыре цветовые темы, которые сменяются по времени суток. После этого этапа страницу уже можно ставить стартовой в браузере.",
@@ -307,7 +1105,7 @@
         {
           "id": "2ff5a5f9-fa7c-4def-916c-66a5aa68f107",
           "text": "Четыре темы в CSS-переменных",
-          "done": false,
+          "done": true,
           "notes": "theme.css: наборы переменных для утра, дня, вечера и ночи. Все цвета только через var() — ни одного хардкода в app.css, иначе тема сломается.",
           "assignee": null,
           "children": [
@@ -324,8 +1122,8 @@
                 "name": "Claude",
                 "kind": "agent",
                 "reason": "verified",
-                "note": "Тёплый песочный: bg #f8f4ed, surface #fffdfa, accent #c0723a. Скриншот http://localhost:8137/#morning — фон тёплый, текст читается, приветствие «Good morning».",
-                "at": 1790543761546
+                "note": "Все четыре набора в css/theme.css, просмотрены на скриншотах. Правило «никакого хардкода в app.css» соблюдено: единственные литеральные цвета в проекте — внутри theme.css.",
+                "at": 1790543798928
               }
             },
             {
@@ -341,8 +1139,8 @@
                 "name": "Claude",
                 "kind": "agent",
                 "reason": "verified",
-                "note": "Нейтральный светлый, самый контрастный: bg #eff2f6, surface #ffffff, text #191d22, accent #2d6cd4. Скриншот #day — приветствие «Good afternoon».",
-                "at": 1790543761559
+                "note": "Все четыре набора в css/theme.css, просмотрены на скриншотах. Правило «никакого хардкода в app.css» соблюдено: единственные литеральные цвета в проекте — внутри theme.css.",
+                "at": 1790543798928
               }
             },
             {
@@ -358,8 +1156,8 @@
                 "name": "Claude",
                 "kind": "agent",
                 "reason": "verified",
-                "note": "Тёплые сумерки: bg #2a2320, surface #352d28, accent #e08f4d. Скриншот #evening — тёмно-коричневый фон, приветствие «Good evening». Получилась дуга: утро светлое тёплое → день светлый яркий → вечер тёмный тёплый → ночь тёмная холодная.",
-                "at": 1790543761569
+                "note": "Все четыре набора в css/theme.css, просмотрены на скриншотах. Правило «никакого хардкода в app.css» соблюдено: единственные литеральные цвета в проекте — внутри theme.css.",
+                "at": 1790543798928
               }
             },
             {
@@ -375,39 +1173,71 @@
                 "name": "Claude",
                 "kind": "agent",
                 "reason": "verified",
-                "note": "bg #131519, text #c5cad3 — намеренно не чисто белый, как и требовал пункт. Проверено getComputedStyle: bodyBg = rgb(19, 21, 25). Скриншот #night, приветствие «Still up?».",
-                "at": 1790543761578
+                "note": "Все четыре набора в css/theme.css, просмотрены на скриншотах. Правило «никакого хардкода в app.css» соблюдено: единственные литеральные цвета в проекте — внутри theme.css.",
+                "at": 1790543798928
               }
             }
           ],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Все четыре набора в css/theme.css, просмотрены на скриншотах. Правило «никакого хардкода в app.css» соблюдено: единственные литеральные цвета в проекте — внутри theme.css.",
+            "at": 1790543798928
+          }
         },
         {
           "id": "2f750e61-1202-4c34-853d-3603c9975cc5",
           "text": "Переключение темы по времени",
-          "done": false,
+          "done": true,
           "notes": "Атрибут data-time на :root. Пересчёт при загрузке и по таймеру раз в минуту — иначе страница, открытая в 16:59, останется дневной до утра.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Загрузил страницу без хэша в 23:00 — автоматически применилась night (data-time=\"night\", приветствие «Still up?»). Прогнал bandForHour по границам: 0h,4h=night, 5h,10h=morning, 11h,16h=day, 17h,21h=evening, 22h,23h=night. Ночь сделана fallback-веткой, потому что её диапазон перекатывается через полночь. Пересчёт стоит на setInterval раз в минуту, там же обновление даты — оно перекинет число в полночь.",
+            "at": 1790543798943
+          }
         },
         {
           "id": "8a7f5f20-a3d7-4506-bf41-3a1ee9c58c31",
           "text": "Плавный переход между темами",
-          "done": false,
+          "done": true,
           "notes": "transition на background-color и color. Без него смена темы в полночь выглядит как мигание.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "transition 0.7s на background-color, color и border-color. Проверено невольно: первый скриншот после переключения на #night поймал страницу в середине перехода — фон был ещё светлым, тогда как getComputedStyle уже отдавал rgb(19, 21, 25). То есть переход реально идёт, а не срабатывает мгновенно.",
+            "at": 1790543798955
+          }
         },
         {
           "id": "c500f03a-175f-4b75-a70a-b499f6db3ad2",
           "text": "Проверка этапа",
-          "done": false,
+          "done": true,
           "notes": "Открыть index.html двойным кликом: часы идут, дата верная. Временно захардкодить час (0, 8, 14, 19) и просмотреть все четыре темы — каждая читаема, ночная не слепит.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Часы шли на серии скриншотов (23:14:24 → 23:15:01), дата «Sunday, September 27», все четыре темы просмотрены глазами и читаемы. Вместо хардкода часа сделал переключение темы через хэш адреса (#night и т.д.) — проверять удобнее, и это осталось в продукте как способ посмотреть тему в любой момент.",
+            "at": 1790543798967
+          }
         }
       ],
       "labels": [],
@@ -417,13 +1247,20 @@
       "priority": 2,
       "milestone": null,
       "markdownTaskId": null,
-      "updatedAt": 1790543761578,
+      "doneBy": {
+        "name": "Claude",
+        "kind": "agent",
+        "reason": "verified",
+        "note": "Запустил панель на локальном сервере (http://localhost:8137) и проверил в браузере: часы тикают (23:14:24 → 23:15:01), дата «Sunday, September 27» на английском, все четыре темы отрисованы и читаемы на скриншотах, автоматический выбор темы по реальному времени сработал (23:00 → night), границы часов прогнаны через bandForHour и все верные. Интерфейс целиком на английском по решению пользователя.",
+        "at": 1790543813321
+      },
+      "updatedAt": 1790543813321,
       "deletedAt": null
     },
     {
       "id": "a85f8a8f-3e27-4c2f-9e9a-2d4e31dbdac5",
       "number": 3,
-      "column": "Todo",
+      "column": "Done",
       "position": 2,
       "title": "Этап 3 — история, серии, сохранность данных",
       "description": "Накопленные отметки превращаются в видимый прогресс: сетка за 10 недель, серии и проценты. Здесь же экспорт и импорт — с этого этапа в браузере лежат данные, которых больше нигде нет.",
@@ -433,57 +1270,105 @@
         {
           "id": "611aa8ff-7018-4b29-99bf-60efe9465ae8",
           "text": "Сетка отметок за 10 недель",
-          "done": false,
+          "done": true,
           "notes": "Столбец — неделя, строка — день. Насыщенность цвета по доле выполненного за день (5 ступеней). CSS Grid с grid-auto-flow: column.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "70 ячеек, столбец — неделя с понедельника, строка — день. Сверил две ячейки вручную: 2026-09-26 при трёх активных привычках и одной выполненной дал 33% и уровень 2; 2026-07-21, когда существовали только две привычки из трёх и выполнена была одна, дал 50%. То есть привычка учитывается только с даты своего создания и не портит задним числом прошлые месяцы. Отдельный уровень -1 для дней, когда привычек ещё не было — это не то же самое, что «ничего не сделал». Будущие дни текущей недели рисуются пустыми.",
+            "at": 1790545735008
+          }
         },
         {
           "id": "8699fafe-d0b3-4595-960f-100483609291",
           "text": "Расчёт серий",
-          "done": false,
+          "done": true,
           "notes": "В habits.js отдельной чистой функцией: принимает log и id привычки, возвращает текущую и лучшую серию. Чистая — значит ничего не читает из DOM и хранилища, её легко проверить на выдуманных данных.",
           "assignee": null,
           "children": [
             {
               "id": "b1acbbc6-c364-4662-993e-2e2326a10dc5",
               "text": "Сегодняшний день не рвёт серию",
-              "done": false,
+              "done": true,
               "notes": "Важная деталь: если сегодня ещё не отмечено, серия считается до вчера и пока жива. Иначе каждое утро панель будет сообщать, что ты всё провалил.",
               "assignee": null,
               "children": [],
-              "comments": []
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Habits.streaks(log, habit, todayKey) — чистая, всё приходит аргументами. Прогнал 8 случаев на выдуманных данных, все сошлись с ручным ответом: пусто 0/0; три дня до вчера 3/3; три дня включая сегодня 3/3; дыра посередине current 1 / best 4; разрыв позавчера current 0 / best 2; значение ниже цели не засчитывается; цель 5 при значении 4 не засчитана, при 5 и 9 — серия 2. Даты — строки 'ГГГГ-ММ-ДД', они верно сравниваются как текст, поэтому объекты Date для сортировки дней не нужны. В циклах стоит предохранитель на 4000 итераций.",
+                "at": 1790545734997
+              }
             }
           ],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Habits.streaks(log, habit, todayKey) — чистая, всё приходит аргументами. Прогнал 8 случаев на выдуманных данных, все сошлись с ручным ответом: пусто 0/0; три дня до вчера 3/3; три дня включая сегодня 3/3; дыра посередине current 1 / best 4; разрыв позавчера current 0 / best 2; значение ниже цели не засчитывается; цель 5 при значении 4 не засчитана, при 5 и 9 — серия 2. Даты — строки 'ГГГГ-ММ-ДД', они верно сравниваются как текст, поэтому объекты Date для сортировки дней не нужны. В циклах стоит предохранитель на 4000 итераций.",
+            "at": 1790545734997
+          }
         },
         {
           "id": "355b061d-7492-4d46-bd7f-84cc2c5755d4",
           "text": "Статистика и полоска года",
-          "done": false,
+          "done": true,
           "notes": "Текущая серия, лучшая серия, процент закрытого месяца, доля прошедшего года.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Четыре карточки: Current streak, Best streak, This month, Year gone. На тестовых данных показали «3 days / Water», «3 days / Water», «11% of habits completed», «74% of 2026» — сверено с ручным подсчётом. У процентов есть полоска. Сверх пункта: текущая серия показывается ещё и на самой плитке привычки («6 days in a row»), но только начиная с двух дней — один день серией называть нечестно.",
+            "at": 1790545751500
+          }
         },
         {
           "id": "2a730a8e-6f5f-4b2b-ac4a-592b1a61b546",
           "text": "Экспорт и импорт JSON",
-          "done": false,
+          "done": true,
           "notes": "Стоит именно здесь, а не в конце: localStorage стирается при чистке браузера, а накопленную историю восстановить невозможно. Скачивание через Blob и <a download>, загрузка через <input type=file>. Он же понадобится на этапе 7 для переезда в Electron.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Экспорт: перехватил клик по ссылке, не скачивая — имя файла day-panel-2026-09-27.json, blob содержал 3 привычки и 66 дней истории. Импорт отклоняет мусор с внятным текстом: «That file is not valid JSON.» на не-JSON и «That does not look like a Day Panel backup.» на чужой JSON, при этом данные в панели не портятся. Импорт спрашивает подтверждение, потому что заменяет всё целиком.",
+            "at": 1790545751515
+          }
         },
         {
           "id": "4470069f-3047-4f6d-81ae-e9d8a298bb9c",
           "text": "Проверка этапа",
-          "done": false,
+          "done": true,
           "notes": "Вписать в log выдуманные данные за прошлый месяц и сверить сетку и серии вручную. Выгрузить JSON, очистить хранилище, загрузить обратно — всё вернулось.",
           "assignee": null,
           "children": [],
-          "comments": []
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Наполнил лог данными за 10 недель, сверил ячейки сетки и серии вручную. Затем полный цикл сохранности: снял копию, стёр localStorage целиком (панель опустела и показала пустое состояние), импортировал обратно — привычки, 4 дня лога и значение Water на месте, а строка состояния совпала с исходной побайтово. Статистика после восстановления та же, что до стирания.",
+            "at": 1790545751526
+          }
         }
       ],
       "labels": [],
@@ -493,13 +1378,202 @@
       "priority": 3,
       "milestone": null,
       "markdownTaskId": null,
-      "updatedAt": 1790543355618,
+      "doneBy": {
+        "name": "Claude",
+        "kind": "agent",
+        "reason": "verified",
+        "note": "Сетка на 70 ячеек, четыре карточки статистики, серии на плитках, экспорт и импорт — всё проверено в браузере. Серии прогнаны восемью случаями на выдуманных данных, ячейки сетки сверены вручную, полный цикл «копия → стирание → восстановление» вернул состояние побайтово идентичным.",
+        "at": 1790545828441
+      },
+      "updatedAt": 1790545828441,
+      "deletedAt": null
+    },
+    {
+      "id": "b02668e9-ba58-47c9-a939-44af77ab4678",
+      "number": 11,
+      "column": "Done",
+      "position": 10,
+      "title": "Менять цель у добавленных привычек",
+      "description": "Готовые привычки приходят с фиксированной целью: чтение всегда 20 страниц, язык всегда 20 минут. Подогнать под себя нельзя, а цель — это ровно то, что у всех разное.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "93fb9c2b-b809-4821-87ed-85397bf1ca54",
+          "text": "Список своих привычек в пикере",
+          "done": true,
+          "notes": "Первым блоком до каталога пресетов: то, что уже выбрано, с полями цели и единицы и крестиком удалить.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Блок «Your habits» стоит первым, до каталога: подстроить то, что уже отслеживаешь, важнее, чем снова листать список. В каждой строке название, поле цели, поле единицы и крестик. Проверено на пяти привычках — все отрисовались, названия не обрезаются.",
+            "at": 1790554378998
+          }
+        },
+        {
+          "id": "f97b3c54-0fe6-4258-b454-a379d96ff370",
+          "text": "Правка цели и единицы",
+          "done": true,
+          "notes": "Сохранять по событию change, а не input: при сохранении идёт перерисовка, и на каждой набранной цифре поле теряло бы фокус.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "e9c0982b-8116-4ae2-9c09-ef95b67bf4a8",
+              "text": "Шаг пересчитать",
+              "done": true,
+              "notes": "Цель 20 минут с шагом 5 при смене на 120 потребовала бы 24 клика. Правило то же, что для своих привычек: около десяти кликов до цели.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Цель и единица правятся у любой привычки, включая готовые. Сохранение по change: у языка единица сменилась на «minutes», у чтения цель на 60. Цель 1 честно превращает привычку в да/нет — плитка стала показывать «Not yet» вместо цифр.\n\nСверх пункта: каталог пресетов теперь показывает ТВОЮ цель, а не заводскую. Reading отображается как «60 pages», Water как «12 glasses», нетронутый Steps остался «8000 steps». Иначе привычка, настроенная на 60, рекламировалась бы как 20 прямо под собственной настройкой.",
+                "at": 1790554398115
+              }
+            },
+            {
+              "id": "866eb648-50ae-49b1-ad8a-d78b140ad5ff",
+              "text": "Историю не трогать",
+              "done": true,
+              "notes": "В логе лежат абсолютные значения, а не проценты. После смены цели прошлые дни пересчитаются относительно новой — это неизбежно и честно, но стоит знать.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Цель и единица правятся у любой привычки, включая готовые. Сохранение по change: у языка единица сменилась на «minutes», у чтения цель на 60. Цель 1 честно превращает привычку в да/нет — плитка стала показывать «Not yet» вместо цифр.\n\nСверх пункта: каталог пресетов теперь показывает ТВОЮ цель, а не заводскую. Reading отображается как «60 pages», Water как «12 glasses», нетронутый Steps остался «8000 steps». Иначе привычка, настроенная на 60, рекламировалась бы как 20 прямо под собственной настройкой.",
+                "at": 1790554398115
+              }
+            }
+          ],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Цель и единица правятся у любой привычки, включая готовые. Сохранение по change: у языка единица сменилась на «minutes», у чтения цель на 60. Цель 1 честно превращает привычку в да/нет — плитка стала показывать «Not yet» вместо цифр.\n\nСверх пункта: каталог пресетов теперь показывает ТВОЮ цель, а не заводскую. Reading отображается как «60 pages», Water как «12 glasses», нетронутый Steps остался «8000 steps». Иначе привычка, настроенная на 60, рекламировалась бы как 20 прямо под собственной настройкой.",
+            "at": 1790554398115
+          }
+        },
+        {
+          "id": "11df290e-1a4c-4f0e-ae9c-c77290e5cee9",
+          "text": "Проверка",
+          "done": true,
+          "notes": "Поменять цель у пресета, убедиться что плитка и полоска обновились, значение за сегодня осталось, шаг стал разумным, а пустая или нулевая цель отвергается.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Прогнано в браузере: цель чтения 20→60 (плитка «0 / 60 pages», шаг 5→6), вода 8→12 при уже набранных трёх стаканах (значение уцелело, плитка «3 / 12 glasses»), единица языка на «minutes», цель 1 превратила привычку в да/нет. Ноль и пустое поле отвергнуты сообщением «The goal has to be a whole number, 1 or more.», прежняя цель 60 при этом осталась нетронутой. Удаление из этого же списка работает и по-прежнему архивирует, а не стирает.",
+            "at": 1790554410628
+          }
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790582248329,
+      "deletedAt": null
+    },
+    {
+      "id": "b0dc6f44-61ce-4de9-9f57-7d056fa6ad6f",
+      "number": 23,
+      "column": "Done",
+      "position": 21,
+      "title": "The worst bug in the project: a new origin, and an empty panel, every launch",
+      "description": "The Electron shell served the pages from an http server on a port the system handed out — a different port every launch. localStorage belongs to an origin and an origin includes the port, so every restart of the app opened onto a blank panel. Ten ports' worth of abandoned data were sitting in the profile.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "439fa594-0c9c-43f3-a37d-5e86318036bd",
+          "text": "Pages now come from app://panel, a scheme of the app's own",
+          "done": false,
+          "notes": "desktop/main.js serve(). A fixed port would have worked until something else was using it, and then the data would vanish again; a private scheme cannot collide",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "cf9c3ef7-4f05-4f9f-aec3-fdbbae959892",
+          "text": "Verified both windows load from it",
+          "done": false,
+          "notes": "Terminal: \"widget loaded app://panel/widget.html\" and \"panel loaded app://panel/index.html\"",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "bce6e8ca-2b30-4550-b78b-a07ba75722e5",
+          "text": "Load failures and page errors are printed to the terminal instead of being invisible",
+          "done": false,
+          "notes": "desktop/main.js watch(). A window that fails to load used to be a blank rectangle that said nothing",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "1d28236c-8c77-4a97-b79d-3ea1dfff9e9e",
+          "text": "A Content-Security-Policy on both pages",
+          "done": false,
+          "notes": "script-src 'self', no remote code; connect-src limited to the three weather hosts. Electron had been warning about its absence",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "91f38439-7592-4998-a999-a5fb7e710fff",
+          "text": "What survived in the old profile was pulled out to day-panel-recovered.json",
+          "done": false,
+          "notes": "6 habits, one day's log, one countdown. Restore it from Settings → Restore from file if it is still wanted; the file holds personal data and is covered by .gitignore",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "99698d9f-6c1d-4810-ae8c-816ce4208b58",
+          "text": "Verify: pick some habits, quit the app completely from the tray, start it again — the habits are still there",
+          "done": false,
+          "notes": "This is the check that would have caught it",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790626824338,
       "deletedAt": null
     },
     {
       "id": "b770ad4d-17c9-4d19-ac40-92229a894190",
       "number": 2,
-      "column": "Todo",
+      "column": "Done",
       "position": 1,
       "title": "Этап 2 — привычки: библиотека и отметки",
       "description": "Ядро трекера: библиотека готовых привычек по четырём категориям, выбор своего набора и отметка выполнения за сегодня с сохранением. С этого момента панель полезна каждый день.",
@@ -509,25 +1583,49 @@
         {
           "id": "c0670f2c-09df-439b-9067-e429ba3ad899",
           "text": "storage.js — хранилище",
-          "done": false,
+          "done": true,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Один ключ dayPanel, состояние целиком одним объектом. Прочитал его из браузера после теста — структура ровно та, что в плане: version: 1, habits[], log{\"2026-09-27\": {...}}, tasks, countdowns, notes, settings.",
+            "at": 1790544936457
+          },
           "notes": "Один ключ localStorage `dayPanel`, всё состояние одним объектом, пишется целиком. Функции: load(), save(), today(). Поле version: 1 — чтобы потом мигрировать, а не терять данные.",
           "assignee": null,
+          "due": null,
           "children": [
             {
               "id": "895fc906-5941-4c2c-bd3d-2b8113b2a8b5",
               "text": "Функция today()",
-              "done": false,
+              "done": true,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Один ключ dayPanel, состояние целиком одним объектом. Прочитал его из браузера после теста — структура ровно та, что в плане: version: 1, habits[], log{\"2026-09-27\": {...}}, tasks, countdowns, notes, settings.",
+                "at": 1790544936457
+              },
               "notes": "Возвращает строку 'ГГГГ-ММ-ДД' по локальному времени. Использовать ТОЛЬКО её везде, где нужна дата — иначе в разных местах 'сегодня' разъедется. Не брать toISOString(): он отдаёт UTC и после 21:00 по Киеву вернёт завтрашний день.",
               "assignee": null,
+              "due": null,
               "children": [],
               "comments": []
             },
             {
               "id": "8c0d3c5f-32b7-4b09-a476-ec2559616eab",
               "text": "Защита от битых данных",
-              "done": false,
+              "done": true,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Один ключ dayPanel, состояние целиком одним объектом. Прочитал его из браузера после теста — структура ровно та, что в плане: version: 1, habits[], log{\"2026-09-27\": {...}}, tasks, countdowns, notes, settings.",
+                "at": 1790544936457
+              },
               "notes": "JSON.parse в try/catch. Если хранилище повреждено — вернуть пустую структуру, а не уронить страницу.",
               "assignee": null,
+              "due": null,
               "children": [],
               "comments": []
             }
@@ -537,25 +1635,49 @@
         {
           "id": "fb75f32d-6e62-4faf-a204-640e9ca1920e",
           "text": "presets.js — библиотека привычек",
-          "done": false,
+          "done": true,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "18 пресетов в четырёх категориях, проверено в браузере (18 кнопок, заголовки: Learning and growth, Sport and body, Health and routine, Work and focus). Учёба стоит первой и содержит 6 вариантов против 4 у остальных: Language practice, New words, Listening practice, Reading, Online course, Coding practice.",
+            "at": 1790544920192
+          },
           "notes": "Четыре категории: спорт и тело, режим и здоровье, учёба и развитие, работа и фокус. В учёбе вариантов больше остальных: язык (минуты), чтение (страницы), курс (уроки), практика кода (минуты) — это заявленный приоритет.",
           "assignee": null,
+          "due": null,
           "children": [],
           "comments": []
         },
         {
           "id": "1378b311-fe12-4481-bbc1-0c52fabfb775",
           "text": "Экран выбора привычек",
-          "done": false,
+          "done": true,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Кнопка «Edit habits» раскрывает панель под плитками (не модалка — проще и не перекрывает сегодняшний день), повторное нажатие сворачивает, надпись меняется на «Done editing». Пресеты работают на переключение: добавленные подсвечены рамкой и фоном, повторный клик убирает. Форма своей привычки проверена: пустое имя даёт «Give the habit a name.», цель 0 — «The goal has to be a whole number, 1 or more.», корректный ввод создаёт плитку и чистит форму. Имена экранируются: ввёл «Meditation &lt;b&gt;x&lt;/b&gt;» — в DOM тега b нет, текст отрисован буквально.",
+            "at": 1790544936482
+          },
           "notes": "Отметить нужные из пресетов, добавить свою (название, единица, цель), убрать лишнюю.",
           "assignee": null,
+          "due": null,
           "children": [
             {
               "id": "4b231a74-de6b-4ce3-a5ea-5dc54f9fb168",
               "text": "Убранная привычка архивируется, а не удаляется",
-              "done": false,
+              "done": true,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Кнопка «Edit habits» раскрывает панель под плитками (не модалка — проще и не перекрывает сегодняшний день), повторное нажатие сворачивает, надпись меняется на «Done editing». Пресеты работают на переключение: добавленные подсвечены рамкой и фоном, повторный клик убирает. Форма своей привычки проверена: пустое имя даёт «Give the habit a name.», цель 0 — «The goal has to be a whole number, 1 or more.», корректный ввод создаёт плитку и чистит форму. Имена экранируются: ввёл «Meditation &lt;b&gt;x&lt;/b&gt;» — в DOM тега b нет, текст отрисован буквально.",
+                "at": 1790544936482
+              },
               "notes": "archived: true. Удаление стёрло бы всю её историю из log — восстановить будет неоткуда.",
               "assignee": null,
+              "due": null,
               "children": [],
               "comments": []
             }
@@ -565,25 +1687,49 @@
         {
           "id": "a77eb100-03c5-4933-98da-9bdebb21e234",
           "text": "Плитка привычки на сегодня",
-          "done": false,
+          "done": true,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Плитка показывает название, значение с целью и полоску прогресса; у цели 1 вместо цифр «Done» / «Not yet». Отснята в обеих темах, обе читаемы. Ноль не пишется в лог, а удаляется из него — хранилище не копит пустые записи (после выключения Workout его ключа в log нет).",
+            "at": 1790544953929
+          },
           "notes": "Привычка — всегда число с целью: зарядка цель 1, вода 8, английский 20 минут. Галочка это частный случай, отдельного типа нет.",
           "assignee": null,
+          "due": null,
           "children": [
             {
               "id": "3c3d330d-f114-457a-ba94-85aa472398e6",
               "text": "Нажатие добавляет единицу",
-              "done": false,
+              "done": true,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Плитка показывает название, значение с целью и полоску прогресса; у цели 1 вместо цифр «Done» / «Not yet». Отснята в обеих темах, обе читаемы. Ноль не пишется в лог, а удаляется из него — хранилище не копит пустые записи (после выключения Workout его ключа в log нет).",
+                "at": 1790544953929
+              },
               "notes": "При достижении цели плитка переходит в состояние «готово».",
               "assignee": null,
+              "due": null,
               "children": [],
               "comments": []
             },
             {
               "id": "2ee0f82d-27ba-4624-a188-76555ad28f98",
               "text": "Правый клик убавляет",
-              "done": false,
+              "done": true,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Плитка показывает название, значение с целью и полоску прогресса; у цели 1 вместо цифр «Done» / «Not yet». Отснята в обеих темах, обе читаемы. Ноль не пишется в лог, а удаляется из него — хранилище не копит пустые записи (после выключения Workout его ключа в log нет).",
+                "at": 1790544953929
+              },
               "notes": "Обязательно: без отмены случайное нажатие не исправить, и данные за день становятся враньём.",
               "assignee": null,
+              "due": null,
               "children": [],
               "comments": []
             }
@@ -593,9 +1739,17 @@
         {
           "id": "19d038ba-7b9c-4b16-8e0a-970650d1e647",
           "text": "Проверка этапа",
-          "done": false,
+          "done": true,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Перезагрузил страницу после всех правок — плитки вернулись со своими значениями: Water 11/8, Language practice 5/20, Workout Not yet, Meditation 0/15. Пикер при загрузке закрыт. Хранилище прочитано и сверено с ожидаемой структурой.",
+            "at": 1790544953939
+          },
           "notes": "Отметить привычку, перезагрузить страницу — значение на месте. Открыть DevTools → Application → Local Storage, найти ключ dayPanel и увидеть свою структуру своими глазами.",
           "assignee": null,
+          "due": null,
           "children": [],
           "comments": []
         }
@@ -607,70 +1761,76 @@
       "priority": 2,
       "milestone": null,
       "markdownTaskId": null,
-      "updatedAt": 1790543249136,
+      "doneBy": {
+        "name": "Claude",
+        "kind": "agent",
+        "reason": "verified",
+        "note": "Прогнал полный сценарий в браузере: добавил три пресета и одну свою привычку, накликал значения, проверил правый клик, переключение привычки с целью 1, архивирование с сохранением истории, повторное добавление без дубля, валидацию формы и экранирование HTML в названии. Перезагрузил страницу — всё на месте. Хранилище прочитано и сверено. Сняты скриншоты плиток и пикера в светлой и тёмной теме.",
+        "at": 1790544962398
+      },
+      "updatedAt": 1790548095180,
       "deletedAt": null
     },
     {
-      "id": "d774af9b-c46c-47c9-843e-40026b4bd7c3",
-      "number": 5,
-      "column": "Todo",
-      "position": 4,
-      "title": "Этап 5 — задачи, отсчёты, заметка дня",
-      "description": "Панель начинает закрывать день целиком, а не только привычки. Все подписи в интерфейсе на английском.",
+      "id": "c2fe5b78-0a01-4a79-90e5-eb05509a58e2",
+      "number": 20,
+      "column": "Done",
+      "position": 19,
+      "title": "Patterns that say what they are waiting for, and two nobody else can ask",
+      "description": "The Patterns page is empty by design for weeks, which made it indistinguishable from a broken page. It now says what it is counting towards. Two new comparisons use the halves of the app no habit tracker has: your tasks and your notes.",
       "assignee": null,
       "dueDate": null,
       "checklist": [
         {
-          "id": "a9123e05-49ce-46e2-8429-7486630673c6",
-          "text": "Задачи на день (Today's tasks)",
+          "id": "fe4f829c-69f3-4f56-b37a-cd035ec0a634",
+          "text": "\"Still counting\" lists each comparison and how far off the thinnest side is",
           "done": false,
-          "notes": "Добавить, отметить, удалить. Список привязан к дате.",
-          "assignee": null,
-          "children": [
-            {
-              "id": "43686acf-ef11-4375-8194-c599f67cae58",
-              "text": "Перенос невыполненного",
-              "done": false,
-              "notes": "Утром список чистый, но вчерашние незакрытые не пропадают — панель предлагает перенести их одним нажатием (Move 3 tasks from yesterday).",
-              "assignee": null,
-              "children": [],
-              "comments": []
-            }
-          ],
-          "comments": []
-        },
-        {
-          "id": "77d6105e-e29e-4de3-9df0-3e64ccaf9fc9",
-          "text": "Обратные отсчёты (Countdowns)",
-          "done": false,
-          "notes": "Название плюс дата, показывает оставшиеся дни. Прошедшие уходят в конец списка, а не исчезают.",
+          "notes": "Verify: History → the list names e.g. \"Full days against quiet ones — 0 of the 10 days needed\"",
           "assignee": null,
           "children": [],
           "comments": []
         },
         {
-          "id": "a836b560-c652-45da-bcbf-91570195d0e7",
-          "text": "Заметка дня (Note)",
+          "id": "7fd1528a-8b58-47f9-bc1f-5a315fb55cc1",
+          "text": "Full days against quiet ones: habit completion when 3+ tasks were planned against days with 0–1",
           "done": false,
-          "notes": "Пара строк, сохраняется по дате с задержкой после остановки набора, а не на каждое нажатие клавиши.",
+          "notes": "The ambiguous middle is left out on purpose rather than blurring the contrast",
           "assignee": null,
           "children": [],
           "comments": []
         },
         {
-          "id": "1d30fc6a-fb69-4e60-9f8e-d9ba82735894",
-          "text": "Блок «One year ago»",
+          "id": "85e04b5c-ffbe-4fb0-aa2a-b88a6a3da20c",
+          "text": "Days you wrote something down against days you did not",
           "done": false,
-          "notes": "Заложить сразу, хотя оживёт он только через год. Пока данных нет — блок просто не показывается.",
+          "notes": "Language-neutral, so it works whatever you write in",
           "assignee": null,
           "children": [],
           "comments": []
         },
         {
-          "id": "e452d82f-b55c-4123-8334-6ee593991328",
-          "text": "Проверка этапа",
+          "id": "8094b163-7223-41f1-914d-a082691d280a",
+          "text": "\"When you do them\": the usual time for a habit, with the middle half of the spread",
           "done": false,
-          "notes": "Создать задачу, подменить дату на завтрашнюю — панель предлагает перенос невыполненного.",
+          "notes": "Needs 10 timed days. Kept apart from the findings and worded as an observation — it is a description, not a claim about cause, so it does not go through the z-test",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "20834760-ec1f-44cd-a812-30fd632396ae",
+          "text": "Habits measured by the week are left out of day-by-day comparisons",
+          "done": false,
+          "notes": "Comparing a weekly habit day by day would be comparing the wrong thing",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "6522ff43-9d10-461f-aef1-b53e93411f6a",
+          "text": "The z-test gate at z >= 3 is unchanged",
+          "done": false,
+          "notes": "Still the thing standing between this page and confident nonsense",
           "assignee": null,
           "children": [],
           "comments": []
@@ -680,10 +1840,678 @@
       "branches": [],
       "pullRequests": [],
       "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598886016,
+      "deletedAt": null
+    },
+    {
+      "id": "c906a185-bd4a-49d3-a023-364f6ebc2b22",
+      "number": 8,
+      "column": "Done",
+      "position": 3,
+      "title": "Переделать расположение под референс iDraft",
+      "description": "Пользователь прислал скриншот дашборда iDraft (27.09.2026) как образец того, как должно быть расположено. Стиль чёрно-белый совпадает с текущим, вопрос в компоновке. Отдельное требование: интерфейс не должен быть перегружен, вкладок меньше, боковая панель открывается кнопкой, а не висит всегда.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "da775005-07b7-4cee-9c56-51082f4f1c49",
+          "text": "Боковая панель, скрытая за кнопкой",
+          "done": true,
+          "notes": "Главное требование пользователя. По умолчанию закрыта, открывается кнопкой в шапке, состояние запоминается в settings. На референсе она всегда открыта — это сознательное отступление.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Круглая кнопка-бургер слева в шапке. Панель выезжает поверх содержимого с затемнением, закрывается кликом по затемнению, клавишей Escape и автоматически при выборе пункта. Проверено: menu-btn открыл (sidebarHidden false), выбор Settings закрыл её и переключил вид. Отступление от замысла карточки: состояние НЕ запоминается, панель всегда стартует закрытой — просьба была именно в том, чтобы она не висела постоянно.",
+            "at": 1790546816607
+          }
+        },
+        {
+          "id": "0a2a387d-7e9a-4fed-a187-16ff851a604f",
+          "text": "Минимум вкладок",
+          "done": true,
+          "notes": "На референсе их десяток (Dashboard, Calendar, My Tasks, Statistics, Documents, интеграции, команды) — пользователь сам сказал, что это перегружено. Делаем три: Dashboard, History, Settings.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Три пункта: Dashboard, History, Settings. Активный подсвечен инверсией темы. Переключение проверено во все три вида, скрытие остальных через hidden.",
+            "at": 1790546816621
+          }
+        },
+        {
+          "id": "6a728351-7e28-4558-b1c6-b8e91104a1ad",
+          "text": "Шапка как на референсе",
+          "done": true,
+          "notes": "Слева крупное приветствие и дата, справа ряд круглых кнопок действий и чёрная кнопка-акцент (у них «+ Create», у нас — добавление привычки). Часы переезжают туда же.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Бургер, крупное приветствие с датой под ним, справа часы и чёрная кнопка-таблетка «Edit habits» (аналог «+ Create» с референса). Часы уехали из отдельного блока в шапку, стали компактнее. Кнопка из любого вида возвращает на Dashboard, потому что пикер живёт там.",
+            "at": 1790546816631
+          }
+        },
+        {
+          "id": "7038e62a-0dba-4b67-a028-95e3edce0d58",
+          "text": "Сетка карточек",
+          "done": true,
+          "notes": "Крупные скруглённые карточки разной ширины, одна из них чёрная с крупными цифрами — это главный приём референса и самое заметное отличие от нынешнего плоского списка.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Две карточки сверху в пропорции 2:1: широкая акцентная со Streak и узкая Year. Радиус 20px, крупные цифры. Приём взят из второго набора референсов (виджеты в белом и чёрном варианте): акцентная карточка — это тема, вывернутая наизнанку, через переменные --invert-bg и --invert-text. На светлой теме она чёрная, на тёмной белая. Проверено getComputedStyle: в тёмной теме фон rgb(250, 250, 250) с текстом rgb(24, 24, 27).",
+            "at": 1790546834737
+          }
+        },
+        {
+          "id": "45803a39-ed99-4a29-a6c0-e22aa4d01e04",
+          "text": "Убрать лишнее с главного экрана",
+          "done": true,
+          "notes": "Сейчас на одном экране всё сразу: плитки, пикер, четыре цифры, сетка, кнопки бэкапа и футер с темой. Экспорт, импорт и тема уезжают в Settings, сетка и полная статистика — в History. На главном остаются привычки дня и одна сводная карточка.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "На Dashboard остались две сводные карточки и плитки дня. Сетка за полгода и три цифры статистики уехали в History, экспорт с импортом и выбор темы — в Settings. Футер с отладочным индикатором темы удалён совсем, вместо хэша адреса появились настоящие кнопки Follow the clock / Always light / Always dark. Карточка Year gone из History убрана, чтобы не дублировать одноимённую карточку дашборда.",
+            "at": 1790546834755
+          }
+        },
+        {
+          "id": "499835dd-860e-416e-b63a-4670c8e32bd9",
+          "text": "Проверка",
+          "done": true,
+          "notes": "Сравнить скриншот с референсом в обеих темах. Убедиться, что вся прежняя механика жива: клики по плиткам, правый клик, пикер, экспорт и импорт — это только перекладка разметки, логика не трогается.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Сняты скриншоты обеих тем и всех трёх видов. Механика прогнана после перекладки: клик 5→6, правый клик 6→5, привычка с целью 1 переключилась Done→Not yet, карточка Streak обновляется вместе с плитками, пикер открывается из шапки (18 пресетов, 4 добавленных помечены) и закрывается, меню закрывается при выборе вида, выбор темы сохраняется в settings, экспорт выдал day-panel-2026-09-28.json. Добавлены элементы из второго набора референсов: строка дней недели Mon-Sun с состояниями (выполнено, сегодня, пропущено, будущее) и год 52 точками.",
+            "at": 1790546834766
+          }
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "doneBy": {
+        "name": "Claude",
+        "kind": "agent",
+        "reason": "verified",
+        "note": "Макет переложен под оба набора референсов и проверен в браузере в светлой и тёмной теме, во всех трёх видах. Логика не тронута — только разметка и стили; вся прежняя механика прогнана заново и работает.",
+        "at": 1790546848456
+      },
+      "updatedAt": 1790546848456,
+      "deletedAt": null
+    },
+    {
+      "id": "d774af9b-c46c-47c9-843e-40026b4bd7c3",
+      "number": 5,
+      "column": "Done",
+      "position": 5,
+      "title": "Этап 5 — задачи, отсчёты, заметка дня",
+      "description": "Панель начинает закрывать день целиком, а не только привычки. Все подписи в интерфейсе на английском.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "a9123e05-49ce-46e2-8429-7486630673c6",
+          "text": "Задачи на день (Today's tasks)",
+          "done": true,
+          "notes": "Добавить, отметить, удалить. Список привязан к дате.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "43686acf-ef11-4375-8194-c599f67cae58",
+              "text": "Перенос невыполненного",
+              "done": true,
+              "notes": "Утром список чистый, но вчерашние незакрытые не пропадают — панель предлагает перенести их одним нажатием (Move 3 tasks from yesterday).",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Добавление через форму, отметка по чекбоксу (галочка, зачёркнутый текст), удаление крестиком — он появляется только при наведении, чтобы не шуметь в списке. Задачи привязаны к дате. Проверено: две задачи добавились, первая отметилась как выполненная.",
+                "at": 1790550246806
+              }
+            }
+          ],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Добавление через форму, отметка по чекбоксу (галочка, зачёркнутый текст), удаление крестиком — он появляется только при наведении, чтобы не шуметь в списке. Задачи привязаны к дате. Проверено: две задачи добавились, первая отметилась как выполненная.",
+            "at": 1790550246806
+          }
+        },
+        {
+          "id": "77d6105e-e29e-4de3-9df0-3e64ccaf9fc9",
+          "text": "Обратные отсчёты (Countdowns)",
+          "done": true,
+          "notes": "Название плюс дата, показывает оставшиеся дни. Прошедшие уходят в конец списка, а не исчезают.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Название плюс дата. «Trip» на 5 октября показал «7 days» — сверено с ручным счётом от 28 сентября. Сегодняшняя дата пишется словом «today», завтрашняя «tomorrow». Прошедшие сортируются в конец списка и бледнеют, но не исчезают: прошедшая годовщина всё ещё стоит того, чтобы её видеть. Пустое название даёт «Give it a name.»",
+            "at": 1790550246818
+          }
+        },
+        {
+          "id": "a836b560-c652-45da-bcbf-91570195d0e7",
+          "text": "Заметка дня (Note)",
+          "done": true,
+          "notes": "Пара строк, сохраняется по дате с задержкой после остановки набора, а не на каждое нажатие клавиши.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Сохраняется через полсекунды после остановки набора и дополнительно при уходе фокуса. Проверено: набрал текст, подождал — в хранилище под сегодняшней датой лежит именно он. Отдельная деталь: поле не перезаполняется из хранилища, пока в нём стоит курсор, иначе при перерисовке каретка прыгала бы в конец прямо во время печати. Пустая заметка удаляется из хранилища, а не хранится пустой строкой.",
+            "at": 1790550261815
+          }
+        },
+        {
+          "id": "1d30fc6a-fb69-4e60-9f8e-d9ba82735894",
+          "text": "Блок «One year ago»",
+          "done": true,
+          "notes": "Заложить сразу, хотя оживёт он только через год. Пока данных нет — блок просто не показывается.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Проверить удалось, не дожидаясь года: положил заметку под датой 2025-09-28 и блок появился с её текстом. Когда записи за тот день нет, блок скрыт целиком и места не занимает.",
+            "at": 1790550261832
+          }
+        },
+        {
+          "id": "e452d82f-b55c-4123-8334-6ee593991328",
+          "text": "Проверка этапа",
+          "done": true,
+          "notes": "Создать задачу, подменить дату на завтрашнюю — панель предлагает перенос невыполненного.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Вместо подмены даты сделал обратное и надёжнее: положил задачи во вчерашний день. Панель предложила перенести ровно незакрытые (2 из 3), после переноса они оказались в сегодняшнем списке, закрытая осталась во вчера. Ошибок в консоли нет. Всё отснято в обеих темах.",
+            "at": 1790550261842
+          }
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
       "priority": 4,
       "milestone": null,
       "markdownTaskId": null,
-      "updatedAt": 1790543449673,
+      "doneBy": {
+        "name": "Claude",
+        "kind": "agent",
+        "reason": "verified",
+        "note": "Задачи, отсчёты и заметка работают и проверены в браузере: добавление, отметка, удаление, перенос только незакрытых со вчера, отсчёт «Trip — 7 days» сверен вручную, заметка сохраняется с задержкой, блок «One year ago» проверен подложенной заметкой годичной давности. Ошибок в консоли нет.",
+        "at": 1790550271192
+      },
+      "updatedAt": 1790550271192,
+      "deletedAt": null
+    },
+    {
+      "id": "db8fbad1-0159-40c7-9e54-a212a45bc51c",
+      "number": 24,
+      "column": "Todo",
+      "position": 0,
+      "title": "Released as 1.0.0: an installer anyone can download",
+      "description": "Packaged with electron-builder and published as a GitHub release, so the app can be installed like any other program rather than started from a terminal. https://github.com/blickff/plan_C/releases/tag/v1.0.0",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "cc42ca5a-36d9-4adb-bc6a-774d98d9a736",
+          "text": "Per-user NSIS installer and a portable exe, both x64",
+          "done": false,
+          "notes": "npm run dist. Per-user so it never asks for an administrator. Verified the unpacked build runs and opens a real window",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "18176c7b-bb12-4550-b19f-15dfaccdbcfa",
+          "text": "The data folder is pinned to %APPDATA%\\day-panel",
+          "done": false,
+          "notes": "Electron names it after the product, so an installed \"Day Panel\" and a dev \"day-panel\" would have been two profiles. Verified: running the packaged build wrote to the existing folder and created no second one",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "688f537b-2f69-4f05-9bbb-ce16b1864442",
+          "text": "Single-instance lock",
+          "done": false,
+          "notes": "Verified: launching a second copy left the process count unchanged",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "b9f04d63-f2df-4757-865f-4977ed5de3d6",
+          "text": "Uninstalling leaves the data behind",
+          "done": false,
+          "notes": "deleteAppDataOnUninstall: false. Uninstalling an app should not delete what you wrote in it",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "e973d4c3-8cce-41d7-a4a1-37b7b513019e",
+          "text": "App icon drawn in code at scripts/make-icon.js, regenerated with npm run icon",
+          "done": false,
+          "notes": "The completion ring the panel already uses, so it is recognisable after a day of use",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "8e561407-390f-4ccc-b191-6c53a3e8c025",
+          "text": "NOT code-signed — Windows SmartScreen will warn on first run",
+          "done": false,
+          "notes": "A certificate is a yearly purchase and the owner has ruled out paying for anything. The README and the release notes both say plainly that the warning is about the missing certificate, not about the program, and point at building from source as the alternative",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "1a261765-c910-4d64-a99c-7598e9edd98d",
+          "text": "Verify: run the installer, then quit and reopen from the Start menu — the habits are still there",
+          "done": false,
+          "notes": null,
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790627468503,
+      "deletedAt": null
+    },
+    {
+      "id": "dfc41e38-a9d5-4d0f-afba-23fca77f7bdc",
+      "number": 16,
+      "column": "Done",
+      "position": 18,
+      "title": "Filling in a day that was missed",
+      "description": "The record was never \"what I did\" — it was \"what I did on the days I remembered to open this\". Habits could only be ticked for today, and every unlogged day was silently counted as a failure by the calendar, the month figure, the streaks and the patterns. The day view is now editable, and a day nobody filled in is treated as unknown rather than failed.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "3215e7fb-44c9-48d6-833f-8f4bb2c0bf5a",
+          "text": "Press any day on the calendar and edit its habits with − / + there",
+          "done": false,
+          "notes": "js/dayview.js. Verify: open a past day, add some pages, the calendar cell changes colour straight away",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "b6e9f906-3227-418b-92c3-aa8679bc782d",
+          "text": "The note for any day is written in the same card, past or future",
+          "done": false,
+          "notes": "Verify: write on a past day, then find it in Notes",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "0d8f9fc0-e989-4ada-a05d-fe82ef12ef5d",
+          "text": "A day is \"known\" only once something was logged or it was explicitly marked empty",
+          "done": false,
+          "notes": "Storage.known / Storage.closeDay. The button reads \"Nothing got done that day — count it\"",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "249d36a4-83fa-4444-a71b-2d629c75adc4",
+          "text": "Unfilled past days are no longer painted red on the calendar or in the history grid",
+          "done": false,
+          "notes": "Habits.levelOn returns -1 for an unknown day. Verify: a day you were away shows as an outline, not red",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "6870d3c2-95c0-4f6d-9a09-f6456c9ae706",
+          "text": "The month and year percentages skip unfilled days instead of scoring them zero",
+          "done": false,
+          "notes": "dashboard.completionOver, history.monthPercent",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "2d876fe5-2313-49b4-a59b-da441a05b721",
+          "text": "The patterns on the History page only count filled-in days",
+          "done": false,
+          "notes": "insights.eachDay. This was the one that mattered: \"Sunday is your weak spot\" could have meant nothing more than the computer being off on Sundays",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "16965767-8732-47ce-8e0c-adb22d4d4302",
+          "text": "Times are recorded when a habit is ticked today, and never when a past day is filled in",
+          "done": false,
+          "notes": "Habits.setValue. Inventing a time for last Tuesday would poison the only insight that depends on it",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598885456,
+      "deletedAt": null
+    },
+    {
+      "id": "ee22d62f-f4d5-422d-9736-4120aff3f1e4",
+      "number": 22,
+      "column": "Done",
+      "position": 20,
+      "title": "The streak is no longer the only number on the card",
+      "description": "The most fragile figure in the app sat in the largest type: one missed day took it to zero and the whole month's work with it. And a single ring averaging every habit hid the one that was failing while the others carried the number.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "5914510c-b413-4379-874f-f028edbf2a39",
+          "text": "Under the streak: \"Met on 21 of the last 30 days\" — in weeks for a weekly habit",
+          "done": false,
+          "notes": "Habits.rate. A broken streak is then a broken streak, not a verdict on the month",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "9e144b9a-f490-4796-bd90-14e065e07c80",
+          "text": "The habit falling behind is named on the card when there is one",
+          "done": false,
+          "notes": "Habits.laggard: at least 7 chances and 40% or worse over 30 days, so it stays quiet rather than nagging",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598886413,
+      "deletedAt": null
+    },
+    {
+      "id": "ee7a7c7c-751a-4712-8a6a-34101b93b99e",
+      "number": 21,
+      "column": "Done",
+      "position": 12,
+      "title": "Version 2 of the stored shape, and not losing data to it or to a sync race",
+      "description": "The day record needed room for the time a habit was ticked and for whether the day had been accounted for at all, and the weather had been sharing a namespace with habit ids. Both changes rewrite everybody's history on first open, and the sync rule could already discard a day's work in silence — so the safety nets came with them.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "87eb7561-9539-42bd-9f00-f22a88b73717",
+          "text": "A day is now { values, at, weather, closed } instead of a flat map with 'weather' among the habit ids",
+          "done": false,
+          "notes": "Storage.migrate. Verified on version-1 data: values moved across, weather kept, days with entries marked as accounted for",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "5471238b-ec41-4ca5-b2e9-fd27eaa44ab5",
+          "text": "The untouched version-1 data is kept under its own storage key before anything rewrites it",
+          "done": false,
+          "notes": "dayPanel-before-v2, written once and never overwritten so a later run cannot replace the original with already-migrated data",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "8bc57c12-4b11-4cb1-96b4-a0e240c2cec6",
+          "text": "Settings offers it as a download while it exists",
+          "done": false,
+          "notes": "\"Download the copy from before the upgrade\". A safety net nobody can reach is not a safety net. Verified: the button appears only after a migration",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "e7a87be3-e250-4488-9fa6-5799f735da4d",
+          "text": "A copy also goes next to the data file, for anyone who has chosen a folder",
+          "done": false,
+          "notes": "Storage.keepPreMigrationCopy → vault.stash",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "73124b40-eebb-44c2-9e56-1da1fc93663f",
+          "text": "When a synced folder holds a newer file, the losing side is written out beside it and the panel says so",
+          "done": false,
+          "notes": "day-panel-replaced-<timestamp>.json plus a notice on the dashboard with the path. Before this, a machine that had been offline lost its day without a word",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        },
+        {
+          "id": "f68c1306-f329-43aa-932a-57a0e6f3ad3d",
+          "text": "Verify on the real data: open Settings after the first launch and download the pre-upgrade copy, then check the calendar and streaks look right",
+          "done": false,
+          "notes": "No vault folder is configured on this machine yet, so the storage-key copy is the only net until one is chosen",
+          "assignee": null,
+          "children": [],
+          "comments": []
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 0,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790598878475,
+      "deletedAt": null
+    },
+    {
+      "id": "f6a3040f-fe5e-4a1f-8968-901db71646a3",
+      "number": 9,
+      "column": "Done",
+      "position": 8,
+      "title": "Тёмная тема и кнопка меню",
+      "description": "Светлая тема пользователя устраивает, тёмная — нет: серые тона невнятные. Плюс кнопка меню в шапке отрисовывается одной короткой полоской вместо трёх и стоит не по центру.",
+      "assignee": null,
+      "dueDate": null,
+      "checklist": [
+        {
+          "id": "02bb2a8b-f9ab-447a-87c8-83bbe4ab0a46",
+          "text": "Починить кнопку меню",
+          "done": true,
+          "notes": "В разметке три span, но видна одна полоска. Причина в том, что высота 1.5px при масштабировании округляется в ноль, а без flex: none полоски сжимаются. Сделать три одинаковые полоски по 2px с явным flex: none и центрированием по обеим осям.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "829d21de-7405-4e0a-b2fa-bfdcdab7c849",
+              "text": "Три полоски одинаковой длины",
+              "done": true,
+              "notes": "Средняя была короче остальных — пользователь говорит, что так неинтуитивно. Стандартный гамбургер узнаётся сразу.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Замерил через getBoundingClientRect: три полоски 16×2 на позициях y=40, 46, 52, все с одним центром по X (35), центр самой кнопки тоже 35 — то есть ровно посередине.\n\nПричина исходной поломки оказалась двойной. Высота полоски была 1.5px: у флекс-элемента с дробной высотой и flex-shrink по умолчанию браузер при округлении схлопывал две из трёх в ноль. Плюс padding: 0 10px сдвигал содержимое от центра. Теперь высота целые 2px, flex: none и padding убран, центрирование по обеим осям через align-items и justify-content.",
+                "at": 1790552426607
+              }
+            }
+          ],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Замерил через getBoundingClientRect: три полоски 16×2 на позициях y=40, 46, 52, все с одним центром по X (35), центр самой кнопки тоже 35 — то есть ровно посередине.\n\nПричина исходной поломки оказалась двойной. Высота полоски была 1.5px: у флекс-элемента с дробной высотой и flex-shrink по умолчанию браузер при округлении схлопывал две из трёх в ноль. Плюс padding: 0 10px сдвигал содержимое от центра. Теперь высота целые 2px, flex: none и padding убран, центрирование по обеим осям через align-items и justify-content.",
+            "at": 1790552426607
+          }
+        },
+        {
+          "id": "6788347c-b2a1-4c4e-9a20-6f93f7afc607",
+          "text": "Перебрать серые тона тёмной темы",
+          "done": true,
+          "notes": "Светлую тему не трогать вовсе — она устраивает. В тёмной серые с фиолетовым отливом (#1c1c22, R меньше B) — оттого грязноватые. Взять холодный сине-серый ряд.",
+          "assignee": null,
+          "children": [
+            {
+              "id": "766c39f7-4f28-493b-b6d2-b9836ad32fad",
+              "text": "Проверить контраст текста",
+              "done": true,
+              "notes": "Основной текст на фоне карточки должен давать не меньше 7:1, приглушённый — не меньше 4.5:1. Считать, а не на глаз.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Диагноз: в старом наборе у каждого серого синего было заметно больше красного (#1c1c22, #35353f, #26262c). Такой перекос глаз читает как пыльно-фиолетовый — отсюда и ощущение грязи.\n\nНовый ряд — ровный холодный сине-серый: фон #0a0c0f, поверхность #161a20, граница #29303a, акцентная подложка #1e242c, текст #e9edf2 / #a2acb9 / #808d9d. Инверсная карточка стала #f4f6f8 вместо чистого #fafafa, чтобы не резала на тёмном.\n\nСветлая тема не тронута ни одним значением — она устраивает.",
+                "at": 1790552441724
+              }
+            },
+            {
+              "id": "fe1d20d1-0aa1-43f9-921e-ca81f2aec8f2",
+              "text": "Границы должны быть видны",
+              "done": true,
+              "notes": "Раньше уже была жалоба на «чёрное на чёрном»: поверхность обязана отличаться от фона, а рамка — от поверхности.",
+              "assignee": null,
+              "children": [],
+              "comments": [],
+              "review": false,
+              "doneBy": {
+                "name": "Claude",
+                "kind": "agent",
+                "reason": "verified",
+                "note": "Диагноз: в старом наборе у каждого серого синего было заметно больше красного (#1c1c22, #35353f, #26262c). Такой перекос глаз читает как пыльно-фиолетовый — отсюда и ощущение грязи.\n\nНовый ряд — ровный холодный сине-серый: фон #0a0c0f, поверхность #161a20, граница #29303a, акцентная подложка #1e242c, текст #e9edf2 / #a2acb9 / #808d9d. Инверсная карточка стала #f4f6f8 вместо чистого #fafafa, чтобы не резала на тёмном.\n\nСветлая тема не тронута ни одним значением — она устраивает.",
+                "at": 1790552441724
+              }
+            }
+          ],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Диагноз: в старом наборе у каждого серого синего было заметно больше красного (#1c1c22, #35353f, #26262c). Такой перекос глаз читает как пыльно-фиолетовый — отсюда и ощущение грязи.\n\nНовый ряд — ровный холодный сине-серый: фон #0a0c0f, поверхность #161a20, граница #29303a, акцентная подложка #1e242c, текст #e9edf2 / #a2acb9 / #808d9d. Инверсная карточка стала #f4f6f8 вместо чистого #fafafa, чтобы не резала на тёмном.\n\nСветлая тема не тронута ни одним значением — она устраивает.",
+            "at": 1790552441724
+          }
+        },
+        {
+          "id": "e2bb0b4e-1763-4042-95af-a47234d304ec",
+          "text": "Проверка",
+          "done": true,
+          "notes": "Скриншоты обеих тем и всех трёх видов, замер контрастов, проверить что у кнопки меню три полоски видны и она работает.",
+          "assignee": null,
+          "children": [],
+          "comments": [],
+          "review": false,
+          "doneBy": {
+            "name": "Claude",
+            "kind": "agent",
+            "reason": "verified",
+            "note": "Тёмная тема отснята, контрасты посчитаны, кнопка меню замерена — три полоски 16×2 с центром, совпадающим с центром кнопки. Приложение перезапущено с новой палитрой, работает. Не проверено глазами пользователя — ему смотреть, устроил ли новый серый.",
+            "at": 1790552452230
+          }
+        }
+      ],
+      "labels": [],
+      "branches": [],
+      "pullRequests": [],
+      "issues": [],
+      "priority": 2,
+      "milestone": null,
+      "markdownTaskId": null,
+      "updatedAt": 1790582240354,
       "deletedAt": null
     }
   ],
