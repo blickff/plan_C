@@ -87,13 +87,13 @@ var Notes = (function () {
     }
 
     if (!everything.length) {
-      box.innerHTML = '<p class="muted dv__empty">' +
+      box.innerHTML = '<p class="muted soft">' +
         'Nothing written yet. The note box is at the bottom of the dashboard.</p>';
       return;
     }
 
     if (!found.length) {
-      box.innerHTML = '<p class="muted dv__empty">No note mentions that.</p>';
+      box.innerHTML = '<p class="muted soft">No note mentions that.</p>';
       return;
     }
 
@@ -121,9 +121,9 @@ var Notes = (function () {
        written usually only makes sense next to what was happening. */
     document.getElementById('notes-list').addEventListener('click', function (event) {
       var row = event.target.closest('[data-note-date]');
-      if (!row || typeof DayView === 'undefined') return;
+      if (!row || typeof goToDay !== 'function') return;
       showView('dashboard');
-      DayView.open(row.getAttribute('data-note-date'));
+      goToDay(row.getAttribute('data-note-date'));
     });
   }
 

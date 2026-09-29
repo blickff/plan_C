@@ -77,7 +77,7 @@
         </div>
 
         <div class="card card--fill">
-          <p class="card__title">Today's tasks</p>
+          <p class="card__title" id="tasks-title">Today's tasks</p>
           <div class="fill" id="tasks"></div>
           <form class="taskform" id="task-form">
             <div class="row">
@@ -95,9 +95,9 @@
         </div>
       </div>
 
-      <div class="card" id="dayview" hidden></div>
-
-      <p class="label">Today</p>
+      <!-- Which day the habits, the tasks and the note below belong to.
+           Today unless one was pressed on the calendar. -->
+      <div class="dayhead" id="dayhead"></div>
       <div class="tiles" id="tiles"></div>
 
       <div class="picker" id="picker" hidden>
@@ -217,12 +217,19 @@
       <div class="card" id="desktop-card" hidden>
         <p class="card__title">Desktop widget</p>
         <p class="card__note muted">
-          Ctrl+Shift+D hides and brings back the widget.
+          Ctrl+Shift+D hides and brings back the widget, and so does the icon by the clock.
         </p>
         <div class="row">
           <button class="pill" type="button" id="autostart-btn">Start with Windows</button>
           <button class="pill" type="button" id="ontop-btn">Keep above other windows</button>
+          <button class="pill" type="button" id="pinned-btn">Pin to the desktop</button>
         </div>
+        <p class="card__note muted">
+          Pinned, it leaves the taskbar and Alt+Tab, stays behind whatever you
+          are working in rather than over it, and comes back after “show desktop”.
+          Windows has no real way to fasten a window to the wallpaper, so this is
+          as close as it gets without machinery this app does not otherwise need.
+        </p>
       </div>
 
       <div class="card">
@@ -243,7 +250,6 @@
   <script src="js/habits.js"></script>
   <script src="js/weather.js"></script>
   <script src="js/dashboard.js"></script>
-  <script src="js/dayview.js"></script>
   <script src="js/history.js"></script>
   <script src="js/notes.js"></script>
   <script src="js/panel.js"></script>

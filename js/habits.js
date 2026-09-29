@@ -124,15 +124,20 @@ var Habits = (function () {
     return dueOn(Storage.load().log, habit, Storage.today());
   }
 
-  /* Today's values ---------------------------------------------------- */
+  /* The values of the day on screen ------------------------------------
+
+     Which is today unless a day was picked off the calendar. The
+     default is Storage.viewingDay() rather than today so that one set
+     of controls works for any day — the widget never picks a day, so
+     for it the two are always the same. */
 
   function valueOf(id, key) {
     var log = Storage.load().log;
-    return Storage.valuesOn(log, key || Storage.today())[id] || 0;
+    return Storage.valuesOn(log, key || Storage.viewingDay())[id] || 0;
   }
 
   function setValue(id, value, key) {
-    key = key || Storage.today();
+    key = key || Storage.viewingDay();
     var day = Storage.day(key, true);
 
     if (value > 0) {
@@ -148,7 +153,10 @@ var Habits = (function () {
     } else {
       /* Zero is the default, so storing it would only pad the file. */
       delete day.values[id];
-      if (day.at) delete day.at[id];
+      if (day.at) {
+        delete day.at[id];
+        if (!Object.keys(day.at).length) delete day.at;
+      }
       /* Zeroing the last habit would make the day look untouched again,
          which is a different claim from "nothing got done". */
       if (!Object.keys(day.values).length) day.closed = true;
@@ -163,7 +171,12 @@ var Habits = (function () {
     var habit = find(id);
     if (!habit) return;
 
-    key = key || Storage.today();
+    key = key || Storage.viewingDay();
+    /* A day that has not arrived cannot have been done. Nothing stops
+       you writing a note or a task on it — those are plans — but a
+       habit value is a record of something that happened. */
+    if (key > Storage.today()) return;
+
     var current = valueOf(id, key);
     var next;
 
@@ -465,26 +478,40 @@ var Habits = (function () {
     return n + ' ' + word + (n === 1 ? '' : 's');
   }
 
-  function tileHtml(habit) {
-    var value = valueOf(habit.id);
+  function tileHtml(habit, key, ahead) {
+    var value = valueOf(habit.id, key);
     var done = value >= habit.goal;
     var percent = Math.min(100, Math.round((value / habit.goal) * 100));
-    var due = dueToday(habit);
+    var due = dueOn(Storage.load().log, habit, key);
+    var here = key === Storage.today();
 
     var readout = habit.goal === 1
       ? (done ? 'Done' : 'Not yet')
       : '<strong>' + value + '</strong> / ' + habit.goal + ' ' + escapeHtml(habit.unit);
 
-    /* A single one is not a streak worth announcing. */
-    var run = streaksFor(habit);
-    var foot = run.current >= 2
-      ? plural(run.current, run.unit) + ' in a row'
-      : (due ? '' : 'Not on today — ' + scheduleLabel(habit).toLowerCase());
+    /* A streak is a fact about now, so it only belongs on the tile
+       while the tile is showing now. On a day in the past it would
+       describe something that has not happened yet from that day's
+       point of view. */
+    var foot;
+    if (!due) {
+      foot = 'Not on this day — ' + scheduleLabel(habit).toLowerCase();
+    } else if (here) {
+      var run = streaksFor(habit);
+      foot = run.current >= 2 ? plural(run.current, run.unit) + ' in a row' : '';
+    } else {
+      foot = '';
+    }
+
+    var hint = ahead
+      ? 'Still to come — nothing to record yet'
+      : escapeHtml(scheduleLabel(habit)) + ' · click to add, right-click to take away';
 
     return '' +
       '<button class="tile' + (done ? ' is-done' : '') + (due ? '' : ' is-off') +
-        '" data-id="' + escapeHtml(habit.id) + '"' +
-      ' title="' + escapeHtml(scheduleLabel(habit)) + ' · click to add, right-click to take away">' +
+        (ahead ? ' is-ahead' : '') +
+        '" data-id="' + escapeHtml(habit.id) + '"' + (ahead ? ' disabled' : '') +
+      ' title="' + hint + '">' +
         '<span class="tile__name">' + escapeHtml(habit.name) + '</span>' +
         '<span class="tile__value">' + readout + '</span>' +
         '<span class="tile__bar"><span style="width:' + percent + '%"></span></span>' +
@@ -492,16 +519,20 @@ var Habits = (function () {
       '</button>';
   }
 
-  /* Due first. What is being asked of you today belongs above what is
-     not; the rest stay visible because doing one early is allowed. */
-  function todaysOrder() {
+  /* Due first. What is being asked of you on that day belongs above
+     what is not; the rest stay visible because doing one early is
+     allowed. Habits younger than the day are left out entirely — a
+     habit started last week has nothing to say about last month. */
+  function orderFor(key) {
     var log = Storage.load().log;
-    var key = Storage.today();
     var due = [];
     var off = [];
+
     active().forEach(function (habit) {
+      if (habit.createdAt && habit.createdAt > key) return;
       (dueOn(log, habit, key) ? due : off).push(habit);
     });
+
     return due.concat(off);
   }
 
@@ -511,14 +542,18 @@ var Habits = (function () {
        compact layout, so the full panel's containers are not there. */
     if (!el) return;
 
-    var list = todaysOrder();
+    var key = Storage.viewingDay();
+    var ahead = key > Storage.today();
+    var list = orderFor(key);
 
     if (!list.length) {
-      el.innerHTML = '<p class="empty">No habits yet — press “Edit habits” to pick some.</p>';
+      el.innerHTML = Storage.viewingToday()
+        ? '<p class="empty">No habits yet — press “Edit habits” to pick some.</p>'
+        : '<p class="empty">No habits existed yet on that day.</p>';
       return;
     }
 
-    el.innerHTML = list.map(tileHtml).join('');
+    el.innerHTML = list.map(function (habit) { return tileHtml(habit, key, ahead); }).join('');
   }
 
   function presetHtml(item) {

@@ -306,6 +306,35 @@ var Storage = (function () {
     return pad(now.getHours()) + ':' + pad(now.getMinutes());
   }
 
+  /* Which day the panel is showing ------------------------------------
+
+     Today, unless a day was picked off the calendar. The habit tiles,
+     the task list and the note all read from here, which is what lets
+     a day be filled in the same way today is — with the same controls,
+     in the same place, rather than in a second card that repeated the
+     first one.
+
+     Deliberately not saved. Coming back to the app tomorrow and finding
+     it still sitting on last Tuesday would be a trap: you would tick
+     today's habits into the wrong day and not notice. */
+  var viewing = null;
+
+  function viewingDay() {
+    /* Re-checked against the clock, not just stored, so a panel left
+       open overnight rolls to the new day instead of quietly editing
+       yesterday. */
+    if (viewing && viewing === today()) viewing = null;
+    return viewing || today();
+  }
+
+  function setViewingDay(key) {
+    viewing = key && key !== today() ? key : null;
+  }
+
+  function viewingToday() {
+    return viewingDay() === today();
+  }
+
   /* Backup ----------------------------------------------------------
      localStorage is wiped by a browser clean-up, and none of this exists
      anywhere else. Two buttons are the whole safety net. */
@@ -379,6 +408,9 @@ var Storage = (function () {
     today: today,
     clock: clock,
     dateKey: dateKey,
+    viewingDay: viewingDay,
+    setViewingDay: setViewingDay,
+    viewingToday: viewingToday,
     exportToFile: exportToFile,
     importFromText: importFromText
   };

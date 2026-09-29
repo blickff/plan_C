@@ -29,14 +29,19 @@ var Panel = (function () {
     return state().tasks.filter(function (t) { return t.date === key; }).sort(byOrder);
   }
 
-  function todaysTasks() {
-    return tasksOn(Storage.today());
+  /* The list belongs to whichever day the page is showing. */
+  function dayTasks() {
+    return tasksOn(Storage.viewingDay());
   }
 
   /* Anything already written down for a day still to come. Planning
      tomorrow is most of what planning is, and a list that only accepts
-     today could not do it. */
+     today could not do it.
+
+     Only shown while the page is on today: sitting on last Tuesday, a
+     list of everything after today is noise. */
   function upcoming() {
+    if (!Storage.viewingToday()) return [];
     var key = Storage.today();
     return state().tasks
       .filter(function (t) { return t.date > key && !t.done; })
@@ -47,6 +52,8 @@ var Panel = (function () {
      does not vanish just because the clock rolled over — but it does not
      silently pile onto today either. The person decides. */
   function leftovers() {
+    /* Carrying work forward only means anything from today. */
+    if (!Storage.viewingToday()) return [];
     var key = Storage.today();
     return state().tasks.filter(function (t) {
       return t.date < key && !t.done && !t.movedTo;
@@ -62,7 +69,7 @@ var Panel = (function () {
   function addTask(text, date) {
     text = String(text || '').trim();
     if (!text) return 'Write the task first.';
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) date = Storage.today();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) date = Storage.viewingDay();
 
     state().tasks.push({
       id: 'task-' + Date.now(),
@@ -131,8 +138,7 @@ var Panel = (function () {
      survives a reload. */
   function reorder(movedId, ontoId) {
     if (movedId === ontoId) return;
-    var key = Storage.today();
-    var list = tasksOn(key);
+    var list = tasksOn(Storage.viewingDay());
 
     var from = -1;
     var to = -1;
@@ -208,9 +214,22 @@ var Panel = (function () {
   }
 
   function renderTasks() {
-    var list = todaysTasks();
+    var list = dayTasks();
     var old = leftovers();
     var later = upcoming();
+
+    /* The card is headed "Today's tasks" in the markup, which stops
+       being true the moment another day is opened. */
+    var head = document.getElementById('tasks-title');
+    if (head) {
+      head.textContent = Storage.viewingToday() ? "Today's tasks" : 'Tasks that day';
+    }
+
+    /* A new task lands on the day you are looking at unless the date
+       box says otherwise, so the box follows the day. Left alone while
+       it has the focus — changing a field somebody is using is rude. */
+    var when = document.getElementById('task-date');
+    if (when && document.activeElement !== when) when.value = Storage.viewingDay();
 
     var rows = list.map(taskRow).join('');
 
@@ -330,7 +349,11 @@ var Panel = (function () {
 
   function renderNote() {
     var box = document.getElementById('note');
-    var key = Storage.today();
+    var key = Storage.viewingDay();
+
+    box.placeholder = Storage.viewingToday() ? 'How did today go?'
+      : key > Storage.today() ? 'Anything to remember for that day?'
+      : 'What happened that day?';
 
     /* Only refill it when it is not being typed into, or the caret would
        jump to the end on every repaint. */
@@ -353,7 +376,7 @@ var Panel = (function () {
   function saveNote(text) {
     /* The archive lists notes, so it goes stale the moment one is
        written and nothing tells it. */
-    var key = Storage.today();
+    var key = Storage.viewingDay();
     if (text.trim()) state().notes[key] = text;
     else delete state().notes[key];
     Storage.save();
@@ -382,7 +405,6 @@ var Panel = (function () {
 
   function start() {
     var taskDate = document.getElementById('task-date');
-    taskDate.value = Storage.today();
 
     render();
 

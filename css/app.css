@@ -705,6 +705,19 @@ body {
 .input--wide { flex: 1 1 180px; }
 .input--small { width: 92px; text-align: center; }
 
+/* A hint has to look like a hint. The unit box shows "min" as a
+   placeholder, and centring it put the caret in the middle of the word
+   — it read as text already typed in, so people tried to delete it,
+   nothing happened, and the field looked broken. While the hint is
+   showing the text sits at the left, where an empty field's caret
+   belongs; it centres once there is something real in it. */
+.input:placeholder-shown { text-align: start; }
+
+.input::placeholder {
+  color: var(--text-faint);
+  opacity: 0.75;
+}
+
 .custom__error:empty { display: none; }
 .custom__error { margin: 9px 0 0; font-size: 13px; color: var(--danger); }
 .custom__hint { margin: 7px 0 0; font-size: 12px; }
@@ -977,60 +990,44 @@ body {
   .ask { flex-direction: column; align-items: flex-start; }
 }
 
-/* A day, opened from the calendar -------------------------------------- */
+/* Which day the page is showing ---------------------------------------
+   One line above the habit tiles, in place of the card that used to
+   open below the calendar and repeat everything already on the page. */
 
-.dayview,
-#dayview { margin-bottom: 20px; }
-
-.dv__head {
+.dayhead {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
-  margin-bottom: 18px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
-/* Labels elsewhere sit above one block and need no room above them. Here
-   they divide four sections stacked in one card, and without a gap the
-   card read as one run-on list. */
-#dayview .label { margin-top: 20px; }
-#dayview .label:first-of-type { margin-top: 0; }
+.dayhead .label { margin: 0; }
+.dayhead__main { min-width: 0; }
+.dayhead__note { margin: 4px 0 0; font-size: 12px; }
+.dayhead__due { color: var(--text-dim); }
 
-.dv__note {
-  margin: 0 0 4px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--accent-bg);
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.dv__list { list-style: none; margin: 0; padding: 0; }
-.dv__empty { margin: 0; font-size: 13px; }
-
-.dv__habit,
-.dv__task {
+.dayhead__side {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 7px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  align-items: center;
+  gap: 8px;
+  flex: none;
 }
 
-.dv__habit:last-child,
-.dv__task:last-child { border-bottom: 0; }
-
-.dv__value { flex: none; font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
-.dv__habit.is-done .dv__value { color: var(--ok); }
-.dv__task.is-done { color: var(--text-faint); text-decoration: line-through; }
+/* A day that has not happened. The tiles still show what is set up for
+   it, because that is worth seeing, but nothing can be recorded on a
+   day that has not been. */
+.tile.is-ahead { opacity: 0.45; cursor: default; }
+.tile.is-ahead:hover { border-color: var(--border); }
 
 /* A day carries something: a countdown, tasks, or a note. */
 .day { position: relative; border: 0; font: inherit; cursor: pointer; }
-.day[data-level="-2"] { cursor: default; }
-.day[data-level="-2"][data-has] { cursor: pointer; }
+
+/* The day the page below belongs to. A ring rather than a fill: the
+   fill already carries how the day went. */
+.day.is-open { box-shadow: 0 0 0 2px var(--accent); }
+.day.is-open.is-today { box-shadow: 0 0 0 2px var(--accent); }
 
 /* Sky blue on purpose: the day cells are red, yellow and green, so a
    star in any of those hues would read as part of the score. This one
@@ -1091,17 +1088,6 @@ body {
 }
 
 .ask__note.is-warning { color: var(--danger); }
-
-.dv__tally {
-  margin-left: 8px;
-  text-transform: none;
-  letter-spacing: 0;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Carried to another day: it stood here, and it did not finish here. */
-.dv__task.is-moved span:first-child { color: var(--text-faint); }
 
 .ask__side { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; flex: none; }
 
@@ -1202,36 +1188,6 @@ body {
 
 .daypick:hover { border-color: var(--text-faint); }
 .daypick.is-on { background: var(--invert-bg); border-color: var(--invert-bg); color: var(--invert-text); }
-
-/* One day, opened and editable ---------------------------------------- */
-
-.dv__habits .dv__habit { display: flex; align-items: center; gap: 10px; }
-.dv__hname { flex: 1 1 auto; min-width: 0; }
-.dv__off { color: var(--text-faint); font-size: 12px; }
-.dv__habit.is-off { opacity: 0.6; }
-.dv__steps { display: flex; gap: 4px; flex: none; }
-
-.dv__step {
-  min-width: 28px;
-  height: 26px;
-  padding: 0 8px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.dv__step:hover:not(:disabled) { border-color: var(--text-faint); }
-.dv__step:disabled { opacity: 0.35; cursor: default; }
-.dv__step--wide { min-width: 84px; }
-
-.dv__write { margin-bottom: 4px; }
-
-.dv__mark { margin-top: 10px; }
 
 /* Tasks ---------------------------------------------------------------- */
 

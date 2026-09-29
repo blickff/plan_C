@@ -11,6 +11,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('desktop', {
   openPanel: () => ipcRenderer.invoke('open-panel'),
   toggleOnTop: () => ipcRenderer.invoke('toggle-on-top'),
+  togglePinned: () => ipcRenderer.invoke('toggle-pinned'),
   toggleAutostart: () => ipcRenderer.invoke('toggle-autostart'),
   getWindowSettings: () => ipcRenderer.invoke('get-window-settings'),
   hideWidget: () => ipcRenderer.invoke('hide-widget'),

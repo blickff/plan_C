@@ -50,7 +50,111 @@ function esc(text) {
 function repaint() {
   Dashboard.render();
   HistoryView.render();
+  renderDayHead();
   if (typeof Insights !== 'undefined') Insights.render();
+}
+
+/* The day on screen --------------------------------------------------
+
+   Pressing a day on the calendar used to open a second card below it
+   that listed the same habits, the same tasks and the same note again,
+   with its own smaller controls. Two ways to look at a day, one of them
+   worse, and a card that appeared and pushed the page around.
+
+   Now the page itself moves to that day: the tiles, the task list and
+   the note all show it and are edited exactly as today is. The only
+   new thing on screen is one line saying which day you are on. */
+
+function prettyDay(key) {
+  var parts = key.split('-');
+  return new Intl.DateTimeFormat('en-US', {
+    weekday: 'long', month: 'long', day: 'numeric'
+  }).format(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+}
+
+function goToDay(key) {
+  Storage.setViewingDay(key);
+  Dashboard.showMonthOf(key);
+  Habits.renderTiles();
+  /* Panel.render draws the tasks and the note for the day, and asks the
+     calendar to redraw so the selected cell moves with it. */
+  Panel.render();
+  renderDayHead();
+}
+
+function renderDayHead() {
+  var el = document.getElementById('dayhead');
+  if (!el) return;
+
+  var key = Storage.viewingDay();
+  var todayKey = Storage.today();
+  var here = key === todayKey;
+  var ahead = key > todayKey;
+  var state = Storage.load();
+
+  var score = Habits.completionFor(state.log, state.habits, key);
+  var accounted = Storage.known(state.log, key);
+  var values = Storage.valuesOn(state.log, key);
+
+  /* Today is never "never filled in" — it is simply not over. Saying
+     otherwise every morning would be an accusation. */
+  var note = ahead ? 'Still to come — notes and tasks only'
+    : here ? (score === null ? 'Nothing being tracked yet'
+                             : Math.round(score * 100) + '% of today done')
+    : !accounted ? 'Never filled in'
+    : score === null ? 'Nothing was being tracked yet'
+    : Math.round(score * 100) + '% of the day done';
+
+  /* Dates that land on this day, which used to be the day card's "on
+     this date" list. One line is enough for what is usually one thing. */
+  var due = state.countdowns.filter(function (c) { return c.date === key; });
+  var dueLine = due.length
+    ? '<span class="dayhead__due"> · ' +
+      esc(due.map(function (c) { return c.title; }).join(', ')) + '</span>'
+    : '';
+
+  /* Only for a day that has been and gone: the difference between "I
+     did nothing" and "nobody ever wrote this day down" is one a person
+     has to state, and the app used to guess at it. */
+  var mark = '';
+  if (!ahead && !here) {
+    if (!accounted) {
+      mark = '<button class="chipbtn" type="button" id="day-mark">Nothing got done — count it</button>';
+    } else if (!Object.keys(values).length) {
+      mark = '<button class="chipbtn" type="button" id="day-unmark">Counted as empty — undo</button>';
+    }
+  }
+
+  el.innerHTML = '' +
+    '<div class="dayhead__main">' +
+      '<p class="label">' + (here ? 'Today' : esc(prettyDay(key))) + '</p>' +
+      '<p class="dayhead__note muted">' + esc(note) + dueLine + '</p>' +
+    '</div>' +
+    '<div class="dayhead__side">' +
+      mark +
+      (here ? '' : '<button class="pill" type="button" id="day-back">Back to today</button>') +
+    '</div>';
+
+  var back = document.getElementById('day-back');
+  if (back) back.addEventListener('click', function () { goToDay(todayKey); });
+
+  var markBtn = document.getElementById('day-mark');
+  if (markBtn) {
+    markBtn.addEventListener('click', function () {
+      Storage.closeDay(key, true);
+      goToDay(key);
+      repaint();
+    });
+  }
+
+  var unmarkBtn = document.getElementById('day-unmark');
+  if (unmarkBtn) {
+    unmarkBtn.addEventListener('click', function () {
+      Storage.closeDay(key, false);
+      goToDay(key);
+      repaint();
+    });
+  }
 }
 
 /* Clock and theme ---------------------------------------------------- */
@@ -395,11 +499,13 @@ function wireChrome() {
     var card = document.getElementById('desktop-card');
     var autoBtn = document.getElementById('autostart-btn');
     var topBtn = document.getElementById('ontop-btn');
+    var pinBtn = document.getElementById('pinned-btn');
     card.removeAttribute('hidden');
 
     window.desktop.getWindowSettings().then(function (settings) {
       autoBtn.classList.toggle('is-active', settings.openAtLogin);
       topBtn.classList.toggle('is-active', settings.onTop);
+      pinBtn.classList.toggle('is-active', settings.pinned);
     });
 
     autoBtn.addEventListener('click', function () {
@@ -408,9 +514,20 @@ function wireChrome() {
       });
     });
 
+    /* The two are opposite answers to the same question — above
+       everything, or behind everything — so each switches the other
+       off, and the buttons have to say so. */
     topBtn.addEventListener('click', function () {
       window.desktop.toggleOnTop().then(function (on) {
         topBtn.classList.toggle('is-active', on);
+        if (on) pinBtn.classList.remove('is-active');
+      });
+    });
+
+    pinBtn.addEventListener('click', function () {
+      window.desktop.togglePinned().then(function (on) {
+        pinBtn.classList.toggle('is-active', on);
+        if (on) topBtn.classList.remove('is-active');
       });
     });
   }

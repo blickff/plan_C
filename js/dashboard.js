@@ -249,6 +249,9 @@ var Dashboard = (function () {
         level = Habits.levelOn(state.log, state.habits, key);
       }
       if (key === todayKey) extra = ' is-today';
+      /* The day the page below is showing, so there is never a doubt
+         about which one the tiles and the note belong to. */
+      if (key === Storage.viewingDay()) extra += ' is-open';
 
       /* A dot marks a day that has something waiting on it: a
          countdown's date, or notes and tasks already written for it.
@@ -368,15 +371,13 @@ var Dashboard = (function () {
       var monthBtn = event.target.closest('[data-month]');
       if (monthBtn) return setViewKey(monthBtn.getAttribute('data-month'), 'month');
 
-      /* Pressing a day opens what it held. A day still to come is inert
-         unless something is already attached to it — a countdown lands on
-         a future date, and that date is exactly the one worth opening. */
+      /* Pressing a day moves the page to it: the habit tiles, the task
+         list and the note below all become that day's, edited with the
+         same controls as today. Any day can be opened, including ones
+         still to come — a note or a task can be written ahead. */
       var dayBtn = event.target.closest('[data-day]');
-      if (dayBtn && typeof DayView !== 'undefined') {
-        var future = dayBtn.getAttribute('data-level') === '-2';
-        if (!future || dayBtn.hasAttribute('data-has')) {
-          DayView.open(dayBtn.getAttribute('data-day'));
-        }
+      if (dayBtn && typeof goToDay === 'function') {
+        goToDay(dayBtn.getAttribute('data-day'));
       }
     };
   }
@@ -386,5 +387,18 @@ var Dashboard = (function () {
     renderPeriod();
   }
 
-  return { render: render };
+  /* Bring a day's own month on screen. Opening a day from the notes
+     archive, or stepping into last month, otherwise left the calendar
+     sitting where it was — with the ring marking the open day nowhere
+     to be seen. */
+  function showMonthOf(key) {
+    var settings = Storage.load().settings;
+    var month = key.slice(0, 7);
+    if (settings.periodKey === month && settings.periodScope !== 'year') return;
+    settings.periodKey = month;
+    settings.periodScope = 'month';
+    Storage.save();
+  }
+
+  return { render: render, showMonthOf: showMonthOf };
 })();

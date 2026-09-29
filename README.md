@@ -45,6 +45,11 @@ A small widget on the desktop and an icon by the clock.
 - `Ctrl+Shift+D` also hides and brings back the widget.
 - The widget's own buttons appear when the pointer is over it: keep
   above other windows, open the panel, hide.
+- Settings → *Desktop widget* → **Pin to the desktop** takes it out of
+  the taskbar and Alt+Tab, keeps it behind whatever you are working in
+  rather than over it, and brings it back after "show desktop". Windows has no
+  real way to fasten a window to the wallpaper, so this is as close as
+  it gets without machinery this app does not otherwise need.
 - Drag the widget by any empty part of it.
 
 ### Uninstalling
@@ -93,10 +98,13 @@ at 1 so overshooting one cannot hide skipping another. Under the streak
 sits *met on N of the last 30 days*, because one missed day takes a
 streak to zero and that is not a verdict on the month.
 
-**Filling in a day you missed.** Press any day on the calendar and edit
-it there. A day nobody filled in is drawn as unknown rather than failed,
-and left out of every figure — the app not being open on Sunday is not
-the same as failing on Sunday.
+**Filling in a day you missed.** Press any day on the calendar and the
+page moves to it: the habit tiles, the task list and the note all
+become that day's, edited exactly as today is. A day nobody filled in
+is drawn as unknown rather than failed, and left out of every figure —
+the app not being open on Sunday is not the same as failing on Sunday.
+Days still to come take notes and tasks but not habit values, because
+nothing has happened on them yet.
 
 **Tasks** can be put on today, tomorrow or any date, corrected by
 double-clicking, reordered by dragging, and un-deleted for ten seconds.
@@ -150,7 +158,6 @@ js/storage.js    one storage key, the vault file, export and import
 js/presets.js    the habit catalogue
 js/habits.js     habits, schedules, streaks, the day's score
 js/dashboard.js  the streak card and the calendar
-js/dayview.js    one day, opened from the calendar and editable
 js/history.js    the grid and the figures
 js/notes.js      the notes archive
 js/panel.js      tasks, countdowns, the note

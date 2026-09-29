@@ -147,8 +147,17 @@ function createWidget() {
     transparent: false,
     backgroundColor: '#0b0b0b',
     resizable: true,
-    skipTaskbar: false,
-    alwaysOnTop: firstRun ? true : !!saved.onTop,
+    /* Pinned to the desktop: out of the taskbar and out of Alt+Tab, and
+       never held above other windows, so it sits on the desktop rather
+       than in the way.
+
+       Deliberately still focusable. Making it unfocusable would stop it
+       ever taking the focus, which sounds better, but on Windows that
+       flag also tends to break dragging a frameless window by its
+       body — and a widget you cannot move is worse than one that
+       briefly takes the focus when you click it. */
+    skipTaskbar: !!saved.pinned,
+    alwaysOnTop: firstRun ? true : (!saved.pinned && !!saved.onTop),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -167,8 +176,21 @@ function createWidget() {
 
   /* Shown only once the page has painted, so it never flashes empty. */
   widget.once('ready-to-show', () => {
-    widget.show();
-    widget.focus();
+    if (loadState().pinned) widget.showInactive();
+    else { widget.show(); widget.focus(); }
+  });
+
+  /* "Show desktop" minimises every top-level window, and a thing that
+     is meant to live on the desktop should survive being shown it.
+     Only while pinned: otherwise this would fight a person who
+     minimised it on purpose. */
+  widget.on('minimize', () => {
+    if (!loadState().pinned) return;
+    setTimeout(() => {
+      if (!widget || widget.isDestroyed()) return;
+      widget.restore();
+      widget.showInactive();
+    }, 50);
   });
 
   const remember = () => {
@@ -181,6 +203,15 @@ function createWidget() {
   widget.on('moved', remember);
   widget.on('resized', remember);
   widget.on('closed', () => { widget = null; });
+}
+
+/* Pinned and always-on-top are opposite answers to the same question,
+   so turning either on turns the other off. */
+function applyWidgetMode() {
+  if (!widget || widget.isDestroyed()) return;
+  const saved = loadState();
+  widget.setAlwaysOnTop(!saved.pinned && !!saved.onTop);
+  widget.setSkipTaskbar(!!saved.pinned);
 }
 
 function openPanel() {
@@ -256,8 +287,22 @@ function wireMessages() {
 
   ipcMain.handle('toggle-on-top', () => {
     const next = !loadState().onTop;
-    saveState({ onTop: next });
-    if (widget) widget.setAlwaysOnTop(next);
+    saveState({ onTop: next, pinned: next ? false : loadState().pinned });
+    applyWidgetMode();
+    return next;
+  });
+
+  ipcMain.handle('toggle-pinned', () => {
+    const next = !loadState().pinned;
+    saveState({ pinned: next, onTop: next ? false : loadState().onTop });
+    applyWidgetMode();
+    /* Coming out of pinned mode, the window has been out of the
+       taskbar and behind everything — it may be buried. Bring it back
+       where it can be found. */
+    if (!next && widget && !widget.isDestroyed()) {
+      widget.show();
+      widget.focus();
+    }
     return next;
   });
 
@@ -265,6 +310,7 @@ function wireMessages() {
     const saved = loadState();
     return {
       onTop: !!saved.onTop,
+      pinned: !!saved.pinned,
       openAtLogin: app.getLoginItemSettings().openAtLogin
     };
   });
@@ -341,6 +387,12 @@ app.whenReady().then(async () => {
   /* Windows needs this before a notification will show the app's name
      rather than "electron.app.Electron". */
   if (process.platform === 'win32') app.setAppUserModelId('com.dayPanel.app');
+
+  /* No File / Edit / View / Window / Help. Electron puts that bar on
+     every window by default, and not one of its entries does anything
+     this app needs — it is a strip of chrome announcing that this is a
+     browser in a coat. */
+  Menu.setApplicationMenu(null);
 
   origin = serve();
   wireMessages();
