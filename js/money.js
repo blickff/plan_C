@@ -665,10 +665,18 @@ var Money = (function () {
     var totalThen = sum(within(p.other));
     var sumEl = document.getElementById('money-against-sum');
 
-    var shown = title(base.which, range(base.which, base.off));
+    /* Said with the actual dates. "Both cut to the same 29 days" was
+       correct and meant nothing to anyone reading it; "Sep 1–29 against
+       Aug 1–29" says the same thing in a form that needs no explaining. */
+    var shownName = base.which === 'month'
+      ? MONTHS[parse(p.now.from).getMonth()]
+      : p.now.from.slice(0, 4);
+    /* Comparing years, both spans have the same dates, so the year is
+       what tells them apart. */
+    var withYear = base.which === 'year';
     var note = p.partial
-      ? 'Both cut to the same ' + (Math.round((parse(p.now.to) - parse(p.now.from)) / 86400000) + 1) +
-        ' days, because ' + shown.replace(/^This /, 'this ').replace(/^Today$/, 'today') + ' is not over yet.'
+      ? spanLabel(p.now, withYear) + ' against ' + spanLabel(p.other, withYear) +
+        ', since ' + shownName + ' is not over yet'
       : '';
 
     if (!rows.length) {
@@ -720,6 +728,17 @@ var Money = (function () {
         '<span class="mdiff__change">' + arrow + escapeHtml(change) + '</span>' +
       '</div>';
     }).join('');
+  }
+
+  /* "Sep 1–29", or "Jan 1 – Sep 29" when the span crosses months. */
+  function spanLabel(r, withYear) {
+    var a = parse(r.from);
+    var b = parse(r.to);
+    var year = withYear ? ' ' + b.getFullYear() : '';
+    if (a.getMonth() === b.getMonth() && a.getFullYear() === b.getFullYear()) {
+      return SHORT[a.getMonth()] + ' ' + a.getDate() + (a.getDate() === b.getDate() ? '' : '–' + b.getDate()) + year;
+    }
+    return SHORT[a.getMonth()] + ' ' + a.getDate() + ' – ' + SHORT[b.getMonth()] + ' ' + b.getDate() + year;
   }
 
   /* A column heading short enough for a narrow column. */
