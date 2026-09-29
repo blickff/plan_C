@@ -67,6 +67,10 @@ var DatePick = (function () {
 
     var shown = null;    // first of the month on show
     var focusKey = null; // the day the keyboard is on
+    /* Pressing the month's name swaps the days for the twelve months of
+       that year, with the arrows stepping a whole year — so another year
+       is a couple of presses, not a dozen pages of months. */
+    var picking = false;
 
     function refresh() {
       btn.innerHTML = ICON + '<span>' + label(native.get.call(input)) + '</span>';
@@ -84,7 +88,29 @@ var DatePick = (function () {
       input.dispatchEvent(new Event('change', { bubbles: true }));
     }
 
+    function renderMonths() {
+      var y = shown.getFullYear();
+      var now = new Date();
+      var chosen = parse(native.get.call(input));
+      var cells = SHORT.map(function (name, i) {
+        var cls = 'dpick__month' +
+          (y === now.getFullYear() && i === now.getMonth() ? ' is-today' : '') +
+          (chosen && y === chosen.getFullYear() && i === chosen.getMonth() ? ' is-on' : '');
+        return '<button type="button" class="' + cls + '" data-month="' + i + '"' +
+          ' aria-label="' + MONTHS[i] + ' ' + y + '">' + name + '</button>';
+      }).join('');
+      pop.innerHTML =
+        '<div class="dpick__head">' +
+          '<button type="button" class="dpick__title is-open" data-toggle aria-label="Back to the days">' +
+            y + '<span class="dpick__caret" aria-hidden="true"></span></button>' +
+          '<button type="button" class="dpick__nav" data-step="-12" aria-label="Previous year">&#8249;</button>' +
+          '<button type="button" class="dpick__nav" data-step="12" aria-label="Next year">&#8250;</button>' +
+        '</div>' +
+        '<div class="dpick__months">' + cells + '</div>';
+    }
+
     function render() {
+      if (picking) { renderMonths(); return; }
       var today = keyOf(new Date());
       var chosen = native.get.call(input);
       var y = shown.getFullYear();
@@ -109,7 +135,8 @@ var DatePick = (function () {
 
       pop.innerHTML =
         '<div class="dpick__head">' +
-          '<p class="dpick__title">' + MONTHS[m] + ' ' + y + '</p>' +
+          '<button type="button" class="dpick__title" data-toggle aria-label="Choose month and year">' +
+            MONTHS[m] + ' ' + y + '<span class="dpick__caret" aria-hidden="true"></span></button>' +
           '<button type="button" class="dpick__nav" data-step="-1" aria-label="Previous month">&#8249;</button>' +
           '<button type="button" class="dpick__nav" data-step="1" aria-label="Next month">&#8250;</button>' +
         '</div>' +
@@ -139,6 +166,7 @@ var DatePick = (function () {
         var d = parse(native.get.call(input)) || new Date();
         shown = new Date(d.getFullYear(), d.getMonth(), 1);
         focusKey = keyOf(d);
+        picking = false;
         render();
         pop.hidden = false;
         place();
@@ -161,6 +189,19 @@ var DatePick = (function () {
     btn.addEventListener('click', function () { open(pop.hidden); });
 
     pop.addEventListener('click', function (event) {
+      if (event.target.closest('[data-toggle]')) {
+        picking = !picking;
+        render();
+        return;
+      }
+      var month = event.target.closest('[data-month]');
+      if (month) {
+        shown = new Date(shown.getFullYear(), +month.getAttribute('data-month'), 1);
+        focusKey = keyOf(shown);
+        picking = false;
+        render();
+        return;
+      }
       var step = event.target.closest('[data-step]');
       if (step) {
         shown = new Date(shown.getFullYear(), shown.getMonth() + (+step.getAttribute('data-step')), 1);

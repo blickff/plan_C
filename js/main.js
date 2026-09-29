@@ -352,7 +352,17 @@ function showView(name) {
   var edit = document.getElementById('habits-toggle');
   if (name === 'dashboard') edit.removeAttribute('hidden');
   else edit.setAttribute('hidden', '');
+
+  /* The spending line is drawn to the width it has, which it only has
+     once History is on screen. */
+  if (name === 'history' && typeof Money !== 'undefined') Money.renderHistory();
 }
+
+/* And again when the window changes width while History is open. */
+window.addEventListener('resize', function () {
+  var hist = document.querySelector('.view[data-view="history"]');
+  if (hist && !hist.hidden && typeof Money !== 'undefined') Money.renderHistory();
+});
 
 /* Settings for the vault: which folder holds the data file, and the
    handful of things worth doing with it. The path is shown in full and

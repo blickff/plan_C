@@ -198,6 +198,14 @@
     <!-- History --------------------------------------------------- -->
     <section class="view" data-view="history" hidden>
       <div id="history"></div>
+
+      <!-- Money over time, month by month: drawn by money.js. Hidden until
+           something has been written down. -->
+      <div class="card mhist" id="money-history" hidden>
+        <div class="card__head"><p class="card__title">Spending, month by month</p></div>
+        <p class="mhist__sum" id="money-history-sum"></p>
+        <div class="mhist__chart" id="money-history-chart"></div>
+      </div>
       <!-- Patterns: set aside for now (2026-09-30) — the owner found them
            unclear. insights.js still fills it; bring it back by removing
            hidden. -->
@@ -260,7 +268,6 @@
               <svg class="mtool__ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 8.5l3 3"/></svg>
               <span class="mtool__label">Edit categories</span>
             </button>
-            <button class="chipbtn" type="button" id="money-example" hidden>Try it with example data</button>
           </div>
           <div class="mentry__prefs">
             <div class="seg seg--small" role="group" aria-label="Chart colours">

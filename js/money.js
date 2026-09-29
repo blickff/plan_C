@@ -946,75 +946,14 @@ var Money = (function () {
 
   /* Example data ---------------------------------------------------------
 
-     A chart with nothing in it shows nothing about how it works. This
-     fills the last five months with made-up but plausible spending so
-     the ring, the bars and the comparison can be seen doing their job.
-
-     Every example entry is marked, so "Remove example data" takes out
-     exactly those and never touches a real one. Seeded, so it comes out
-     the same every time. */
+     Nobody who installs the app is offered example spending any more: a
+     new money page starts empty and fills with what they write. Entries
+     marked as examples can still be in data made before that (they were
+     offered once), so they are still told apart, announced at the top of
+     the page, and removed in one press without touching a real entry. */
 
   function hasExample() {
     return data().entries.some(function (e) { return e.sample; });
-  }
-
-  function hasReal() {
-    return data().entries.some(function (e) { return !e.sample; });
-  }
-
-  function loadExample() {
-    var seed = 20260929;
-    function rand() {
-      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
-      var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
-      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-      return ((t ^ t >>> 14) >>> 0) / 4294967296;
-    }
-    function between(lo, hi) { return Math.round((lo + rand() * (hi - lo)) * 100); }
-
-    var ids = {};
-    data().categories.forEach(function (c) { ids[c.id] = true; });
-    function cat(id) { return ids[id] ? id : (liveCategories()[0] || {}).id; }
-
-    var today = parse(Storage.today());
-    var start = new Date(today.getFullYear(), today.getMonth() - 4, 1);
-    var stamp = Date.now();
-    var n = 0;
-    var entries = data().entries;
-
-    function put(date, id, cents, note) {
-      entries.push({ id: 'm-ex-' + stamp + '-' + (n++), date: Storage.dateKey(date), cat: cat(id),
-        cents: cents, note: note || '', sample: true });
-    }
-
-    for (var d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
-      var dow = (d.getDay() + 6) % 7;
-      var dom = d.getDate();
-      /* Spending creeps up over the five months, so the arrows and the
-         comparison have a direction to show. */
-      var drift = 1 + (d - start) / (today - start || 1) * 0.35;
-
-      if (dom === 1) put(d, 'home', 45000, 'Rent');
-      if (dom === 15) put(d, 'home', between(55, 80), 'Electricity & internet');
-      if (dom === 2) put(d, 'transport', 4900, 'Monthly ticket');
-
-      if (rand() < 0.62) put(d, 'food', Math.round(between(3, 14) * drift), rand() < 0.5 ? 'Coffee' : 'Lunch');
-      if (dow === 5 || (dow === 2 && rand() < 0.4)) put(d, 'food', between(28, 62), 'Groceries');
-      if ((dow >= 4 && rand() < 0.55) || rand() < 0.08) {
-        put(d, 'going-out', Math.round(between(9, 38) * drift), rand() < 0.5 ? 'Drinks' : 'Cinema');
-      }
-      if (rand() < 0.09) put(d, 'shopping', Math.round(between(15, 85) * drift), rand() < 0.5 ? 'Clothes' : 'Online order');
-      if (rand() < 0.04) put(d, 'health', between(6, 32), 'Pharmacy');
-      if (rand() < 0.05) put(d, 'transport', between(3, 18), 'Taxi');
-      if (rand() < 0.03) put(d, 'other', between(4, 25));
-    }
-
-    /* One trip, in the second month. */
-    var trip = new Date(start.getFullYear(), start.getMonth() + 1, 18);
-    put(trip, 'travel', 18900, 'Train tickets');
-    put(new Date(trip.getFullYear(), trip.getMonth(), 19), 'travel', 26400, 'Hotel');
-
-    Storage.save();
   }
 
   function removeExample() {
@@ -1024,14 +963,7 @@ var Money = (function () {
   }
 
   function renderExampleControls() {
-    var load = document.getElementById('money-example');
-    var note = document.getElementById('money-example-note');
-    var ex = hasExample();
-
-    /* Offered only while there is nothing real to look at: once there
-       is, example data would only muddy it. */
-    load.hidden = ex || hasReal();
-    note.hidden = !ex;
+    document.getElementById('money-example-note').hidden = !hasExample();
   }
 
   var listFor = null;
@@ -1048,6 +980,183 @@ var Money = (function () {
     renderCompare();
     renderEntries();
     renderExampleControls();
+    renderHistory();
+  }
+
+  /* History: spending month by month ---------------------------------------
+
+     One line, one point a month, going up when more went out and down when
+     less did — the shape of the spending over time, on the History page
+     beside the habits. It starts at the first month anything was written
+     down: months before that were not "nothing spent", they were not
+     counted, and a line climbing out of them would show a rise that never
+     happened. At most the last twelve.
+
+     The month under way is not over, so its point is hollow and the line
+     to it dashed: it will rise, and a solid dip at the end would read as
+     spending falling. The sentence above compares the last two finished
+     months for the same reason. */
+
+  function monthTotals() {
+    var first = firstDay();
+    if (!first) return [];
+    var today = Storage.today();
+    var y = +first.slice(0, 4);
+    var m = +first.slice(5, 7) - 1;
+    var ty = +today.slice(0, 4);
+    var tm = +today.slice(5, 7) - 1;
+    var months = [];
+    var at = {};
+    while (y < ty || (y === ty && m <= tm)) {
+      var key = y + '-' + ('0' + (m + 1)).slice(-2);
+      at[key] = months.length;
+      months.push({ y: y, m: m, cents: 0 });
+      m += 1;
+      if (m === 12) { m = 0; y += 1; }
+    }
+    data().entries.forEach(function (e) {
+      var i = at[e.date.slice(0, 7)];
+      if (i !== undefined) months[i].cents += e.cents;
+    });
+    return months.slice(-12);
+  }
+
+  /* Whole amounts for the axis: "€1,500", not "€1,500.00". */
+  function roundMoney(cents) {
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: data().currency,
+        currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0
+      }).format(cents / 100);
+    } catch (err) {
+      return Math.round(cents / 100) + ' ' + data().currency;
+    }
+  }
+
+  /* A top for the axis that lands on a round number, with three even
+     steps below it. */
+  function niceTop(cents) {
+    if (cents <= 0) return 3000;
+    var raw = cents / 3;
+    var pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    var steps = [1, 2, 2.5, 5, 10];
+    for (var i = 0; i < steps.length; i++) {
+      if (steps[i] * pow >= raw) return steps[i] * pow * 3;
+    }
+    return 10 * pow * 3;
+  }
+
+  function renderHistory() {
+    var card = document.getElementById('money-history');
+    if (!card) return;
+    var months = monthTotals();
+    card.hidden = !months.length;
+    if (!months.length) return;
+
+    var sumEl = document.getElementById('money-history-sum');
+    var chart = document.getElementById('money-history-chart');
+    var now = months[months.length - 1];
+    var done = months.slice(0, -1);
+
+    var line = escapeHtml(MONTHS[now.m] + ' so far: ' + format(now.cents));
+    if (done.length >= 2) {
+      var a = done[done.length - 1];
+      var b = done[done.length - 2];
+      if (b.cents) {
+        var change = Math.round(((a.cents - b.cents) / b.cents) * 100);
+        var arrow = change > 0 ? '&#8593;' : change < 0 ? '&#8595;' : '&#8596;';
+        line = '<span class="mcmp__arrow" aria-hidden="true">' + arrow + '</span>' +
+          (change === 0 ? 'The same in ' + MONTHS[a.m] + ' as in ' + MONTHS[b.m]
+            : Math.abs(change) + '% ' + (change > 0 ? 'more' : 'less') + ' in ' + MONTHS[a.m] +
+              ' than in ' + MONTHS[b.m]) +
+          ' · ' + line;
+      }
+    }
+    sumEl.innerHTML = line;
+
+    if (months.length < 2) {
+      chart.innerHTML = '<p class="soft">The line starts once there is a second month to go to.</p>';
+      return;
+    }
+
+    /* Drawn to the width it is given, so the text stays its real size. */
+    var W = Math.max(320, chart.clientWidth || 640);
+    var H = 210;
+    var padL = 56;
+    var padR = 16;
+    var padT = 14;
+    var padB = 28;
+    var n = months.length;
+    var top = niceTop(Math.max.apply(null, months.map(function (x) { return x.cents; })));
+    function X(i) { return padL + (i * (W - padL - padR)) / (n - 1); }
+    function Y(v) { return padT + (1 - v / top) * (H - padT - padB); }
+
+    var grid = '';
+    for (var g = 0; g <= 3; g++) {
+      var v = (top / 3) * g;
+      grid += '<line class="mhist__grid" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + Y(v) + '" y2="' + Y(v) + '"/>' +
+        '<text class="mhist__ylab" x="' + (padL - 10) + '" y="' + (Y(v) + 4) + '">' + escapeHtml(roundMoney(v)) + '</text>';
+    }
+
+    var labels = months.map(function (x, i) {
+      var name = SHORT[x.m] + (x.m === 0 || i === 0 ? ' ' + String(x.y).slice(2) : '');
+      return '<text class="mhist__xlab' + (i === n - 1 ? ' is-now' : '') + '" x="' + X(i) + '" y="' + (H - 8) + '">' +
+        escapeHtml(name) + '</text>';
+    }).join('');
+
+    var pts = months.map(function (x, i) { return X(i) + ',' + Y(x.cents); });
+    var solid = pts.slice(0, -1);
+    var area = 'M' + X(0) + ',' + Y(0) + ' L' + solid.join(' L') + ' L' + X(n - 2) + ',' + Y(0) + ' Z';
+
+    var dots = months.map(function (x, i) {
+      return '<circle class="mhist__dot' + (i === n - 1 ? ' is-now' : '') + '" cx="' + X(i) + '" cy="' + Y(x.cents) + '" r="3.5"/>';
+    }).join('');
+
+    chart.innerHTML =
+      '<svg class="mhist__svg" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img"' +
+        ' aria-label="Spending by month, ' + escapeHtml(SHORT[months[0].m] + ' ' + months[0].y) + ' to ' +
+        escapeHtml(SHORT[now.m] + ' ' + now.y) + '">' +
+        '<defs><linearGradient id="mhist-fill" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0" class="mhist__fill-top"/><stop offset="1" class="mhist__fill-bottom"/>' +
+        '</linearGradient></defs>' +
+        grid +
+        (solid.length > 1 ? '<path class="mhist__area" d="' + area + '"/>' : '') +
+        (solid.length > 1 ? '<polyline class="mhist__line" points="' + solid.join(' ') + '"/>' : '') +
+        '<polyline class="mhist__line is-now" points="' + pts.slice(-2).join(' ') + '"/>' +
+        '<line class="mhist__guide" x1="0" x2="0" y1="' + padT + '" y2="' + (H - padB) + '" visibility="hidden"/>' +
+        dots +
+        labels +
+        '<rect class="mhist__hit" x="' + padL + '" y="0" width="' + (W - padL - padR) + '" height="' + H + '"/>' +
+      '</svg>' +
+      '<div class="mhist__tip" hidden></div>';
+
+    /* Pointing anywhere over the chart picks the nearest month and says
+       what it came to. */
+    var svg = chart.querySelector('svg');
+    var tip = chart.querySelector('.mhist__tip');
+    var guide = chart.querySelector('.mhist__guide');
+    var circles = chart.querySelectorAll('.mhist__dot');
+    svg.addEventListener('mousemove', function (event) {
+      var box = svg.getBoundingClientRect();
+      var x = event.clientX - box.left;
+      var i = Math.max(0, Math.min(n - 1, Math.round(((x - padL) / (W - padL - padR)) * (n - 1))));
+      var mo = months[i];
+      guide.setAttribute('x1', X(i));
+      guide.setAttribute('x2', X(i));
+      guide.setAttribute('visibility', 'visible');
+      circles.forEach(function (c, k) { c.classList.toggle('is-lit', k === i); });
+      tip.innerHTML = '<span class="mhist__tipmonth">' + MONTHS[mo.m] + ' ' + mo.y +
+        (i === n - 1 ? ' · so far' : '') + '</span><span class="mhist__tipsum">' + escapeHtml(format(mo.cents)) + '</span>';
+      tip.hidden = false;
+      var left = Math.max(0, Math.min(W - tip.offsetWidth, X(i) - tip.offsetWidth / 2));
+      tip.style.left = left + 'px';
+      tip.style.top = Math.max(0, Y(mo.cents) - tip.offsetHeight - 12) + 'px';
+    });
+    svg.addEventListener('mouseleave', function () {
+      tip.hidden = true;
+      guide.setAttribute('visibility', 'hidden');
+      circles.forEach(function (c) { c.classList.remove('is-lit'); });
+    });
   }
 
   /* Wiring ------------------------------------------------------------------- */
@@ -1138,13 +1247,7 @@ var Money = (function () {
       if (event.key === 'Escape' && !pickPanel.hidden) { openPicker(false); pickBtn.focus(); }
     });
 
-    document.getElementById('money-example').addEventListener('click', function () {
-      loadExample();
-      render();
-    });
-
-    /* No "are you sure": only the made-up entries go, and they can be
-       brought back from the same place while nothing real is written. */
+    /* No "are you sure": only the made-up entries go. */
     document.getElementById('money-example-drop').addEventListener('click', function () {
       removeExample();
       render();
@@ -1261,5 +1364,5 @@ var Money = (function () {
     });
   }
 
-  return { start: start, render: render, parseAmount: parseAmount };
+  return { start: start, render: render, renderHistory: renderHistory, parseAmount: parseAmount };
 })();
