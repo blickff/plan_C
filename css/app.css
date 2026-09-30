@@ -2854,13 +2854,23 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 .streak__stage { margin: 4px 0 0; font-size: 12px; opacity: 0.7; }
 .streak__stage b { font-weight: 600; opacity: 1; }
 
-@media (prefers-reduced-motion: reduce) {
-  .flame *, .flame .flame__svg { animation: none !important; }
-  /* Asked for less motion, the relight is still not a jump: the burnt
-     match fades out and the fire fades in, with nothing moving. */
-  .flame .flame__old { animation: flame-fade-out 0.6s ease both !important; }
-  .flame.is-ignite .flame__fire { animation: flame-fade-in 0.8s ease 0.35s both !important; }
-}
+/* While the engine (js/flame.js) is burning a flame it drives every part
+   frame by frame; the CSS loops above are only the stand-in for when it
+   is not running. Its sparks are particles, so the looped ones go. */
+.flame.is-alive .flame__tongue,
+.flame.is-alive .flame__glow,
+.flame.is-alive .flame__ember,
+.flame.is-alive .flame__root { animation: none; }
+.flame.is-alive .flame__spark { display: none; }
+
+.flame__ember-spark { fill: var(--f-m1); }
+
+/* Motion off (Settings → Motion, or the system when following it): the
+   match stands still; lighting it again is still a crossfade, not a jump. */
+:root[data-motion="reduced"] .flame *,
+:root[data-motion="reduced"] .flame .flame__svg { animation: none !important; }
+:root[data-motion="reduced"] .flame .flame__old { animation: flame-fade-out 0.6s ease both !important; }
+:root[data-motion="reduced"] .flame.is-ignite .flame__fire { animation: flame-fade-in 0.8s ease 0.35s both !important; }
 
 @keyframes flame-fade-out { to { opacity: 0; } }
 @keyframes flame-fade-in { from { opacity: 0; } to { opacity: 1; } }

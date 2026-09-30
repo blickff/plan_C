@@ -9,6 +9,15 @@
         "start"
       ],
       "port": 3000
+    },
+    {
+      "name": "panel",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/serve.js",
+        "3211"
+      ],
+      "port": 3211
     }
   ]
 }

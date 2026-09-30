@@ -99,6 +99,9 @@ var Flame = (function () {
     var rough = (size * 0.2).toFixed(1);
     var grain = (3.4 / Math.max(size, 1)).toFixed(3) + ' ' + (2.4 / Math.max(size, 1)).toFixed(3);
     var seed = stageIndex(days) * 7 + 3;
+    /* How far the noise rises before it starts over, in the drawing's
+       units: half a flame. See the engine, below. */
+    var strip = Math.max(8, Math.round(size * 0.5));
 
     function url(name) { return 'url(#' + id + name + ')'; }
 
@@ -140,7 +143,8 @@ var Flame = (function () {
           '<g transform="translate(' + bx + ' ' + by + ') scale(' + size + ')">' +
             '<g transform="translate(0 0.02) scale(0.36 0.42)"><g class="flame__tongue flame__tongue--core"><path d="' + TONGUE + '" fill="' + url('k') + '"/></g></g>' +
           '</g>' +
-        '</g>';
+        '</g>' +
+        '<g class="flame__particles"></g>';
 
       /* Sparks from a blaze on: embers that rise off the tip and fade. */
       if (days >= 7) {
@@ -169,21 +173,32 @@ var Flame = (function () {
     }
 
     return '' +
-      '<svg class="flame__svg" viewBox="0 0 70 120" aria-hidden="true">' +
+      '<svg class="flame__svg" viewBox="0 0 70 120" aria-hidden="true"' +
+        ' data-lit="' + (lit ? 1 : 0) + '" data-size="' + size + '" data-bx="' + bx + '" data-by="' + by + '"' +
+        ' data-strip="' + strip + '" data-stage="' + stageIndex(days) + '">' +
         '<defs>' +
           /* The fire's edge. Fractal noise pushes the outline about —
              no smooth drop, no clean line between the layers — and a
-             blur melts what is left. The noise is the one place to set
-             the fire moving later: shift its seed or its grain over time
-             (class flame__noise) and every edge moves with it. */
+             blur melts what is left. The engine makes the noise rise
+             through the flame: two copies of it climb half a cycle apart
+             and are crossfaded, each weighed to nothing at the moment it
+             drops back to the start, so the flow never seams or jumps
+             (flame__drift, flame__drift2, flame__mix). Its strength
+             breathes too (flame__warp). */
           '<filter id="' + id + 's" x="-60%" y="-60%" width="220%" height="220%">' +
-            '<feTurbulence class="flame__noise" type="fractalNoise" baseFrequency="' + grain + '" numOctaves="2" seed="' + seed + '" result="n"/>' +
-            '<feDisplacementMap in="SourceGraphic" in2="n" scale="' + rough + '" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
+            '<feTurbulence class="flame__noise" type="fractalNoise" baseFrequency="' + grain + '" numOctaves="2" seed="' + seed + '" result="t"/>' +
+            '<feOffset class="flame__drift" in="t" dx="0" dy="0" result="a"/>' +
+            '<feOffset class="flame__drift2" in="t" dx="0" dy="0" result="b"/>' +
+            '<feComposite class="flame__mix" in="a" in2="b" operator="arithmetic" k1="0" k2="1" k3="0" k4="0" result="n"/>' +
+            '<feDisplacementMap class="flame__warp" in="SourceGraphic" in2="n" scale="' + rough + '" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
             '<feGaussianBlur in="d" stdDeviation="1"/>' +
           '</filter>' +
           '<filter id="' + id + 'r" x="-60%" y="-60%" width="220%" height="220%">' +
-            '<feTurbulence class="flame__noise" type="fractalNoise" baseFrequency="' + grain + '" numOctaves="2" seed="' + (seed + 1) + '" result="n"/>' +
-            '<feDisplacementMap in="SourceGraphic" in2="n" scale="' + (rough * 0.5).toFixed(1) + '" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
+            '<feTurbulence class="flame__noise" type="fractalNoise" baseFrequency="' + grain + '" numOctaves="2" seed="' + (seed + 1) + '" result="t"/>' +
+            '<feOffset class="flame__drift" in="t" dx="0" dy="0" result="a"/>' +
+            '<feOffset class="flame__drift2" in="t" dx="0" dy="0" result="b"/>' +
+            '<feComposite class="flame__mix" in="a" in2="b" operator="arithmetic" k1="0" k2="1" k3="0" k4="0" result="n"/>' +
+            '<feDisplacementMap class="flame__warp" in="SourceGraphic" in2="n" scale="' + (rough * 0.5).toFixed(1) + '" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
             '<feGaussianBlur in="d" stdDeviation="0.7"/>' +
           '</filter>' +
           '<radialGradient id="' + id + 'g"><stop offset="0" class="flame__g0"/><stop offset="1" class="flame__g1"/></radialGradient>' +
@@ -280,6 +295,284 @@ var Flame = (function () {
 
     return '<div class="' + cls + '" title="' + title + '">' + svg(days, waiting, wentOut) + old + '</div>';
   }
+
+  /* The fire, alive -------------------------------------------------------
+
+     Drawn above, the fire is a still picture. This makes it burn, frame by
+     frame, for as long as it is on screen and motion is on (Settings →
+     Motion); otherwise it rests and the picture stays.
+
+     What moves, and why it does not look like a loop:
+     - The noise that roughens the edge flows upward through the flame,
+       like the hot air carrying it, so licks form at the root and climb
+       off the tip. It is a tiled strip scrolled by exactly its own height
+       and round again, so it never jumps.
+     - A wind made of a few slow waves of unrelated lengths leans the
+       flame now one way, now the other; the inner layers follow a moment
+       late, as a real flame's do.
+     - Each tongue flickers on its own mix of quicker waves; the side
+       licks stretch up now and then; a wisp keeps breaking off the tip
+       and melting away.
+     - The glow, the root and the ember in the head breathe with it.
+     - Sparks, from a blaze on, are particles: set off at random moments,
+       lifted by the heat, carried by the wind, burning out on the way up.
+       Hotter stages throw more.
+     - The pointer is air moving: pass it beside the flame and the flame
+       bends away from it and stands a little taller.
+     - Waiting for today, all of it is calmer and quieter.
+
+     Sums of sines at unrelated frequencies stand in for noise: smooth,
+     cheap, and they do not visibly repeat. */
+
+  var Engine = (function () {
+    var states = new WeakMap();
+    var flames = [];
+    var lastScan = 0;
+    var last = 0;
+    var queued = false;
+    var SPARKS_PER_SECOND = [0, 0, 0, 1.4, 1.8, 2.3, 2.9];
+
+    function wave(t, s) {
+      return Math.sin(t + s) * 0.5 + Math.sin(t * 1.63 + s * 1.7) * 0.3 + Math.sin(t * 2.71 + s * 2.3) * 0.2;
+    }
+
+    function alive() {
+      return (typeof Motion === 'undefined' || Motion.on()) && document.visibilityState !== 'hidden';
+    }
+
+    function setup(el) {
+      var svgEl = el.querySelector('.flame__svg:not(.flame__old)');
+      if (!svgEl || svgEl.getAttribute('data-lit') !== '1') return null;
+      function q(sel) { return svgEl.querySelector(sel); }
+      var glow = q('.flame__glow');
+      var st = {
+        el: el,
+        svg: svgEl,
+        size: +svgEl.getAttribute('data-size'),
+        bx: +svgEl.getAttribute('data-bx'),
+        by: +svgEl.getAttribute('data-by'),
+        strip: +svgEl.getAttribute('data-strip'),
+        stage: +svgEl.getAttribute('data-stage'),
+        waiting: el.classList.contains('is-waiting'),
+        outer: q('.flame__tongue--outer'),
+        mid: q('.flame__tongue--mid'),
+        core: q('.flame__tongue--core'),
+        lickL: q('.flame__lick--l'),
+        lickR: q('.flame__lick--r'),
+        wisp: q('.flame__wisp'),
+        glow: glow,
+        glowR: glow ? +glow.getAttribute('r') : 0,
+        root: q('.flame__root'),
+        ember: q('.flame__ember'),
+        drifts: svgEl.querySelectorAll('.flame__drift'),
+        drifts2: svgEl.querySelectorAll('.flame__drift2'),
+        mixes: svgEl.querySelectorAll('.flame__mix'),
+        warps: Array.prototype.slice.call(svgEl.querySelectorAll('.flame__warp')),
+        particles: q('.flame__particles'),
+        sparks: [],
+        nextSpark: 0,
+        seed: Math.random() * 100,
+        wind: 0,
+        lag: 0,
+        push: 0,
+        hover: 0,
+        px: null
+      };
+      st.warp0 = st.warps.map(function (w) { return +w.getAttribute('scale'); });
+
+      el.addEventListener('pointermove', function (event) {
+        var r = svgEl.getBoundingClientRect();
+        st.px = (event.clientX - (r.left + r.width / 2)) / (r.width / 2 || 1);
+      });
+      el.addEventListener('pointerleave', function () { st.px = null; });
+      el.classList.add('is-alive');
+      return st;
+    }
+
+    function bend(node, skew, sx, sy, opacity) {
+      if (!node) return;
+      node.style.transform = 'skewX(' + (-skew).toFixed(2) + 'deg) scale(' + sx.toFixed(3) + ',' + sy.toFixed(3) + ')';
+      if (opacity !== undefined) node.style.opacity = opacity.toFixed(3);
+    }
+
+    function spawn(st) {
+      if (!st.particles) return;
+      var c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('class', 'flame__ember-spark');
+      var p = {
+        node: c,
+        x: st.bx + (Math.random() - 0.5) * st.size * 0.3,
+        y: st.by - st.size * (0.5 + Math.random() * 0.3),
+        vx: st.wind * 12 + (Math.random() - 0.5) * 10,
+        vy: -(18 + Math.random() * 22) * (st.size / 30),
+        r0: 0.45 + Math.random() * 0.75,
+        age: 0,
+        life: 0.7 + Math.random() * 0.8
+      };
+      st.particles.appendChild(c);
+      st.sparks.push(p);
+    }
+
+    function frame(st, t, dt) {
+      var calm = st.waiting ? 0.55 : 1;
+      var heat = 0.85 + st.stage * 0.07;
+      var s = st.seed;
+
+      /* The air: slow gusts, plus the pointer pushing from its side. */
+      var gust = wave(t * 0.45 * heat, s) * 0.55 + wave(t * 1.2 * heat, s + 3) * 0.2;
+      var pushTo = st.px === null ? 0 : Math.max(-1, Math.min(1, -st.px)) * 0.9;
+      st.push += (pushTo - st.push) * Math.min(1, dt * 4);
+      st.hover += ((st.px === null ? 0 : 1) - st.hover) * Math.min(1, dt * 3);
+      st.wind += (gust * calm + st.push - st.wind) * Math.min(1, dt * 2.5);
+      st.lag += (st.wind - st.lag) * Math.min(1, dt * 1.6);
+
+      /* The flicker: quicker waves, a different mix for each tongue. */
+      var f1 = wave(t * 5.1 * heat, s + 1);
+      var f2 = wave(t * 7.3 * heat, s + 2);
+      var f3 = wave(t * 11.2 * heat, s + 5);
+      var lift = 1 + st.hover * 0.06;
+
+      bend(st.outer, st.wind * 10 + f1 * 2.2 * calm, 1 + f2 * 0.035 * calm, (1 + f1 * 0.07 * calm) * lift);
+      bend(st.mid, st.lag * 8 + f2 * 2.4 * calm, 1 + f3 * 0.04 * calm, (1 + f3 * 0.07 * calm) * lift);
+      bend(st.core, st.lag * 5 + f3 * 1.5 * calm, 1 + f1 * 0.05 * calm, 1 + f2 * 0.06 * calm);
+
+      var dim = st.waiting ? 0.8 : 1;
+      var lL = wave(t * 3.4 * heat, s + 7);
+      var lR = wave(t * 3.9 * heat, s + 9);
+      bend(st.lickL, st.wind * 16 + lL * 6 * calm, 1 - lL * 0.08, 0.9 + (lL + 1) * 0.22 * calm, (0.45 + (lL + 1) * 0.25) * dim);
+      bend(st.lickR, st.wind * 16 + lR * 6 * calm, 1 - lR * 0.08, 0.9 + (lR + 1) * 0.22 * calm, (0.45 + (lR + 1) * 0.25) * dim);
+
+      /* The wisp breaks off the tip, rises and melts, over and over. */
+      if (st.wisp) {
+        var ph = (t * 0.95 * heat + s) % 1;
+        st.wisp.style.transform = 'translate(' + (st.wind * 3 * ph).toFixed(2) + 'px,' + (-ph * 1.4).toFixed(2) + 'px) scale(' + (1 - ph * 0.55).toFixed(3) + ')';
+        st.wisp.style.opacity = ((1 - ph) * 0.75 * (ph < 0.12 ? ph / 0.12 : 1) * dim).toFixed(3);
+      }
+
+      /* Light breathing with the fire. */
+      if (st.glow) {
+        st.glow.setAttribute('r', (st.glowR * (1 + f1 * 0.035 * calm + st.hover * 0.06)).toFixed(2));
+        st.glow.style.opacity = ((st.waiting ? 0.55 : 0.85) + f2 * 0.1 * calm).toFixed(3);
+      }
+      if (st.root) st.root.style.opacity = (0.38 + (f3 + 1) * 0.08).toFixed(3);
+      if (st.ember) st.ember.style.opacity = (0.55 + (f2 + 1) * 0.18).toFixed(3);
+
+      /* The noise rising through the flame. Two copies climb half a cycle
+         apart; each is weighed to nothing just as it drops back to the
+         start, so the mix flows up without a seam. Mixing flattens the
+         noise a little mid-way, so the push is raised to match. The core
+         rises slower than the body. */
+      var rise = st.size * 0.85 * heat * calm;
+      for (var n = 0; n < st.drifts.length; n++) {
+        var phase = ((t * rise * (n ? 0.65 : 1)) / st.strip) % 1;
+        var other = (phase + 0.5) % 1;
+        var wa = 1 - Math.abs(2 * phase - 1);
+        var wb = 1 - wa;
+        st.drifts[n].setAttribute('dy', (-phase * st.strip).toFixed(2));
+        if (st.drifts2[n]) st.drifts2[n].setAttribute('dy', (-other * st.strip).toFixed(2));
+        if (st.mixes[n]) {
+          st.mixes[n].setAttribute('k2', wa.toFixed(3));
+          st.mixes[n].setAttribute('k3', wb.toFixed(3));
+        }
+        if (st.warps[n]) {
+          var flat = Math.sqrt(wa * wa + wb * wb) || 1;
+          st.warps[n].setAttribute('scale', (st.warp0[n] * (1 + f1 * 0.12) / flat).toFixed(2));
+        }
+      }
+
+      /* Sparks: set off at random, lifted, blown, burnt out. */
+      var rate = (SPARKS_PER_SECOND[st.stage] || 0) * (st.waiting ? 0.35 : 1);
+      if (rate > 0 && t >= st.nextSpark) {
+        if (st.nextSpark) spawn(st);
+        st.nextSpark = t + (-Math.log(1 - Math.random()) / rate);
+      }
+      for (var i = st.sparks.length - 1; i >= 0; i--) {
+        var p = st.sparks[i];
+        p.age += dt;
+        if (p.age >= p.life) {
+          p.node.remove();
+          st.sparks.splice(i, 1);
+          continue;
+        }
+        p.vx += (st.wind * 30 - p.vx * 0.5) * dt + (Math.random() - 0.5) * 16 * dt;
+        p.vy -= 6 * dt;
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        var k = p.age / p.life;
+        p.node.setAttribute('cx', p.x.toFixed(2));
+        p.node.setAttribute('cy', p.y.toFixed(2));
+        p.node.setAttribute('r', (p.r0 * (1 - k * 0.6)).toFixed(2));
+        p.node.style.opacity = (p.age < 0.08 ? p.age / 0.08 : 1 - k).toFixed(3);
+      }
+    }
+
+    /* Motion off: every flame back to the still picture. */
+    function rest() {
+      flames.forEach(function (st) {
+        st.el.classList.remove('is-alive');
+        [st.outer, st.mid, st.core, st.lickL, st.lickR, st.wisp, st.glow, st.root, st.ember].forEach(function (n) {
+          if (n) { n.style.transform = ''; n.style.opacity = ''; }
+        });
+        if (st.glow) st.glow.setAttribute('r', st.glowR);
+        st.sparks.forEach(function (p) { p.node.remove(); });
+        st.sparks = [];
+      });
+      flames = [];
+      states = new WeakMap();
+    }
+
+    function rescan() {
+      flames = [];
+      document.querySelectorAll('.flame').forEach(function (el) {
+        var st = states.get(el);
+        if (st === undefined) {
+          st = setup(el);
+          states.set(el, st);
+        }
+        if (st) flames.push(st);
+      });
+    }
+
+    function tick(now) {
+      queued = false;
+      if (!alive()) { rest(); last = 0; return; }
+      var dt = last ? Math.min(0.05, (now - last) / 1000) : 1 / 60;
+      last = now;
+      if (now - lastScan > 400) { rescan(); lastScan = now; }
+      var t = now / 1000;
+      flames.forEach(function (st) {
+        if (st.svg.isConnected && st.svg.getClientRects().length) frame(st, t, dt);
+      });
+      schedule();
+    }
+
+    /* One loop at a time. A frame asked for while the window was hidden
+       may never come; after a second without it, ask again — and let
+       only the newest request run, so two loops never burn side by side. */
+    var queuedAt = 0;
+    var loop = 0;
+    function schedule() {
+      var now = performance.now();
+      if (queued && now - queuedAt < 1000) return;
+      queued = true;
+      queuedAt = now;
+      var id = ++loop;
+      requestAnimationFrame(function (ts) { if (id === loop) tick(ts); });
+    }
+
+    function start() {
+      document.addEventListener('visibilitychange', function () { last = 0; if (alive()) schedule(); });
+      new MutationObserver(function () {
+        lastScan = 0;
+        if (alive()) schedule();
+      }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-motion'] });
+      schedule();
+    }
+
+    return { start: start };
+  })();
+
+  Engine.start();
 
   return { html: html, stageOf: stageOf, nextOf: nextOf };
 })();
