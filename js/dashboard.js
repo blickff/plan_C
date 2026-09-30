@@ -144,12 +144,44 @@ var Dashboard = (function () {
         ' — ' + behind.met + ' of ' + Habits.plural(behind.total, behind.unit) + '</p>'
       : '';
 
+    /* The match (js/flame.js). A weekly habit's weeks count as seven days
+       each, so its fire grows at the same pace in time. It burns low
+       while today's part is still to do, and smokes when a streak has
+       just gone out. */
+    var days = lead.unit === 'week' ? lead.run * 7 : lead.run;
+    var run = Habits.streaks(state.log, lead.habit, todayKey);
+    var waiting = lead.run > 0 && Habits.dueOn(state.log, lead.habit, todayKey) &&
+      !Habits.metOn(state.log, lead.habit, todayKey);
+    var wentOut = lead.run === 0 && run.best > 0;
+    var match = typeof Flame !== 'undefined' ? Flame.html(days, waiting, wentOut) : '';
+
+    /* Under the number: what the fire is now and how far the next one is,
+       or — while it waits — that today keeps it going. */
+    var stageLine = '';
+    if (typeof Flame !== 'undefined') {
+      var stage = Flame.stageOf(days);
+      var next = Flame.nextOf(days);
+      var toNext = next
+        ? (lead.unit === 'week'
+            ? Math.ceil(next.left / 7) + (Math.ceil(next.left / 7) === 1 ? ' week' : ' weeks')
+            : next.left + (next.left === 1 ? ' day' : ' days')) + ' to ' + next.stage.name.toLowerCase()
+        : 'as hot as it gets';
+      stageLine = stage.key === 'out'
+        ? (wentOut ? 'It went out — strike it again today' : 'Do it today to strike the match')
+        : (waiting ? '<b>' + stage.name + '</b> · burning low until today is done'
+          : '<b>' + stage.name + '</b> · ' + toNext);
+    }
+
     el.innerHTML = '' +
       '<div class="card__head">' +
-        '<div>' +
-          '<p class="card__eyebrow">Streak · ' + escapeHtml(lead.habit.name) + '</p>' +
-          '<p class="card__big">' + lead.run + ' <span>' + word + '</span></p>' +
-          (sub ? '<p class="card__sub">' + sub + '</p>' : '') +
+        '<div class="streak__main">' +
+          match +
+          '<div>' +
+            '<p class="card__eyebrow">Streak · ' + escapeHtml(lead.habit.name) + '</p>' +
+            '<p class="card__big">' + lead.run + ' <span>' + word + '</span></p>' +
+            (stageLine ? '<p class="streak__stage">' + stageLine + '</p>' : '') +
+            (sub ? '<p class="card__sub">' + sub + '</p>' : '') +
+          '</div>' +
         '</div>' +
         ring +
       '</div>' +
