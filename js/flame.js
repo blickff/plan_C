@@ -211,10 +211,11 @@ var Flame = (function () {
             '<feGaussianBlur in="d" stdDeviation="0.9"/>' +
           '</filter>' +
         '</defs>' +
-        glow +
+        (glow ? '<g class="flame__fire">' + glow + '</g>' : '') +
         smoke +
         match +
-        fire +
+        (fire ? '<g class="flame__fire">' + fire + '</g>' +
+          '<circle class="flame__strike" cx="' + HX + '" cy="' + (HY - 2) + '" r="5"/>' : '') +
       '</svg>';
   }
 
@@ -223,24 +224,61 @@ var Flame = (function () {
      flare once; the first time ever it only remembers. */
   function lit(days) { return stageOf(days).key !== 'out'; }
 
+  /* What the card showed last time — lit, gone out (and after how many
+     days), or a fresh match — kept per browser, so the moment it changes
+     can be played once, whether it happens while you watch or while the
+     app was closed. */
+  function lastShown() {
+    try { return window.localStorage.getItem('daybook.flameShown') || ''; } catch (err) { return ''; }
+  }
+
+  function remember(state) {
+    try { window.localStorage.setItem('daybook.flameShown', state); } catch (err) { /* nothing lost */ }
+  }
+
+  /* The whole piece for the card.
+
+     Moving up a stage makes the fire flare once. Lighting it after it
+     was out plays a short scene instead of a jump: a burnt-out match
+     drops away and fades, a fresh one rises in its place, a flash at its
+     head as it is struck, and the fire grows out of the flash. From a
+     fresh, never-lit match, just the strike and the fire. */
   function html(days, waiting, wentOut) {
     var stage = stageOf(days);
+    var isLit = lit(days);
+    var gone = !isLit && wentOut;
+    var state = isLit ? 'lit' : gone ? 'gone:' + (typeof wentOut === 'number' ? wentOut : 1) : 'fresh';
+    var before = lastShown();
+    remember(state);
+
+    var ignite = isLit && before !== '' && before !== 'lit';
+    var swapFrom = ignite && before.indexOf('gone:') === 0 ? +before.slice(5) || 1 : 0;
+
     var flare = false;
     try {
       var seen = window.localStorage.getItem('daybook.flameStage');
       var now = stageIndex(days);
-      if (seen !== null && now > +seen && !waiting) flare = true;
+      if (!ignite && seen !== null && now > +seen && !waiting) flare = true;
       window.localStorage.setItem('daybook.flameStage', String(now));
     } catch (err) { /* private window: no flare, nothing lost */ }
 
     var cls = 'flame flame--' + stage.key +
-      (!lit(days) && wentOut ? ' is-gone' : '') +
+      (gone ? ' is-gone' : '') +
       (waiting ? ' is-waiting' : '') +
-      (flare ? ' is-flare' : '');
+      (flare ? ' is-flare' : '') +
+      (ignite ? ' is-ignite' : '') +
+      (swapFrom ? ' is-swap' : '');
     var title = stage.key === 'out'
-      ? (wentOut ? 'The match went out. Light it again today.' : 'Not lit yet — do it today to strike it.')
+      ? (gone ? 'The match went out. Light it again today.' : 'Not lit yet — do it today to strike it.')
       : stage.name + (waiting ? ' · dimmed until today is done' : '');
-    return '<div class="' + cls + '" title="' + title + '">' + svg(days, waiting, wentOut) + '</div>';
+
+    /* The old match, drawn over the new one for the swap and animated
+       away; it is gone from the page once its part is over. */
+    var old = swapFrom
+      ? svg(0, false, swapFrom).replace('class="flame__svg"', 'class="flame__svg flame__old"')
+      : '';
+
+    return '<div class="' + cls + '" title="' + title + '">' + svg(days, waiting, wentOut) + old + '</div>';
   }
 
   return { html: html, stageOf: stageOf, nextOf: nextOf };

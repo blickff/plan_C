@@ -2800,10 +2800,67 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
   100% { transform: scale(1); filter: brightness(1); }
 }
 
+/* Lighting it again (js/flame.js, html): the burnt match drops and
+   fades, the new one rises, a flash at its head, and the fire grows out
+   of the flash. From a fresh match, only the strike and the fire. The
+   strike flash is hidden except while igniting. */
+.flame { position: relative; }
+
+.flame__strike { fill: #fff3c4; opacity: 0; filter: blur(1.2px); pointer-events: none; }
+
+.flame__old {
+  position: absolute;
+  inset: 0;
+  animation: flame-old-out 0.55s cubic-bezier(0.5, 0, 0.8, 0.4) both;
+}
+
+@keyframes flame-old-out {
+  to { transform: translateY(26px) rotate(-6deg); opacity: 0; }
+}
+
+.flame.is-swap > .flame__svg:not(.flame__old) {
+  animation: flame-new-in 0.55s cubic-bezier(0.2, 0.9, 0.3, 1) 0.4s both;
+}
+
+@keyframes flame-new-in {
+  from { transform: translateY(26px); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+.flame__fire {
+  transform-box: view-box;
+  transform-origin: 35px 72px;
+}
+
+.flame.is-ignite .flame__fire { animation: flame-ignite 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.25) 0.35s both; }
+.flame.is-ignite.is-swap .flame__fire { animation-delay: 1s; }
+.flame.is-ignite .flame__strike { transform-box: fill-box; transform-origin: 50% 50%; animation: flame-strike 0.6s ease-out 0.25s both; }
+.flame.is-ignite.is-swap .flame__strike { animation-delay: 0.9s; }
+
+@keyframes flame-ignite {
+  0% { transform: scale(0.05); opacity: 0; }
+  35% { opacity: 1; }
+  60% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes flame-strike {
+  0% { transform: scale(0.2); opacity: 0; }
+  25% { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+
 /* The line under the number: the stage, and how far to the next. */
 .streak__stage { margin: 4px 0 0; font-size: 12px; opacity: 0.7; }
 .streak__stage b { font-weight: 600; opacity: 1; }
 
 @media (prefers-reduced-motion: reduce) {
   .flame *, .flame .flame__svg { animation: none !important; }
+  /* Asked for less motion, the relight is still not a jump: the burnt
+     match fades out and the fire fades in, with nothing moving. */
+  .flame .flame__old { animation: flame-fade-out 0.6s ease both !important; }
+  .flame.is-ignite .flame__fire { animation: flame-fade-in 0.8s ease 0.35s both !important; }
 }
+
+@keyframes flame-fade-out { to { opacity: 0; } }
+@keyframes flame-fade-in { from { opacity: 0; } to { opacity: 1; } }
