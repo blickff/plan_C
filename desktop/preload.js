@@ -16,9 +16,10 @@ contextBridge.exposeInMainWorld('desktop', {
   getWindowSettings: () => ipcRenderer.invoke('get-window-settings'),
   hideWidget: () => ipcRenderer.invoke('hide-widget'),
 
-  /* The widget's face (Settings → Desktop widget): the window takes its
-     size. And word from the app when it is pinned or unpinned. */
-  setWidgetFace: (face, reset) => ipcRenderer.invoke('widget-face', face, !!reset),
+  /* The widget says how big it needs to be — it is as tall as what is in
+     it — and at what scale; the window follows. And word from the app
+     when it is pinned or unpinned. */
+  setWidgetSize: (width, height, zoom) => ipcRenderer.invoke('widget-size', width, height, zoom),
   onWidgetMode: (fn) => ipcRenderer.on('widget-mode', (_event, mode) => fn(mode)),
 
   /* One notification, sent by the page when the day is unfinished at

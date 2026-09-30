@@ -35,7 +35,7 @@ body.is-pinned .wg__unpinned { display: none; }
   flex-direction: column;
   gap: 8px;
   height: 100vh;
-  padding: 11px 14px 14px;
+  padding: 10px 12px 12px;
   box-sizing: border-box;
   overflow: hidden;
   background: var(--bg);
@@ -109,7 +109,29 @@ body.is-pinned .wg__unpinned { display: none; }
 
 .wg__meta > span { overflow: hidden; text-overflow: ellipsis; }
 .wg__weather::before { content: "·"; margin: 0 6px; opacity: 0.55; }
-.wg__weather:empty::before { content: ""; margin: 0; }
+.wg__weather:empty::before,
+.wg__weather.is-alone::before { content: ""; margin: 0; }
+
+/* Nothing to say in the top line — a clock alone, or the date already on
+   the dial and the weather off: the line takes no room, and its buttons
+   float over the top of the widget, appearing under the pointer. */
+.wg--nobar .wg__bar { position: absolute; top: 6px; left: 12px; right: 12px; z-index: 2; }
+.wg--nobar .wg__meta { display: none; }
+.wg--nobar .wg__tools { background: none; }
+
+/* Measuring (js/widget.js): for an instant everything takes the height it
+   wants, so the window can be made exactly that tall. */
+/* Size containment (container-type: size) makes a box ignore what is in
+   it when its height is asked for, which is exactly the question here. */
+.wg.is-measuring { height: auto !important; container-type: normal !important; }
+.wg.is-measuring .wg__face,
+.wg.is-measuring .wg__under,
+.wg.is-measuring .wgt,
+.wg.is-measuring .wgp,
+.wg.is-measuring .wgn,
+.wg.is-measuring .wgy,
+.wg.is-measuring .wgk,
+.wg.is-measuring #wg-list { flex: none !important; overflow: visible !important; }
 
 /* The buttons float over the right end of the line when the pointer is
    on the widget, on a patch of the page colour, instead of holding space
@@ -196,38 +218,22 @@ body.is-pinned .wg__unpinned { display: none; }
 
 /* Today ---------------------------------------------------------------------- */
 
-.wgt { display: flex; flex: 1; flex-direction: column; gap: 10px; min-height: 0; }
+.wgt { display: flex; flex: 1; flex-direction: column; gap: 8px; min-height: 0; }
 
-.wgt__head {
+/* One line above the habits: "Today", how many are done, and the streak
+   pushed to the right. */
+.wgt__line {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 12px 11px 14px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: color-mix(in srgb, var(--surface) 80%, transparent);
-  box-shadow: var(--shadow);
-}
-
-.wgt__streak { flex: 1; min-width: 0; }
-.wgt__num { margin: 0; line-height: 1.1; }
-.wgt__num b { font-size: 28px; font-weight: 500; letter-spacing: -0.03em; }
-.wgt__num span { font-size: 12px; color: var(--text-dim); }
-
-.wgt__label {
-  overflow: hidden;
-  margin: 3px 0 0;
-  font-size: 10px;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 2px;
+  font-size: 12px;
   color: var(--text-faint);
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
-.wg .ring { width: 48px; height: 48px; -webkit-app-region: no-drag; }
-.wg .ring__inner { width: 38px; height: 38px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: 600; }
-.wg .ring__inner i { margin-top: 9px; font-size: 8px; }
-
-.wgt__week { padding: 0 2px; }
+.wgt__line b { font-size: 14px; font-weight: 600; color: var(--text); }
+.wgt__line em { margin-left: auto; font-style: normal; color: var(--text-dim); }
 
 .wgt__list {
   display: flex;
@@ -244,9 +250,9 @@ body.is-pinned .wg__unpinned { display: none; }
   align-items: center;
   gap: 7px 10px;
   flex: none;
-  padding: 9px 12px 10px;
+  padding: 8px 11px 9px;
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: 12px;
   background: var(--surface);
   color: var(--text);
   font: inherit;
@@ -313,7 +319,7 @@ body.is-pinned .wg__unpinned { display: none; }
 
 /* Week ------------------------------------------------------------------------ */
 
-.wgk { display: flex; flex: 1; gap: 18px; min-height: 0; align-items: stretch; }
+.wgk { display: flex; flex: 1; gap: 16px; min-height: 118px; align-items: stretch; }
 
 .wgk__left { display: flex; flex: none; flex-direction: column; justify-content: center; width: 124px; }
 .wgk__num { margin: 0; line-height: 1; }
@@ -433,10 +439,7 @@ body.is-pinned .wg__unpinned { display: none; }
 /* The top line is laid over the clock rather than above it, and says
    nothing: the dial has the window to itself, and the buttons still
    appear at the top under the pointer. */
-.wg--clock { padding: 12px; }
-.wg--clock .wg__bar { position: absolute; top: 8px; left: 12px; right: 12px; z-index: 2; }
-.wg--clock .wg__meta { visibility: hidden; }
-.wg--clock .wg__tools { background: none; }
+.wg--clock { padding: 10px; }
 
 .wgc { display: flex; flex: 1; min-height: 0; align-items: center; justify-content: center; }
 
@@ -576,7 +579,8 @@ body.is-pinned .wg__unpinned { display: none; }
   flex: 1;
   grid-template-columns: repeat(6, 1fr);
   gap: 8px;
-  min-height: 50px;
+  flex: none;
+  height: 62px;
   margin-top: 12px;
 }
 
@@ -603,24 +607,24 @@ body.is-pinned .wg__unpinned { display: none; }
    clock in a band of its own across the top, the chosen face below. The
    band is its own measure (container), so the clock inside it sizes to
    the band exactly as a clock alone sizes to the window. */
-.wg--combined .wg__face { gap: 12px; }
+.wg--combined .wg__face { gap: 10px; }
 
 .wg__clockband {
   display: flex;
   flex: none;
-  height: 172px;
+  height: 146px;
   container-type: size;
 }
 
-.wg--with-clock-digital .wg__clockband { height: 94px; }
-.wg--with-clock-stack .wg__clockband { height: 152px; }
+.wg--with-clock-digital .wg__clockband { height: 78px; }
+.wg--with-clock-stack .wg__clockband { height: 132px; }
 
 .wg__under {
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border);
 }
 

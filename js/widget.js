@@ -78,6 +78,9 @@ var Widget = (function () {
       accent: ACCENTS.indexOf(w.accent) !== -1 ? w.accent : 'orange',
       seconds: w.seconds !== false,
       date: w.date !== false,
+      weather: w.weather !== false,
+      /* small, medium or large: the whole widget scaled, text and all. */
+      size: w.size === 'small' || w.size === 'large' ? w.size : 'medium',
       backdrop: w.backdrop === 'plain' ? 'plain' : 'glow'
     };
   }
@@ -91,13 +94,6 @@ var Widget = (function () {
   }
 
   function hasClock(p) { return p.face === 'clock' || p.clockOnTop; }
-
-  /* "today+clock-round": the face's own window, made taller for the clock
-     that sits above it. */
-  function shapeOf(p) {
-    if (p.face === 'clock') return clockShape(p);
-    return p.clockOnTop ? p.face + '+' + clockShape(p) : p.face;
-  }
 
   /* The widget follows the panel's theme: the setting, or the clock when
      the setting says to follow it. */
@@ -184,8 +180,6 @@ var Widget = (function () {
   /* Today ---------------------------------------------------------------- */
 
   function faceToday() {
-    var streak = streakHtml('wgt__num');
-    var p = todayScore();
     var log = Storage.load().log;
     var key = Storage.today();
     var habits = Habits.active().sort(function (a, b) {
@@ -205,15 +199,23 @@ var Widget = (function () {
       '</button>';
     }).join('') : '<p class="wg__empty">No habits yet — open the panel to pick some.</p>';
 
+    /* One line above the habits: how today stands, and the streak. It
+       used to be a card with a big number and a ring, and a strip of the
+       week under it — most of the widget's height for three facts. */
+    var due = habits.filter(function (h) { return Habits.dueOn(log, h, key); });
+    var done = due.filter(function (h) { return Habits.valueOf(h.id) >= h.goal; }).length;
+    var lead = leadHabit();
+    var run = lead && lead.run > 0
+      ? lead.run + '-' + lead.unit + ' streak'
+      : '';
+
     return '' +
       '<div class="wgt">' +
-        '<div class="wgt__head">' +
-          '<div class="wgt__streak">' + streak.num +
-            '<p class="wgt__label">' + escapeHtml(streak.label) + '</p>' +
-          '</div>' +
-          '<div class="ring wgt__ring" style="--p:' + p + '"><span class="ring__inner">' + p + '<i>%</i></span></div>' +
-        '</div>' +
-        weekStrip('wgt__week') +
+        '<p class="wgt__line">' +
+          '<b>Today</b>' +
+          '<span>' + (due.length ? done + ' of ' + due.length + ' done' : 'nothing due') + '</span>' +
+          (run ? '<em title="' + escapeHtml(lead.habit.name) + '">' + run + '</em>' : '') +
+        '</p>' +
         '<div class="wgt__list" id="wg-list">' + rows + '</div>' +
       '</div>';
   }
@@ -564,35 +566,76 @@ var Widget = (function () {
 
   /* Drawing ------------------------------------------------------------ */
 
-  var lastShape = null;
+  /* The top line: the date and the weather. The date is left out when a
+     clock on the widget is already showing it — it was there twice — and
+     the weather can be turned off. With neither, the line takes no room:
+     its buttons float over the top of the widget instead. */
+  function renderBar(p) {
+    var clockShowsDate = hasClock(p) && p.date;
+    var dateEl = document.getElementById('wg-date');
+    /* Its own element, not the one weather.js writes into: that module
+       would put its own line there, place name and all, whether or not
+       the weather is wanted on the widget. It still fetches; this reads
+       what it stored. */
+    var weatherEl = document.getElementById('wg-weather');
 
-  function renderDate() {
-    document.getElementById('wg-date').textContent = new Intl.DateTimeFormat('en-US', {
+    dateEl.textContent = clockShowsDate ? '' : new Intl.DateTimeFormat('en-US', {
       weekday: 'short', month: 'short', day: 'numeric'
     }).format(new Date());
+
+    var w = Storage.load().settings.weather;
+    weatherEl.textContent = p.weather && w && typeof Weather !== 'undefined'
+      ? Math.round(w.temp) + '° ' + Weather.describe(w.code)
+      : '';
+
+    /* The dot between the two belongs only where both are there. */
+    weatherEl.classList.toggle('is-alone', !dateEl.textContent);
+    return !!(dateEl.textContent || weatherEl.textContent);
   }
 
-  /* The weather as last fetched, from the same store the panel uses. */
-  function renderWeather() {
-    var el = document.getElementById('weather');
-    var w = Storage.load().settings.weather;
-    if (!el || !w || typeof Weather === 'undefined') return;
-    el.textContent = Math.round(w.temp) + '° ' + Weather.describe(w.code);
+  /* How big the window should be ------------------------------------------
+
+     The widget is as wide as its face needs and exactly as tall as what
+     is in it: one habit makes a small widget, five a taller one. Past a
+     limit the list scrolls instead of the window growing down the screen.
+     A clock alone has a shape of its own. */
+  var WIDTH = { today: 280, plans: 280, note: 280, money: 300, week: 350 };
+  var CLOCK_ALONE = { 'clock-round': [220, 220], 'clock-digital': [320, 136], 'clock-stack': [190, 236] };
+  var TALLEST = 600;
+  var SCALE = { small: 0.85, medium: 1, large: 1.2 };
+  var lastSize = '';
+  var size = { w: 280, h: 300 };
+
+  function measure(p, root) {
+    if (p.face === 'clock') {
+      var fixed = CLOCK_ALONE[clockShape(p)];
+      return { w: fixed[0], h: fixed[1] };
+    }
+    var w = WIDTH[p.face] || 280;
+    /* Let it take the height it wants, at the width it will have, and
+       read that. Nothing is painted in between. */
+    root.classList.add('is-measuring');
+    root.style.width = w + 'px';
+    /* offsetHeight: the laid-out height, whatever scale it is shown at. */
+    var h = root.offsetHeight + 1;
+    root.style.width = '';
+    root.classList.remove('is-measuring');
+    return { w: w, h: Math.min(TALLEST, Math.max(90, h)) };
   }
 
   function render() {
     applyTheme();
-    renderDate();
-    renderWeather();
 
     var p = prefs();
     var root = document.getElementById('wg');
     var face = document.getElementById('wg-face');
+    var barHasText = renderBar(p);
 
     var combined = p.face !== 'clock' && p.clockOnTop;
     root.className = 'wg wg--' + p.face + ' wg--' + p.backdrop + ' wg--accent-' + p.accent +
       (hasClock(p) ? ' wg--dial-' + p.dial : '') +
-      (combined ? ' wg--combined wg--with-' + clockShape(p) : '');
+      (combined ? ' wg--combined wg--with-' + clockShape(p) : '') +
+      (barHasText && p.face !== 'clock' ? '' : ' wg--nobar');
 
     var body = p.face === 'week' ? faceWeek()
       : p.face === 'plans' ? facePlans()
@@ -608,16 +651,19 @@ var Widget = (function () {
       : body;
 
     runClock(hasClock(p), ANALOG.indexOf(p.dial) !== -1 && p.seconds);
+
+    /* The window follows the content: the desktop app is told the size,
+       and the scale chosen in Settings, whenever either changes. */
+    size = measure(p, root);
+    var zoom = SCALE[p.size];
+    var key = size.w + 'x' + size.h + '@' + zoom;
+    if (key !== lastSize) {
+      lastSize = key;
+      if (window.desktop && window.desktop.setWidgetSize) window.desktop.setWidgetSize(size.w, size.h, zoom);
+    }
+
     fadeList();
     tellTray(todayScore());
-
-    /* A new face wants its own shape of window: the desktop app sets the
-       size it was drawn for, and the smallest it still works at. */
-    var shape = shapeOf(p);
-    if (shape !== lastShape) {
-      if (window.desktop && window.desktop.setWidgetFace) window.desktop.setWidgetFace(shape, lastShape !== null);
-      lastShape = shape;
-    }
   }
 
   /* A list fades out at the bottom only when something is really hidden
@@ -726,6 +772,9 @@ var Widget = (function () {
     });
 
     window.addEventListener('resize', fadeList);
+    /* The window was given its size a moment after the page asked; what
+       fits in it may have changed. */
+    window.addEventListener('resize', function () { setTimeout(fadeList, 60); });
 
     /* Rolls over at midnight without a restart, and is the heartbeat the
        reminder rides on. */
@@ -780,7 +829,7 @@ var Widget = (function () {
     }
   }
 
-  return { start: start, render: render, choice: choice };
+  return { start: start, render: render, choice: choice, size: function () { return size; }, refit: fadeList };
 })();
 
 Widget.start();

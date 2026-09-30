@@ -41,7 +41,7 @@
       height: var(--h, 440px);
       border-radius: 10px;
       box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
-      transition: width 0.3s cubic-bezier(0.2, 0, 0, 1), height 0.3s cubic-bezier(0.2, 0, 0, 1);
+      transition: height 0.25s cubic-bezier(0.2, 0, 0, 1);
     }
 
     .demo-panel {
@@ -84,7 +84,7 @@
   <div class="demo-stage">
     <div class="wg" id="wg">
       <div class="wg__bar">
-        <p class="wg__meta"><span id="wg-date"></span><span class="wg__weather" id="weather"></span></p>
+        <p class="wg__meta"><span id="wg-date"></span><span class="wg__weather" id="wg-weather"></span></p>
         <button class="wg__upd" type="button" id="wg-update" hidden></button>
         <div class="wg__tools">
           <button class="wg__btn" type="button" id="wg-pin" title="Pin to the desktop">

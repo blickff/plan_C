@@ -631,6 +631,8 @@ function wireWidgetPrefs() {
     radio('data-wdial', dial);
     radio('data-waccent', w.accent || 'orange');
     radio('data-wbackdrop', w.backdrop === 'plain' ? 'plain' : 'glow');
+    radio('data-wsize', w.size === 'small' || w.size === 'large' ? w.size : 'medium');
+    document.getElementById('wweather-btn').classList.toggle('is-active', w.weather !== false);
 
     document.getElementById('wclock-btn').classList.toggle('is-active', c.clock);
     /* The clock's own settings sit right under its switch, and only while
@@ -672,7 +674,7 @@ function wireWidgetPrefs() {
       });
     });
   });
-  [['data-wdial', 'dial'], ['data-waccent', 'accent'], ['data-wbackdrop', 'backdrop']].forEach(function (pair) {
+  [['data-wdial', 'dial'], ['data-waccent', 'accent'], ['data-wbackdrop', 'backdrop'], ['data-wsize', 'size']].forEach(function (pair) {
     document.querySelectorAll('[' + pair[0] + ']').forEach(function (b) {
       b.addEventListener('click', function () {
         save(function (w) { w[pair[1]] = b.getAttribute(pair[0]); });
@@ -684,6 +686,9 @@ function wireWidgetPrefs() {
   });
   document.getElementById('wdate-btn').addEventListener('click', function () {
     save(function (w) { w.date = w.date === false; });
+  });
+  document.getElementById('wweather-btn').addEventListener('click', function () {
+    save(function (w) { w.weather = w.weather === false; });
   });
 
   mark();

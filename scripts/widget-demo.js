@@ -4,21 +4,6 @@
    redraw — which is all the desktop app does too. */
 
 (function () {
-  /* The sizes desktop/main.js gives each face's window. */
-  var SIZES = {
-    today: [340, 440],
-    week: [410, 200],
-    plans: [310, 330],
-    note: [310, 230],
-    money: [330, 260],
-    'clock-round': [270, 270],
-    'clock-digital': [390, 180],
-    'clock-stack': [220, 280]
-  };
-
-  /* How much taller the window gets for a clock above the face. */
-  var ABOVE = { 'clock-round': 196, 'clock-digital': 118, 'clock-stack': 176 };
-
   var SECTIONS = [['none', 'Nothing'], ['today', 'Today'], ['week', 'Week'], ['plans', 'Plans'], ['note', 'Note'], ['money', 'Money']];
   var DIALS = ['minimal', 'classic', 'roman', 'modern', 'mono', 'digital', 'stack', 'ring'];
   var ACCENTS = { orange: '#ff7a2a', amber: '#f5a800', red: '#ef4444', green: '#22a35a', blue: '#3b9cff', violet: '#b46cff', ink: 'var(--text)' };
@@ -47,12 +32,16 @@
     var theme = Storage.load().settings.theme || 'auto';
     var panel = document.getElementById('demo-panel');
 
-    var clockShape = dial === 'digital' ? 'clock-digital' : dial === 'stack' ? 'clock-stack' : 'clock-round';
-    var both = c.clock && c.section !== 'none';
-    var size = SIZES[c.section === 'none' ? clockShape : c.section];
+    /* The widget works out its own size (as the desktop app's window
+       follows it); the scale chosen is shown here by zooming the box. */
+    var size = Widget.size();
+    var scale = { small: 0.85, medium: 1, large: 1.2 }[w.size] || 1;
     var root = document.getElementById('wg');
-    root.style.setProperty('--w', size[0] + 'px');
-    root.style.setProperty('--h', (size[1] + (both ? ABOVE[clockShape] : 0)) + 'px');
+    root.style.setProperty('--w', size.w + 'px');
+    root.style.setProperty('--h', size.h + 'px');
+    root.style.transform = 'scale(' + scale + ')';
+    /* The box glides to its new height; what fits is judged once it is there. */
+    setTimeout(Widget.refit, 320);
 
     panel.innerHTML =
       '<h1>Widget preview</h1>' +
@@ -66,6 +55,8 @@
           '</div>'
         : '') +
       '<h2>Section</h2>' + pills('data-set-section', SECTIONS, c.section) +
+      '<h2>Size</h2>' + pills('data-set-size', ['small', 'medium', 'large'], w.size === 'small' || w.size === 'large' ? w.size : 'medium') +
+      '<div class="demo-row" style="margin-top:8px"><button class="pill' + (w.weather !== false ? ' is-active' : '') + '" type="button" data-toggle="weather">Show the weather</button></div>' +
       '<h2>Accent</h2><div class="demo-sw">' + Object.keys(ACCENTS).map(function (name) {
         return '<button type="button" title="' + cap(name) + '" data-set-accent="' + name + '" style="--sw:' + ACCENTS[name] + '"' +
           ((w.accent || 'orange') === name ? ' class="is-active"' : '') + '></button>';
@@ -83,7 +74,7 @@
     var w = prefs();
     var c = Widget.choice();
     var done = false;
-    ['dial', 'accent', 'backdrop'].forEach(function (key) {
+    ['dial', 'accent', 'backdrop', 'size'].forEach(function (key) {
       var value = b.getAttribute('data-set-' + key);
       if (value) { w[key] = value; done = true; }
     });

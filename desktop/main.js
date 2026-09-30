@@ -148,8 +148,8 @@ function createWidget() {
   widget = new BrowserWindow({
     width: saved.width || 340,
     height: saved.height || 440,
-    minWidth: 260,
-    minHeight: 260,
+    minWidth: 100,
+    minHeight: 80,
     x: saved.x,
     y: saved.y,
     center: firstRun,
@@ -255,6 +255,13 @@ function createWidget() {
    (and takes it back when it is unpinned). If PowerShell is not there or
    refuses, nothing breaks — the widget is just not tied, as before.
 
+   The same call marks the window as one a click does not activate, so
+   ticking a habit on a pinned widget does not pull it in front of the
+   windows being worked in. This is asked of Windows and not of Electron
+   (setFocusable(false)) on purpose: Electron's way also throws away every
+   click made while the widget is not the active window — with the panel
+   open, the pin on a pinned widget did nothing at all.
+
    The handle is this app's own window; nothing else is touched. */
 const DESKTOP_TIE = `
 Add-Type @"
@@ -264,11 +271,15 @@ public static class DaybookDesktop {
   [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string cls, string title);
   [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] static extern IntPtr SetWindowLongPtr(IntPtr h, int index, IntPtr value);
   [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] static extern IntPtr GetWindowLongPtr(IntPtr h, int index);
+  const long NOACTIVATE = 0x08000000L;
   public static string Tie(long handle, bool on) {
     IntPtr h = new IntPtr(handle);
     IntPtr desktop = on ? FindWindow("Progman", null) : IntPtr.Zero;
     if (on && desktop == IntPtr.Zero) return "no desktop window";
     SetWindowLongPtr(h, -8, desktop);
+    long style = GetWindowLongPtr(h, -20).ToInt64();
+    style = on ? (style | NOACTIVATE) : (style & ~NOACTIVATE);
+    SetWindowLongPtr(h, -20, new IntPtr(style));
     return GetWindowLongPtr(h, -8) == desktop ? (on ? "tied" : "released") : "refused";
   }
 }
@@ -304,11 +315,10 @@ function tieToDesktop(on) {
    so turning either on turns the other off.
 
    Pinned is fastened to the desktop: it cannot be moved or resized, not
-   even by dragging; it is out of the taskbar and Alt+Tab; it never takes
-   the focus, so a click on it — ticking a habit — does not lift it above
-   the windows in front; and it is tied to the desktop (above), so it is
-   there whenever the desktop is, "show desktop" included, and behind
-   everything else. It is unpinned from its own button, the tray menu or
+   even by dragging; it is out of the taskbar and Alt+Tab; and it is tied
+   to the desktop (above), so it is there whenever the desktop is, "show
+   desktop" included, behind everything else, and a click on it — ticking
+   a habit — does not lift it above the windows in front. It is unpinned from its own button, the tray menu or
    Settings. The page is told too, so it drops its drag area and its hide
    button. */
 function applyWidgetMode() {
@@ -318,8 +328,8 @@ function applyWidgetMode() {
   widget.setAlwaysOnTop(!pinned && !!saved.onTop);
   widget.setSkipTaskbar(pinned);
   widget.setMovable(!pinned);
-  widget.setResizable(!pinned);
-  widget.setFocusable(!pinned);
+  /* Never resized by hand, pinned or not: the page sets the size. */
+  widget.setResizable(false);
   tieToDesktop(pinned);
   /* The widget and the panel both show the state; either may not have
      been the one that changed it. */
@@ -329,26 +339,13 @@ function applyWidgetMode() {
   buildTrayMenu();
   console.log('widget mode: ' + (pinned ? 'pinned' : 'free') +
     ' movable=' + widget.isMovable() + ' resizable=' + widget.isResizable() +
-    ' focusable=' + widget.isFocusable() + ' size=' + widget.getSize().join('x'));
+    ' size=' + widget.getSize().join('x'));
 }
-
-/* Each face of the widget has the shape it was drawn for, and a smallest
-   size it still works at: [width, height, min width, min height]. The
-   clock's shape depends on its dial: a round one wants a square, a row
-   of digits a wide strip, hours over minutes a tall one. */
-const FACE_SIZES = {
-  today: [340, 440, 260, 260],
-  week: [410, 200, 330, 170],
-  plans: [310, 330, 250, 220],
-  note: [310, 230, 230, 160],
-  money: [330, 260, 260, 210],
-  'clock-round': [270, 270, 170, 170],
-  'clock-digital': [390, 180, 260, 130],
-  'clock-stack': [220, 280, 160, 210]
-};
 
 function openPanel() {
   if (panel && !panel.isDestroyed()) {
+    /* Minimised to the taskbar, show() alone leaves it there. */
+    if (panel.isMinimized()) panel.restore();
     panel.show();
     panel.focus();
     return;
@@ -502,35 +499,27 @@ function watch(win, name) {
   });
 }
 
-/* How much taller a face's window gets for a clock sat above it. */
-const CLOCK_ABOVE = { 'clock-round': 196, 'clock-digital': 118, 'clock-stack': 176 };
-
-/* "today" → its own size; "today+clock-round" → the same, made taller by
-   the band the clock takes. */
-function sizeFor(shape) {
-  const parts = shape.split('+');
-  const base = FACE_SIZES[parts[0]];
-  if (!base) return null;
-  const extra = parts[1] ? CLOCK_ABOVE[parts[1]] : 0;
-  if (parts[1] && !extra) return null;
-  return [base[0], base[1] + extra, base[2], base[3] + extra];
-}
-
 function wireMessages() {
   ipcMain.handle('open-panel', openPanel);
 
-  /* A face chosen in Settings: set its smallest size, and — when it is a
-     change rather than the widget starting up — its own size. */
-  ipcMain.handle('widget-face', (_event, face, reset) => {
-    const size = sizeFor(String(face));
-    if (!size || !widget || widget.isDestroyed()) return;
-    widget.setMinimumSize(size[2], size[3]);
-    if (!reset) return;
-    const pinned = !!loadState().pinned;
-    if (pinned) widget.setResizable(true);
-    widget.setSize(size[0], size[1]);
-    if (pinned) widget.setResizable(false);
-    saveState({ width: size[0], height: size[1] });
+  /* The widget's page works out how big it needs to be — as wide as its
+     face, as tall as what is in it — and at what scale (small, medium,
+     large in Settings); the window follows. It grows and shrinks from its
+     top-left corner, so it stays where it was put. Nobody drags its edge:
+     the size belongs to the content. */
+  ipcMain.handle('widget-size', (_event, width, height, zoom) => {
+    if (!widget || widget.isDestroyed()) return;
+    const z = [0.85, 1, 1.2].includes(zoom) ? zoom : 1;
+    const w = Math.round(Math.max(120, Math.min(900, Number(width) || 0)) * z);
+    const h = Math.round(Math.max(80, Math.min(900, Number(height) || 0)) * z);
+    widget.webContents.setZoomFactor(z);
+    const [cw, ch] = widget.getSize();
+    if (cw === w && ch === h) return;
+    widget.setResizable(true);
+    widget.setMinimumSize(100, 80);
+    widget.setSize(w, h);
+    widget.setResizable(false);
+    saveState({ width: w, height: h });
   });
 
   ipcMain.handle('toggle-on-top', () => {
