@@ -459,6 +459,16 @@
       </div>
 
       <div class="card">
+        <p class="card__title">Motion</p>
+        <p class="card__note muted">Animations as you move around the app. Windows and macOS can ask apps to keep still; Daybook can follow that, or not.</p>
+        <div class="row">
+          <button class="pill" type="button" data-motion-set="auto">Match the system</button>
+          <button class="pill" type="button" data-motion-set="on">Always on</button>
+          <button class="pill" type="button" data-motion-set="off">Off</button>
+        </div>
+      </div>
+
+      <div class="card">
         <p class="card__title">Theme</p>
         <p class="card__note muted">Light through the day, dark after 19:00.</p>
         <div class="row">
@@ -472,6 +482,7 @@
   </main>
 
   <script src="js/storage.js"></script>
+  <script src="js/motion.js"></script>
   <script src="js/presets.js"></script>
   <script src="js/habits.js"></script>
   <script src="js/weather.js"></script>

@@ -119,10 +119,13 @@ var Dashboard = (function () {
 
     /* The ring replaces what used to be a bare habit name: it answers
        "how is today going" across habits measured in different units. */
+    /* Drawn at the value it showed last, then moved to the new one, so
+       the ring turns and the number counts rather than jumping. */
+    var ringFrom = lastPercent === null ? percent : lastPercent;
     var ring = '' +
-      '<div class="ring" style="--p: ' + percent + '"' +
+      '<div class="ring" style="--p: ' + ringFrom + '"' +
         ' title="Today: ' + percent + '% of your goals, averaged across habits">' +
-        '<span class="ring__inner">' + percent + '<i>%</i></span>' +
+        '<span class="ring__inner"><b class="ring__num">' + percent + '</b><i>%</i></span>' +
       '</div>';
 
     /* A streak is the most fragile number in the app and it sits in the
@@ -194,7 +197,7 @@ var Dashboard = (function () {
           match +
           '<div>' +
             '<p class="card__eyebrow">Streak · ' + escapeHtml(lead.habit.name) + '</p>' +
-            '<p class="card__big">' + lead.run + ' <span>' + word + '</span></p>' +
+            '<p class="card__big"><b class="streak__num">' + lead.run + '</b> <span>' + word + '</span></p>' +
             (stageLine ? '<p class="streak__stage">' + stageLine + '</p>' : '') +
             (sub ? '<p class="card__sub">' + sub + '</p>' : '') +
           '</div>' +
@@ -203,7 +206,20 @@ var Dashboard = (function () {
       '</div>' +
       weekRow() +
       flag;
+
+    if (typeof Motion !== 'undefined') {
+      var ringEl = el.querySelector('.ring');
+      requestAnimationFrame(function () { if (ringEl) ringEl.style.setProperty('--p', percent); });
+      Motion.count(el.querySelector('.ring__num'), lastPercent, percent, function (v) { return Math.round(v); });
+      Motion.count(el.querySelector('.streak__num'), lastRun, lead.run, function (v) { return Math.round(v); });
+    }
+    lastPercent = percent;
+    lastRun = lead.run;
   }
+
+  /* What the streak card showed last, to move from. */
+  var lastPercent = null;
+  var lastRun = null;
 
   var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -233,7 +249,12 @@ var Dashboard = (function () {
     return /^\d{4}-\d{2}$/.test(saved || '') ? saved : Storage.today().slice(0, 7);
   }
 
+  /* Which way the calendar is turning, for the slide. */
+  var turning = 0;
+
   function setViewKey(key, alsoScope) {
+    var was = viewKey();
+    turning = alsoScope ? 0 : key > was ? 1 : key < was ? -1 : 0;
     var settings = Storage.load().settings;
     settings.periodKey = key;
     if (alsoScope) settings.periodScope = alsoScope;
@@ -457,6 +478,12 @@ var Dashboard = (function () {
         goToDay(dayBtn.getAttribute('data-day'));
       }
     };
+
+    /* The new month (or year) slides in from the side of the arrow. */
+    if (turning && typeof Motion !== 'undefined') {
+      Motion.play(document.getElementById('year-card'), turning > 0 ? 'turn-next' : 'turn-prev');
+    }
+    turning = 0;
   }
 
   function render() {

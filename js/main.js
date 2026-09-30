@@ -335,6 +335,11 @@ function showView(name) {
   for (var i = 0; i < views.length; i++) {
     var match = views[i].getAttribute('data-view') === name;
     if (match) {
+      /* A section that was not on screen comes in from a little below. */
+      if (views[i].hasAttribute('hidden') && typeof Motion !== 'undefined') {
+        views[i].removeAttribute('hidden');
+        Motion.play(views[i], 'is-entering');
+      }
       views[i].removeAttribute('hidden');
     } else {
       views[i].setAttribute('hidden', '');
@@ -591,8 +596,11 @@ function wireChrome() {
 
   var themeButtons = document.querySelectorAll('[data-theme-set]');
   for (var j = 0; j < themeButtons.length; j++) {
-    themeButtons[j].addEventListener('click', function () {
-      setTheme(this.getAttribute('data-theme-set'));
+    themeButtons[j].addEventListener('click', function (event) {
+      var choice = this.getAttribute('data-theme-set');
+      /* The new theme spreads as a circle from the button pressed. */
+      if (typeof Motion !== 'undefined') Motion.reveal(event, function () { setTheme(choice); });
+      else setTheme(choice);
     });
   }
 
@@ -731,6 +739,11 @@ function start() {
 
   wireChrome();
   wireLocationAsk();
+
+  if (typeof Motion !== 'undefined') {
+    Motion.start();
+    Motion.arrive();
+  }
   wirePreviousCopy();
 
   /* Before anything else touches the folder: if the data on this

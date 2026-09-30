@@ -555,7 +555,32 @@ var Habits = (function () {
       return;
     }
 
+    /* What each tile showed before the redraw, so its bar can grow from
+       there and a tile that has just been finished can say so. */
+    var before = {};
+    el.querySelectorAll('.tile').forEach(function (t) {
+      var bar = t.querySelector('.tile__bar > span');
+      before[t.getAttribute('data-id')] = { width: bar ? bar.style.width : '', done: t.classList.contains('is-done') };
+    });
+
     el.innerHTML = list.map(function (habit) { return tileHtml(habit, key, ahead); }).join('');
+
+    if (typeof Motion !== 'undefined' && Motion.on()) {
+      el.querySelectorAll('.tile').forEach(function (t) {
+        var was = before[t.getAttribute('data-id')];
+        if (!was) return;
+        var bar = t.querySelector('.tile__bar > span');
+        if (bar && was.width && was.width !== bar.style.width) {
+          var to = bar.style.width;
+          bar.style.transition = 'none';
+          bar.style.width = was.width;
+          bar.getBoundingClientRect();
+          bar.style.transition = '';
+          bar.style.width = to;
+        }
+        if (!was.done && t.classList.contains('is-done')) Motion.play(t, 'just-done');
+      });
+    }
 
     /* In edit mode the tiles are for arranging, not for ticking: each
        one can be dragged to a new place. Outside it they stay what they

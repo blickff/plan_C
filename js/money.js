@@ -582,7 +582,14 @@ var Money = (function () {
       ? s.ring.filter(function (x) { return x.id === '__rest'; })[0]
       : s.all.filter(function (x) { return x.id === focusCat; })[0];
 
-    document.getElementById('money-total').textContent = format(total);
+    /* The total counts to its new value rather than jumping. */
+    var totalEl = document.getElementById('money-total');
+    if (typeof Motion !== 'undefined') {
+      Motion.count(totalEl, shownTotal, total, function (v) { return format(Math.round(v)); });
+    } else {
+      totalEl.textContent = format(total);
+    }
+    shownTotal = total;
 
     var cmp = comparison(scope, offset);
     var cmpEl = document.getElementById('money-compare');
@@ -967,6 +974,7 @@ var Money = (function () {
   }
 
   var listFor = null;
+  var shownTotal = null;
 
   function render() {
     if (!document.getElementById('money-view')) return;

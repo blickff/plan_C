@@ -2864,3 +2864,156 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 
 @keyframes flame-fade-out { to { opacity: 0; } }
 @keyframes flame-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Motion (js/motion.js) ------------------------------------------------------
+   One timing and one curve for the whole app: things decelerate into
+   place. Fast for answers to a press, a little slower for things that
+   arrive. Only opacity and transforms move. */
+
+:root {
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-pop: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --t-press: 0.12s;
+  --t-switch: 0.24s;
+  --t-arrive: 0.34s;
+}
+
+/* The bubble under a segmented switch's choice. The button itself goes
+   clear; the bubble, one layer down, carries the look and slides. */
+.seg.has-thumb { position: relative; isolation: isolate; }
+
+.seg__thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: var(--shadow), 0 0 0 1px var(--border);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform var(--t-switch) var(--ease-out), width var(--t-switch) var(--ease-out),
+    height var(--t-switch) var(--ease-out), opacity 0.15s ease;
+}
+
+.seg.has-thumb .seg__btn.is-active { background: transparent; box-shadow: none; }
+
+/* The rail's highlight, sliding from section to section. */
+.rail.has-ind { isolation: isolate; }
+
+.rail__ind {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  border-radius: 14px;
+  background: var(--invert-bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.32s var(--ease-out), width 0.32s var(--ease-out),
+    height 0.32s var(--ease-out), opacity 0.15s ease, background-color var(--fade);
+}
+
+.rail.has-ind .nav__item.is-active { background: transparent; }
+.rail.has-ind .nav__item { position: relative; }
+
+/* A section coming on screen: from a little below, fading up. */
+.view.is-entering { animation: m-view-in var(--t-arrive) var(--ease-out); }
+
+@keyframes m-view-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Opening the app: the dashboard's cards arrive in a short wave. */
+.is-arriving { animation: m-arrive 0.5s var(--ease-out) both; }
+
+@keyframes m-arrive {
+  from { opacity: 0; transform: translateY(14px) scale(0.99); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The calendar turning: the new month comes in from the side of the
+   arrow that was pressed. */
+#year-card.turn-next > :not(.card__head) { animation: m-turn-next 0.3s var(--ease-out); }
+#year-card.turn-prev > :not(.card__head) { animation: m-turn-prev 0.3s var(--ease-out); }
+
+@keyframes m-turn-next {
+  from { opacity: 0; transform: translateX(22px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes m-turn-prev {
+  from { opacity: 0; transform: translateX(-22px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A row that has just been added arrives in its place. */
+.is-new { animation: m-row-in 0.36s var(--ease-out); }
+
+@keyframes m-row-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* A habit bar grows to its new length; a tile that has just been
+   finished gives a small pop and a ring of green that fades. */
+.tile__bar > span { transition: width 0.45s var(--ease-out); }
+
+.tile.just-done { animation: m-done 0.55s var(--ease-pop); }
+
+@keyframes m-done {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(34, 160, 90, 0.45); }
+  35% { transform: scale(1.03); }
+  100% { transform: scale(1); box-shadow: 0 0 0 10px rgba(34, 160, 90, 0); }
+}
+
+/* Today's ring turns to its new share. Registered so the browser can
+   animate a number held in a custom property. */
+@property --p {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+.ring { transition: --p 0.7s var(--ease-out); }
+
+.ring__num, .streak__num { font-weight: inherit; font-variant-numeric: tabular-nums; }
+
+/* Pop-up panels open with a small drop and fade. */
+.mpick__panel:not([hidden]) { animation: m-pop 0.16s var(--ease-out); }
+
+@keyframes m-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+/* Anything pressed gives a little under the finger. */
+:is(.pill, .chipbtn, .seg__btn, .mtool, .nav__item, .rail__themebtn, .period__arrow,
+  .dpick__day, .dpick__month, .dpick__nav, .mchip, .msplit, .dpick__btn) {
+  transition: scale var(--t-press) var(--ease-out), background-color 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+:is(.pill, .chipbtn, .seg__btn, .mtool, .nav__item, .rail__themebtn, .period__arrow,
+  .dpick__day, .dpick__month, .dpick__nav, .mchip, .dpick__btn):active { scale: 0.95; }
+
+.tile { transition: border-color 0.15s ease, scale var(--t-press) var(--ease-out); }
+.tile:active { scale: 0.985; }
+
+/* The theme spreading as a circle: the browser's own crossfade is turned
+   off so only the circle shows. */
+::view-transition-old(root),
+::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+
+/* Motion off — chosen, or asked for by the system: everything lands at
+   once. The match on the streak card keeps its own rules (see
+   .flame) and is left out of this. */
+:root[data-motion="reduced"] *:not(.flame, .flame *),
+:root[data-motion="reduced"] *:not(.flame, .flame *)::before,
+:root[data-motion="reduced"] *:not(.flame, .flame *)::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
