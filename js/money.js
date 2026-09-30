@@ -660,19 +660,34 @@ var Money = (function () {
     }).join('');
   }
 
+  /* Where the row of bars ends, as an offset like the page's own. The
+     row used to end at whatever period was on screen, so pressing a bar
+     in the middle threw it to the far right and the months after it out
+     of view — the comparison you were making went with them. Now the row
+     stays put while the chosen period is in it (the pressed bar lights up
+     where it stands) and moves only as far as needed to keep it in view
+     when the arrows go past its edge. */
+  var trendEnd = 0;
+
   function renderTrend() {
     var n = TREND[scope];
+    if (offset > trendEnd) trendEnd = offset;
+    if (offset < trendEnd - (n - 1)) trendEnd = offset + (n - 1);
+    if (trendEnd > 0) trendEnd = 0;
+
     var periods = [];
     for (var i = n - 1; i >= 0; i--) {
-      var r = range(scope, offset - i);
-      periods.push({ r: r, cents: sum(within(r)), current: i === 0 });
+      var r = range(scope, trendEnd - i);
+      periods.push({ r: r, off: trendEnd - i, cents: sum(within(r)), current: trendEnd - i === offset });
     }
 
     var max = 0;
     periods.forEach(function (p) { if (p.cents > max) max = p.cents; });
 
     var word = { day: 'days', week: 'weeks', month: 'months', year: 'years' }[scope];
-    document.getElementById('money-trend-title').textContent = 'The last ' + n + ' ' + word;
+    document.getElementById('money-trend-title').textContent = trendEnd === 0
+      ? 'The last ' + n + ' ' + word
+      : n + ' ' + word + ' to ' + title(scope, range(scope, trendEnd));
 
     /* Nothing spent in any of them: no bars to point at, and no line of
        month names reading out zeroes as the pointer passes over empty
@@ -690,14 +705,14 @@ var Money = (function () {
       var h = max ? Math.max(p.cents ? 3 : 0, Math.round((p.cents / max) * 100)) : 0;
       var label = title(scope, p.r);
       return '<button class="mbar' + (p.current ? ' is-current' : '') + '" type="button"' +
-        ' data-back="' + (n - 1 - i) + '" data-read="' + escapeHtml(label + ' · ' + format(p.cents)) + '"' +
+        ' data-off="' + p.off + '" data-read="' + escapeHtml(label + ' · ' + format(p.cents)) + '"' +
         ' aria-label="' + escapeHtml(label + ', ' + format(p.cents)) + '">' +
         '<span class="mbar__track"><span class="mbar__fill" style="height:' + h + '%"></span></span>' +
         '<span class="mbar__tick">' + escapeHtml(tick(scope, p.r)) + '</span>' +
       '</button>';
     }).join('');
 
-    var cur = periods[periods.length - 1];
+    var cur = periods.filter(function (p) { return p.current; })[0] || periods[periods.length - 1];
     document.getElementById('money-read').textContent = title(scope, cur.r) + ' · ' + format(cur.cents);
   }
 
@@ -1292,6 +1307,7 @@ var Money = (function () {
       b.addEventListener('click', function () {
         scope = this.getAttribute('data-mscope');
         offset = 0;
+        trendEnd = 0;
         back = 1;
         focus = null;
         render();
@@ -1385,12 +1401,12 @@ var Money = (function () {
       if (!summary.contains(event.relatedTarget)) release();
     });
 
-    /* Pressing a bar steps to that period. */
+    /* Pressing a bar opens that period; the row of bars stays where it is. */
     var bars = document.getElementById('money-bars');
     bars.addEventListener('click', function (event) {
-      var bar = event.target.closest('[data-back]');
+      var bar = event.target.closest('[data-off]');
       if (!bar) return;
-      offset -= Number(bar.getAttribute('data-back'));
+      offset = Number(bar.getAttribute('data-off'));
       focus = null;
       render();
     });
