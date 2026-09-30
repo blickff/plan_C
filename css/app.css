@@ -3132,6 +3132,7 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 .wd-stack { font-size: 14px; font-weight: 700; fill: var(--text); text-anchor: middle; letter-spacing: -0.04em; }
 .wd-stack--m { font-weight: 200; fill: #ff7a2a; }
 .wa-hand--bold { stroke-width: 3; }
+.wa-none { fill: none; stroke: var(--text-faint); stroke-width: 1.2; stroke-dasharray: 3 3; }
 .wa-ring { fill: none; stroke: var(--text-faint); stroke-width: 1.2; }
 .wd-monoface { fill: none; stroke: var(--text-faint); stroke-width: 0.8; }
 .wd-monotick { stroke: var(--text-faint); stroke-width: 0.8; stroke-linecap: round; }

@@ -20,8 +20,8 @@
      Money   this month's spending against last month's, and the months
              before it.
 
-   Any face but the clock can have the clock above it ("Clock on top"):
-   Today with a clock over it, Plans with a clock over it, and so on.
+   The clock and the section are two separate choices: a clock alone, a
+   section alone, or the clock above the section.
 
    Settings → Desktop widget also chooses the accent colour (the second
    hand, the tint), whether the clock has a second hand and shows the
@@ -31,7 +31,7 @@
 
 var Widget = (function () {
 
-  var FACES = ['today', 'week', 'plans', 'note', 'clock', 'money'];
+  var SECTIONS = ['none', 'today', 'week', 'plans', 'note', 'money'];
   var ANALOG = ['minimal', 'classic', 'roman', 'modern', 'mono'];
   var DIALS = ANALOG.concat(['digital', 'stack', 'ring']);
   var ACCENTS = ['orange', 'amber', 'red', 'green', 'blue', 'violet', 'ink'];
@@ -48,16 +48,34 @@ var Widget = (function () {
       .replace(/"/g, '&quot;');
   }
 
-  /* What the person chose, with the defaults filled in. Today is the
-     default face: it is what the widget has always been. */
+  /* What the person chose, with the defaults filled in. Two separate
+     choices: a clock, on or off; and a section of the app — or none, for
+     a clock alone. One of the two is always on. Older settings said it as
+     one "face" plus "clock on top"; those are read as what they meant. */
+  function choice() {
+    var w = Storage.load().settings.widget || {};
+    var section;
+    var clock;
+    if (w.section !== undefined || w.clock !== undefined) {
+      section = SECTIONS.indexOf(w.section) !== -1 ? w.section : 'none';
+      clock = w.clock === true;
+    } else {
+      section = w.face === 'clock' ? 'none' : (SECTIONS.indexOf(w.face) !== -1 ? w.face : 'today');
+      clock = w.face === 'clock' || w.clockOnTop === true;
+    }
+    if (section === 'none') clock = true;
+    return { section: section, clock: clock };
+  }
+
   function prefs() {
     var w = Storage.load().settings.widget || {};
+    var c = choice();
     return {
-      face: FACES.indexOf(w.face) !== -1 ? w.face : 'today',
+      /* face: what fills the window — the clock when there is no section. */
+      face: c.section === 'none' ? 'clock' : c.section,
+      clockOnTop: c.clock && c.section !== 'none',
       dial: DIALS.indexOf(w.dial) !== -1 ? w.dial : 'classic',
       accent: ACCENTS.indexOf(w.accent) !== -1 ? w.accent : 'orange',
-      /* A clock above another face: Today with a clock over it, and so on. */
-      clockOnTop: w.clockOnTop === true,
       seconds: w.seconds !== false,
       date: w.date !== false,
       backdrop: w.backdrop === 'plain' ? 'plain' : 'glow'
@@ -755,7 +773,7 @@ var Widget = (function () {
     }
   }
 
-  return { start: start, render: render };
+  return { start: start, render: render, choice: choice };
 })();
 
 Widget.start();

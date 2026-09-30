@@ -590,15 +590,35 @@ function wirePreviousCopy() {
    other settings, so the widget window — reading the same storage — hears
    of each change through the storage event and redraws. */
 function wireWidgetPrefs() {
+  var HANDS = ['minimal', 'classic', 'roman', 'modern', 'mono'];
+  var SECTIONS = ['none', 'today', 'week', 'plans', 'note', 'money'];
+
   function prefs() {
     var s = Storage.load().settings;
     if (!s.widget) s.widget = {};
     return s.widget;
   }
 
+  /* The two choices — a clock, and a section — as they stand, with
+     settings from before they were separate read as what they meant. */
+  function choice() {
+    var w = prefs();
+    var section;
+    var clock;
+    if (w.section !== undefined || w.clock !== undefined) {
+      section = SECTIONS.indexOf(w.section) !== -1 ? w.section : 'none';
+      clock = w.clock === true;
+    } else {
+      section = w.face === 'clock' ? 'none' : (SECTIONS.indexOf(w.face) !== -1 ? w.face : 'today');
+      clock = w.face === 'clock' || w.clockOnTop === true;
+    }
+    if (section === 'none') clock = true;
+    return { section: section, clock: clock };
+  }
+
   function mark() {
     var w = prefs();
-    var face = w.face || 'today';
+    var c = choice();
     var dial = w.dial || 'classic';
     function radio(attr, value) {
       document.querySelectorAll('[' + attr + ']').forEach(function (b) {
@@ -607,43 +627,63 @@ function wireWidgetPrefs() {
         b.setAttribute('aria-checked', String(on));
       });
     }
-    radio('data-wface', face);
+    radio('data-wface', c.section);
     radio('data-wdial', dial);
     radio('data-waccent', w.accent || 'orange');
     radio('data-wbackdrop', w.backdrop === 'plain' ? 'plain' : 'glow');
 
+    document.getElementById('wclock-btn').classList.toggle('is-active', c.clock);
+    /* The clock's own settings sit right under its switch, and only while
+       it is on. */
+    document.getElementById('wopts-clock').hidden = !c.clock;
     var sec = document.getElementById('wseconds-btn');
     sec.classList.toggle('is-active', w.seconds !== false);
     /* Only the dials with hands have a second hand to show. */
-    sec.hidden = ['minimal', 'classic', 'roman', 'modern', 'mono'].indexOf(dial) === -1;
+    sec.hidden = HANDS.indexOf(dial) === -1;
     document.getElementById('wdate-btn').classList.toggle('is-active', w.date !== false);
-    /* The dial and its options matter whenever a clock is on the widget:
-       as the face itself, or sat above another one. */
-    var onTop = w.clockOnTop === true;
-    document.getElementById('wclock-row').hidden = face === 'clock';
-    document.getElementById('wclock-btn').classList.toggle('is-active', onTop);
-    document.getElementById('wopts-clock').hidden = !(face === 'clock' || onTop);
   }
 
-  function set(key, value) {
-    prefs()[key] = value;
+  function save(change) {
+    var w = prefs();
+    var c = choice();
+    change(w, c);
+    /* Written in the new form from here on; the old one goes. */
+    w.section = c.section;
+    w.clock = c.clock;
+    delete w.face;
+    delete w.clockOnTop;
     Storage.save();
     mark();
   }
 
-  [['data-wface', 'face'], ['data-wdial', 'dial'], ['data-waccent', 'accent'], ['data-wbackdrop', 'backdrop']].forEach(function (pair) {
+  /* One of the two is always on: turning the clock off with no section
+     brings Today in; choosing no section turns the clock on. */
+  document.getElementById('wclock-btn').addEventListener('click', function () {
+    save(function (w, c) {
+      c.clock = !c.clock;
+      if (!c.clock && c.section === 'none') c.section = 'today';
+    });
+  });
+  document.querySelectorAll('[data-wface]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      save(function (w, c) {
+        c.section = b.getAttribute('data-wface');
+        if (c.section === 'none') c.clock = true;
+      });
+    });
+  });
+  [['data-wdial', 'dial'], ['data-waccent', 'accent'], ['data-wbackdrop', 'backdrop']].forEach(function (pair) {
     document.querySelectorAll('[' + pair[0] + ']').forEach(function (b) {
-      b.addEventListener('click', function () { set(pair[1], b.getAttribute(pair[0])); });
+      b.addEventListener('click', function () {
+        save(function (w) { w[pair[1]] = b.getAttribute(pair[0]); });
+      });
     });
   });
   document.getElementById('wseconds-btn').addEventListener('click', function () {
-    set('seconds', prefs().seconds === false);
+    save(function (w) { w.seconds = w.seconds === false; });
   });
   document.getElementById('wdate-btn').addEventListener('click', function () {
-    set('date', prefs().date === false);
-  });
-  document.getElementById('wclock-btn').addEventListener('click', function () {
-    set('clockOnTop', prefs().clockOnTop !== true);
+    save(function (w) { w.date = w.date === false; });
   });
 
   mark();
