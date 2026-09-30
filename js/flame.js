@@ -32,7 +32,7 @@ var Flame = (function () {
   ];
 
   /* How tall the flame stands at each stage, in the drawing's units. */
-  var SIZE = { out: 0, spark: 26, flame: 35, blaze: 43, blue: 46, violet: 48, white: 50 };
+  var SIZE = { out: 0, spark: 24, flame: 30, blaze: 34, blue: 36, violet: 38, white: 40 };
 
   var uid = 0;
 
@@ -77,6 +77,14 @@ var Flame = (function () {
     var size = SIZE[stage.key] * (waiting ? 0.7 : 1);
     var bx = HX;
     var by = HY + 3;
+    /* The longer it has burned, the further the black creeps down the
+       stick: a tenth of it on the first day, a little over half at a
+       hundred, and no further. */
+    var charred = lit ? Math.round(10 + (Math.min(days, 100) / 100) * 14) : 0;
+    /* How rough the flame's edge is, and at what grain: see the filter. */
+    var rough = (size * 0.2).toFixed(1);
+    var grain = (3.4 / Math.max(size, 1)).toFixed(3) + ' ' + (2.4 / Math.max(size, 1)).toFixed(3);
+    var seed = stageIndex(days) * 7 + 3;
 
     function url(name) { return 'url(#' + id + name + ')'; }
 
@@ -90,7 +98,7 @@ var Flame = (function () {
     var match =
       '<g transform="translate(' + HX + ' ' + HY + ')">' +
         '<rect x="-2.3" y="2" width="4.6" height="42" rx="2.3" fill="' + url('w') + '"/>' +
-        (lit ? '<rect x="-2.3" y="2" width="4.6" height="13" rx="2.3" fill="' + url('c') + '"/>' : '') +
+        (lit ? '<rect x="-2.3" y="2" width="4.6" height="' + charred + '" rx="2.3" fill="' + url('c') + '"/>' : '') +
         '<ellipse class="flame__head" cx="0" cy="-0.5" rx="4.6" ry="6.2" fill="' + url('h') + '"/>' +
         (lit ? '<ellipse class="flame__ember" cx="0" cy="-1" rx="2.8" ry="3.8"/>' : '') +
       '</g>';
@@ -109,10 +117,14 @@ var Flame = (function () {
             '<g transform="translate(0.21 -0.02) scale(0.52 0.6)"><g class="flame__tongue flame__lick flame__lick--r"><path d="' + LICK + '" fill="' + url('o') + '"/></g></g>' +
             '<g class="flame__tongue flame__tongue--outer"><path d="' + TONGUE + '" fill="' + url('o') + '"/></g>' +
             '<g transform="translate(0 0.04) scale(0.7)"><g class="flame__tongue flame__tongue--mid"><path d="' + TONGUE + '" fill="' + url('m') + '"/></g></g>' +
+            /* A wisp breaking off the tip, so the top is not one clean point. */
+            '<g transform="translate(0.06 -1.02) scale(0.2 0.28)"><g class="flame__tongue flame__wisp"><path d="' + TONGUE + '" fill="' + url('o') + '"/></g></g>' +
           '</g>' +
         '</g>' +
-        '<g transform="translate(' + bx + ' ' + by + ') scale(' + size + ')">' +
-          '<g transform="translate(0 0.02) scale(0.36 0.42)"><g class="flame__tongue flame__tongue--core"><path d="' + TONGUE + '" fill="' + url('k') + '"/></g></g>' +
+        '<g filter="' + url('r') + '">' +
+          '<g transform="translate(' + bx + ' ' + by + ') scale(' + size + ')">' +
+            '<g transform="translate(0 0.02) scale(0.36 0.42)"><g class="flame__tongue flame__tongue--core"><path d="' + TONGUE + '" fill="' + url('k') + '"/></g></g>' +
+          '</g>' +
         '</g>';
 
       /* Sparks from a blaze on: embers that rise off the tip and fade. */
@@ -132,7 +144,21 @@ var Flame = (function () {
     return '' +
       '<svg class="flame__svg" viewBox="0 0 70 120" aria-hidden="true">' +
         '<defs>' +
-          '<filter id="' + id + 's" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.7"/></filter>' +
+          /* The fire's edge. Fractal noise pushes the outline about —
+             no smooth drop, no clean line between the layers — and a
+             blur melts what is left. The noise is the one place to set
+             the fire moving later: shift its seed or its grain over time
+             (class flame__noise) and every edge moves with it. */
+          '<filter id="' + id + 's" x="-60%" y="-60%" width="220%" height="220%">' +
+            '<feTurbulence class="flame__noise" type="fractalNoise" baseFrequency="' + grain + '" numOctaves="2" seed="' + seed + '" result="n"/>' +
+            '<feDisplacementMap in="SourceGraphic" in2="n" scale="' + rough + '" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
+            '<feGaussianBlur in="d" stdDeviation="1"/>' +
+          '</filter>' +
+          '<filter id="' + id + 'r" x="-60%" y="-60%" width="220%" height="220%">' +
+            '<feTurbulence class="flame__noise" type="fractalNoise" baseFrequency="' + grain + '" numOctaves="2" seed="' + (seed + 1) + '" result="n"/>' +
+            '<feDisplacementMap in="SourceGraphic" in2="n" scale="' + (rough * 0.5).toFixed(1) + '" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
+            '<feGaussianBlur in="d" stdDeviation="0.7"/>' +
+          '</filter>' +
           '<radialGradient id="' + id + 'g"><stop offset="0" class="flame__g0"/><stop offset="1" class="flame__g1"/></radialGradient>' +
           /* The outer flame fades out at the tip and thins at the root, so
              the head shows through it. */

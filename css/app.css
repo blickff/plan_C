@@ -2675,6 +2675,7 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 .flame__tongue--core  { animation: flame-c 0.9s ease-in-out infinite; }
 .flame__lick--l { animation: flame-lick 1.5s ease-in-out infinite; }
 .flame__lick--r { animation: flame-lick 1.15s ease-in-out 0.4s infinite reverse; }
+.flame__wisp { opacity: 0.6; }
 
 .flame__glow {
   transform-box: fill-box;
