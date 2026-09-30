@@ -11,45 +11,41 @@
 </head>
 <body class="widget-body">
 
-  <div class="wg">
+  <!-- The whole widget. Which face it wears — Clock, Today, Week, Plans,
+       Note or Money — and how, is chosen in the panel under Settings →
+       Desktop widget; js/widget.js draws it. -->
+  <div class="wg" id="wg">
 
-    <!-- The one line of chrome there is. The buttons sit here but stay
-         invisible until the pointer is over the widget: a desktop widget
-         is something you glance at, and controls you never use should
-         not be part of the picture. -->
+    <!-- The one line of chrome there is: the date, the weather, and a few
+         buttons that only appear under the pointer. Pinned to the desktop,
+         only "open the panel" is left — a pinned widget is not moved,
+         hidden or closed from itself, only unpinned in Settings. -->
     <div class="wg__bar">
-      <p class="wg__meta">
-        <span id="wg-date"></span><span class="wg__weather" id="weather"></span>
-      </p>
+      <p class="wg__meta"><span id="wg-date"></span><span class="wg__weather" id="weather"></span></p>
       <!-- Only there when a newer version is out. Unlike the other
            buttons it does not wait for the pointer: it is news. -->
       <button class="wg__upd" type="button" id="wg-update" hidden></button>
       <div class="wg__tools">
-        <button class="wg__btn" type="button" id="wg-top" title="Keep above other windows">&#9650;</button>
-        <button class="wg__btn" type="button" id="wg-open" title="Open the full panel">&#10530;</button>
-        <button class="wg__btn" type="button" id="wg-hide" title="Hide (Ctrl+Shift+D brings it back)">&#215;</button>
+        <button class="wg__btn wg__unpinned" type="button" id="wg-pin" title="Pin to the desktop — it stays put until unpinned in Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3-1-5z"/><path d="M12 14v6"/></svg>
+        </button>
+        <button class="wg__btn wg__unpinned" type="button" id="wg-top" title="Keep above other windows">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg>
+        </button>
+        <button class="wg__btn" type="button" id="wg-open" title="Open the full panel">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5"/><path d="M19 5l-7 7"/><path d="M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></svg>
+        </button>
+        <button class="wg__btn wg__unpinned" type="button" id="wg-hide" title="Hide (Ctrl+Shift+D brings it back)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+        </button>
       </div>
     </div>
 
-    <div class="wg__hero">
-      <div class="wg__top">
-        <div class="wg__topmain">
-          <p class="wg__eyebrow" id="wg-streak-label">Streak</p>
-          <p class="wg__streak" id="wg-streak">&nbsp;</p>
-          <p class="wg__chip" id="wg-done" hidden></p>
-        </div>
-        <div class="ring" id="wg-ring" style="--p: 0">
-          <span class="ring__inner" id="wg-ring-text">0<i>%</i></span>
-        </div>
-      </div>
-
-      <div class="wg__week" id="wg-week"></div>
-    </div>
-
-    <div class="wg__habits" id="wg-habits"></div>
+    <div class="wg__face" id="wg-face"></div>
   </div>
 
   <script src="js/storage.js"></script>
+  <script src="js/motion.js"></script>
   <script src="js/presets.js"></script>
   <script src="js/habits.js"></script>
   <script src="js/weather.js"></script>

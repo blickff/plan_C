@@ -3027,3 +3027,138 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
   animation-iteration-count: 1 !important;
   transition-duration: 0.001ms !important;
 }
+
+/* Settings → Desktop widget: the faces to choose from ----------------------
+   Each face as a small drawing of itself, a name and one line; the chosen
+   one ringed. The drawings use the page's own ink, with the fire's orange
+   and the "done" green where the widget would have them. */
+
+.wpick {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 14px 0 6px;
+}
+
+.wpick__opt {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 10px 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.wpick__opt:hover { border-color: var(--text-faint); }
+.wpick__opt.is-active { border-color: var(--text); box-shadow: 0 0 0 1px var(--text); }
+
+.wpick__art {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 74px;
+  margin-bottom: 6px;
+  border-radius: 11px;
+  background: radial-gradient(120% 90% at 50% -10%, color-mix(in srgb, var(--text) 7%, transparent), transparent 60%),
+    color-mix(in srgb, var(--text) 4%, var(--surface));
+}
+
+.wpick__art svg { width: 84px; height: 63px; overflow: visible; }
+.wpick__name { font-size: 13px; font-weight: 600; }
+.wpick__note { font-size: 11px; line-height: 1.35; color: var(--text-faint); }
+
+/* The little drawings */
+.wa-stick { fill: #d8ad76; }
+.wa-line { fill: var(--text); opacity: 0.85; }
+.wa-box { fill: none; stroke: var(--border); stroke-width: 1; }
+.wa-ok { fill: var(--ok); }
+.wa-bar { fill: color-mix(in srgb, var(--text) 25%, transparent); }
+.wa-now { fill: var(--text); }
+.wa-fire { fill: #ff8a2a; }
+.wa-dial { fill: color-mix(in srgb, var(--text) 5%, transparent); stroke: color-mix(in srgb, var(--text) 30%, transparent); stroke-width: 1; }
+.wa-hand { stroke: var(--text); stroke-width: 2; stroke-linecap: round; }
+.wa-sec { stroke: #ff7a2a; stroke-width: 0.9; stroke-linecap: round; }
+
+.wopts__label {
+  margin: 16px 0 6px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.wopts > .row { margin-top: 10px; }
+
+/* The dials to choose from */
+.wdial { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.wdial__opt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  width: 74px;
+  padding: 8px 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg);
+  color: var(--text-dim);
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.2s ease, color 0.15s ease;
+}
+
+.wdial__opt svg { width: 44px; height: 44px; }
+.wdial__opt:hover { border-color: var(--text-faint); color: var(--text); }
+.wdial__opt.is-active { border-color: var(--text); box-shadow: 0 0 0 1px var(--text); color: var(--text); }
+
+.wd-digits { font-size: 12px; font-weight: 300; fill: var(--text); text-anchor: middle; letter-spacing: -0.04em; }
+.wd-digits--small { font-size: 9.5px; }
+.wd-tick { stroke: var(--text); stroke-width: 1.1; stroke-linecap: round; }
+.wd-num { font-size: 6px; font-weight: 600; fill: var(--text-dim); text-anchor: middle; }
+.wd-fill { fill: var(--text); }
+.wd-track { fill: none; stroke: color-mix(in srgb, var(--text) 12%, transparent); stroke-width: 3; }
+.wd-prog { fill: none; stroke: var(--ok); stroke-width: 3; stroke-linecap: round; }
+.wd-roman { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 6.4px; fill: var(--text); }
+.wd-stack { font-size: 14px; font-weight: 700; fill: var(--text); text-anchor: middle; letter-spacing: -0.04em; }
+.wd-stack--m { font-weight: 200; fill: #ff7a2a; }
+.wa-hand--bold { stroke-width: 3; }
+.wa-ring { fill: none; stroke: var(--text-faint); stroke-width: 1.2; }
+.wd-monoface { fill: none; stroke: var(--text-faint); stroke-width: 0.8; }
+.wd-monotick { stroke: var(--text-faint); stroke-width: 0.8; stroke-linecap: round; }
+.wd-monohand { stroke: var(--text); stroke-width: 2.2; stroke-linecap: round; }
+.wd-monohand--m { stroke-width: 1.2; }
+
+/* Accent colours to choose from */
+.wsw { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 2px; }
+
+.wsw__one {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--sw);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+  cursor: pointer;
+  transition: transform 0.16s cubic-bezier(0.34, 1.4, 0.64, 1), box-shadow 0.16s ease;
+}
+
+.wsw__one:hover { transform: scale(1.1); }
+.wsw__one.is-active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.wsw__one--orange { --sw: #ff7a2a; }
+.wsw__one--amber  { --sw: #f5a800; }
+.wsw__one--red    { --sw: #ef4444; }
+.wsw__one--green  { --sw: #22a35a; }
+.wsw__one--blue   { --sw: #3b9cff; }
+.wsw__one--violet { --sw: #b46cff; }
+.wsw__one--ink    { --sw: var(--text); }

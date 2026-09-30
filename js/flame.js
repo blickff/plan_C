@@ -598,5 +598,48 @@ var Flame = (function () {
 
   Engine.start();
 
-  return { html: html, stageOf: stageOf, nextOf: nextOf };
+  /* What a habit's match should look like today: how many days it has
+     burned (a weekly habit's weeks count as seven days each, so its fire
+     grows at the same pace in time), whether it is waiting for today, and
+     — only on the day after a streak broke — how far the one that went
+     out had got. Shared by the streak card and the desktop widget. */
+  function stateFor(habit, run, unit) {
+    var s = Storage.load();
+    var todayKey = Storage.today();
+    var days = unit === 'week' ? run * 7 : run;
+    var waiting = run > 0 && Habits.dueOn(s.log, habit, todayKey) && !Habits.metOn(s.log, habit, todayKey);
+    var wentOut = false;
+    if (run === 0 && Habits.streaks(s.log, habit, todayKey).best > 0) {
+      var points = Habits.occurrences(s.log, habit, todayKey);
+      var k = points.length - 1;
+      if (k >= 0 && !points[k].met) k--;          // today, still in progress
+      var missed = 0;
+      while (k >= 0 && !points[k].met) { missed++; k--; }
+      if (missed === 1) {
+        var last = 0;
+        while (k >= 0 && points[k].met) { last++; k--; }
+        wentOut = Math.max(1, unit === 'week' ? last * 7 : last);
+      }
+    }
+    return { days: days, waiting: waiting, wentOut: wentOut };
+  }
+
+  /* The habit with the longest run going — the one whose match is shown. */
+  function lead() {
+    var s = Storage.load();
+    var todayKey = Storage.today();
+    var best = null;
+    Habits.active().forEach(function (habit) {
+      var r = Habits.streaks(s.log, habit, todayKey);
+      if (!best || r.current > best.run) best = { habit: habit, run: r.current, unit: r.unit };
+    });
+    if (!best) return null;
+    var st = stateFor(best.habit, best.run, best.unit);
+    best.days = st.days;
+    best.waiting = st.waiting;
+    best.wentOut = st.wentOut;
+    return best;
+  }
+
+  return { html: html, stageOf: stageOf, nextOf: nextOf, stateFor: stateFor, lead: lead };
 })();

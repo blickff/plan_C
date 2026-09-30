@@ -16,6 +16,11 @@ contextBridge.exposeInMainWorld('desktop', {
   getWindowSettings: () => ipcRenderer.invoke('get-window-settings'),
   hideWidget: () => ipcRenderer.invoke('hide-widget'),
 
+  /* The widget's face (Settings → Desktop widget): the window takes its
+     size. And word from the app when it is pinned or unpinned. */
+  setWidgetFace: (face, reset) => ipcRenderer.invoke('widget-face', face, !!reset),
+  onWidgetMode: (fn) => ipcRenderer.on('widget-mode', (_event, mode) => fn(mode)),
+
   /* One notification, sent by the page when the day is unfinished at
      the hour the person chose. The page decides, because the page is
      the only side that knows what got done. */

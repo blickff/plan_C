@@ -1,12 +1,15 @@
 /* Desktop widget only. The panel never loads this file.
 
-   The look follows the same rule as the panel: a page colour, and cards
-   of a different colour sitting on it. What is different here is that
-   the window has no title bar, no menu and no frame, so the page is the
-   whole widget — which is why the chrome is kept to three buttons that
-   only appear under the pointer. */
+   One surface, a few faces. The window has no title bar, no menu and no
+   frame, so the page is the whole widget: the chrome is kept to a line
+   of small buttons that only appear under the pointer.
+
+   The surface is the page colour with a faint light from above. One
+   accent colour, chosen in Settings, is the clock's second hand and —
+   with the "glow" backdrop — a soft light behind the face. */
 
 .widget-body {
+  margin: 0;
   background: var(--bg);
   overflow: hidden;
   user-select: none;
@@ -15,23 +18,73 @@
   -webkit-app-region: drag;
 }
 
+/* Pinned to the desktop: nothing drags. The window itself cannot move
+   either (desktop/main.js); this is so a drag does not even start. */
+body.is-pinned,
+body.is-pinned * { -webkit-app-region: no-drag !important; }
+body.is-pinned .wg__unpinned { display: none; }
+
 .wg {
+  --wg-accent: #ff7a2a;
+  --glow-at: 50% 46%;
+  position: relative;
+  isolation: isolate;
+  /* Sizes inside are measured against the widget itself (cqw / cqh), so
+     it looks the same in its own window and in a preview of any size. */
+  container-type: size;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   height: 100vh;
-  padding: 11px 12px 12px;
+  padding: 11px 14px 14px;
   box-sizing: border-box;
+  overflow: hidden;
+  background:
+    radial-gradient(140% 90% at 50% -20%, color-mix(in srgb, var(--text) 6%, transparent), transparent 60%),
+    var(--bg);
+}
+
+.wg--accent-orange { --wg-accent: #ff7a2a; }
+.wg--accent-amber  { --wg-accent: #f5a800; }
+.wg--accent-red    { --wg-accent: #ef4444; }
+.wg--accent-green  { --wg-accent: #22a35a; }
+.wg--accent-blue   { --wg-accent: #3b9cff; }
+.wg--accent-violet { --wg-accent: #b46cff; }
+.wg--accent-ink    { --wg-accent: var(--text); }
+
+/* The accent's light, behind everything. */
+.wg--glow::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  z-index: -1;
+  background: radial-gradient(40% 36% at var(--glow-at), color-mix(in srgb, var(--wg-accent) 20%, transparent), transparent 72%);
+  pointer-events: none;
+}
+
+.wg--today { --glow-at: 14% 12%; }
+.wg--week  { --glow-at: 14% 40%; }
+.wg--plans { --glow-at: 12% 10%; }
+.wg--note  { --glow-at: 12% 12%; }
+.wg--money { --glow-at: 12% 22%; }
+
+.wg__face {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* Top line: the date, the weather, and the controls ------------------ */
 
 .wg__bar {
+  position: relative;
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 0 2px;
+  min-height: 24px;
 }
 
 .wg__meta {
@@ -45,263 +98,55 @@
 }
 
 .wg__meta > span { overflow: hidden; text-overflow: ellipsis; }
-
-/* The dot belongs to the weather, not between two fixed things — with
-   no city saved the weather is empty and the dot has to go with it. */
 .wg__weather::before { content: "·"; margin: 0 6px; opacity: 0.55; }
 .wg__weather:empty::before { content: ""; margin: 0; }
-.wg__weather.is-stale { opacity: 0.7; }
 
-/* Reserved space, not conditional space: the buttons keep their width
-   while invisible, so the date does not jump sideways on hover. */
+/* The buttons float over the right end of the line when the pointer is
+   on the widget, on a patch of the page colour, instead of holding space
+   the date and weather need on a narrow face. */
 .wg__tools {
+  position: absolute;
+  top: 0;
+  right: -4px;
   display: flex;
-  flex: none;
   gap: 2px;
+  padding: 0 0 0 14px;
+  background: linear-gradient(to right, transparent, var(--bg) 14px);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.16s ease;
+  transition: opacity 0.18s ease;
   -webkit-app-region: no-drag;
 }
 
-.wg:hover .wg__tools {
-  opacity: 1;
-  pointer-events: auto;
-}
+.wg:hover .wg__tools { opacity: 1; pointer-events: auto; }
 
 .wg__btn {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border: 0;
-  border-radius: 7px;
+  border-radius: 8px;
   background: transparent;
   color: var(--text-faint);
-  font-size: 10px;
-  line-height: 1;
   cursor: pointer;
   transition: background-color 0.14s ease, color 0.14s ease;
 }
 
-.wg__btn:hover { background: var(--accent-bg); color: var(--text); }
+.wg__btn svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.wg__btn:hover,
 .wg__btn.is-on { background: var(--accent-bg); color: var(--text); }
 
-/* The card at the top ------------------------------------------------ */
-
-.wg__hero {
-  padding: 13px 14px 12px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-}
-
-.wg__top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.wg__topmain { min-width: 0; }
-
-.wg__eyebrow {
-  overflow: hidden;
-  margin: 0;
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-faint);
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.wg__streak {
-  margin: 5px 0 0;
-  font-size: 27px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-}
-
-.wg__streak span {
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0;
-  color: var(--text-dim);
-}
-
-.wg__chip {
-  display: inline-flex;
-  align-items: center;
-  margin: 9px 0 0;
-  padding: 3px 9px;
-  border-radius: 999px;
-  background: var(--accent-bg);
-  color: var(--text-dim);
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-}
-
-.wg__chip.is-full { color: var(--ok); }
-
-/* The last seven days ------------------------------------------------ */
-
-.wg__week {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 5px;
-  margin-top: 12px;
-  padding-top: 11px;
-  border-top: 1px solid var(--border);
-}
-
-.wgd {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-}
-
-.wgd__bar {
-  width: 100%;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--cell-0);
-}
-
-/* Today is the one day still being decided, so it stands slightly
-   taller and keeps its label at full strength. */
-.wgd.is-today .wgd__bar { height: 7px; margin-top: -2px; }
-.wgd.is-today .wgd__day { color: var(--text); font-weight: 600; }
-
-.wgd__bar[data-level="0"] { background: var(--lv-0); }
-.wgd__bar[data-level="1"] { background: var(--lv-1); }
-.wgd__bar[data-level="2"] { background: var(--lv-2); }
-
-.wgd__day {
-  font-size: 9px;
-  letter-spacing: 0.04em;
-  color: var(--text-faint);
-}
-
-/* The habits ---------------------------------------------------------- */
-
-.wg__habits {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 6px;
-  min-height: 0;
-  overflow-y: auto;
-  /* No scrollbar. A bar down the side of something this small is most
-     of what makes a widget look like a cut-down web page; the fade at
-     the bottom says there is more, and the wheel still scrolls. */
-  scrollbar-width: none;
-}
-
-/* Only masked when there is more below, or the last row would sit
-   half-faded on a list that fits perfectly well. */
-.wg__habits.is-scrollable {
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
-}
-
-.wg__habits::-webkit-scrollbar { display: none; }
-
-.wgh {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 8px 10px;
-  flex: none;
-  padding: 9px 12px 10px;
-  border: 1px solid var(--border);
-  border-radius: 13px;
-  background: var(--surface);
-  box-shadow: var(--shadow);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  -webkit-app-region: no-drag;
-  transition: border-color 0.14s ease, transform 0.1s ease;
-}
-
-.wgh:hover { border-color: var(--text-faint); }
-.wgh:active { transform: scale(0.99); }
-
-.wgh__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-.wgh__value {
-  font-size: 11px;
-  color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
-
-.wgh__bar {
-  grid-column: 1 / -1;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--cell-0);
-  overflow: hidden;
-}
-
-/* Green as it fills, exactly as the tiles in the panel do it. The
-   widget and the panel show the same habits; two different colour
-   languages for one thing is worse than either language on its own. */
-.wgh__bar > span {
-  display: block;
-  height: 100%;
-  border-radius: 2px;
-  background: var(--ok);
-  transition: width 0.25s ease;
-}
-
-/* Met, marked the way the panel marks it: the outline goes green. */
-.wgh.is-done { border-color: var(--ok); }
-.wgh.is-done .wgh__value { color: var(--ok); }
-.wgh.is-done .wgh__name { color: var(--text-dim); }
-
-.wg__empty {
-  margin: 0;
-  padding: 16px 12px;
-  border: 1px dashed var(--border);
-  border-radius: 13px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--text-faint);
-  text-align: center;
-}
-
-/* The ring is the panel's, with the widget's colours ------------------ */
-
-.wg .ring {
-  width: 52px;
-  height: 52px;
-  -webkit-app-region: no-drag;
-}
-
-/* Sitting on a normal card, not the inverted one, so the middle takes
-   the card's own colour rather than punching a dark hole in it. */
-.wg .ring__inner {
-  width: 41px;
-  height: 41px;
-  background: var(--surface);
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.wg .ring__inner i { margin-top: 10px; font-size: 8px; }
-
-/* A newer version is out. Small, but always there rather than waiting
-   for the pointer like the other buttons — it is the one thing in this
-   strip that is news. */
 .wg__upd {
   flex: none;
   padding: 3px 9px;
@@ -315,4 +160,426 @@
   -webkit-app-region: no-drag;
 }
 
-.wg__upd:disabled { opacity: 0.7; cursor: default; }
+.wg__empty {
+  margin: 0;
+  padding: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 13px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.wgt__num b, .wgk__num b, .wgc__time, .wgc__hh, .wgc__mm, .wgy__total { font-variant-numeric: tabular-nums; }
+
+/* A list that scrolls without a scrollbar, fading where more is hidden. */
+#wg-list { scrollbar-width: none; }
+#wg-list::-webkit-scrollbar { display: none; }
+#wg-list.is-scrollable {
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 18px), transparent);
+}
+
+/* Today ---------------------------------------------------------------------- */
+
+.wgt { display: flex; flex: 1; flex-direction: column; gap: 10px; min-height: 0; }
+
+.wgt__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  box-shadow: var(--shadow);
+}
+
+.wgt__streak { flex: 1; min-width: 0; }
+.wgt__num { margin: 0; line-height: 1.1; }
+.wgt__num b { font-size: 28px; font-weight: 500; letter-spacing: -0.03em; }
+.wgt__num span { font-size: 12px; color: var(--text-dim); }
+
+.wgt__label {
+  overflow: hidden;
+  margin: 3px 0 0;
+  font-size: 10px;
+  color: var(--text-faint);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.wg .ring { width: 48px; height: 48px; -webkit-app-region: no-drag; }
+.wg .ring__inner { width: 38px; height: 38px; background: var(--surface); color: var(--text); font-size: 12px; font-weight: 600; }
+.wg .ring__inner i { margin-top: 9px; font-size: 8px; }
+
+.wgt__week { padding: 0 2px; }
+
+.wgt__list {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.wgh {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 7px 10px;
+  flex: none;
+  padding: 9px 12px 10px;
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: border-color 0.14s ease, transform 0.12s ease;
+}
+
+.wgh:hover { border-color: var(--text-faint); }
+.wgh:active { transform: scale(0.985); }
+.wgh.is-off { opacity: 0.55; }
+.wgh__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wgh__value { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+.wgh__bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--cell-0);
+  overflow: hidden;
+}
+
+.wgh__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--ok);
+  transition: width 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.wgh.is-done { border-color: var(--ok); }
+.wgh.is-done .wgh__value { color: var(--ok); }
+.wgh.is-done .wgh__name { color: var(--text-dim); }
+
+/* The last seven days, as bars ----------------------------------------------- */
+
+.wgw { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.wgw__day { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+
+.wgw__col {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 7px;
+  border-radius: 4px;
+  background: var(--cell-0);
+  overflow: hidden;
+}
+
+.wgw__fill { position: absolute; inset: auto 0 0; border-radius: inherit; background: var(--viz-muted); }
+.wgw__fill[data-level="0"] { background: var(--lv-0); }
+.wgw__fill[data-level="1"] { background: var(--lv-1); }
+.wgw__fill[data-level="2"] { background: var(--lv-2); }
+
+.wgw__letter { font-size: 9px; letter-spacing: 0.04em; color: var(--text-faint); }
+.wgw__day.is-today .wgw__letter { color: var(--text); font-weight: 600; }
+
+/* In Today the days are a thin strip, filled across; in Week they are
+   tall columns, filled from the bottom by how much of the day was done. */
+.wgt__week .wgw__fill { inset: 0; height: 100% !important; }
+.wgt__week .wgw__fill:not([data-level]) { background: transparent; }
+
+/* Week ------------------------------------------------------------------------ */
+
+.wgk { display: flex; flex: 1; gap: 18px; min-height: 0; align-items: stretch; }
+
+.wgk__left { display: flex; flex: none; flex-direction: column; justify-content: center; width: 124px; }
+.wgk__num { margin: 0; line-height: 1; }
+.wgk__num b { font-size: 46px; font-weight: 300; letter-spacing: -0.05em; }
+.wgk__num span { font-size: 13px; color: var(--text-dim); }
+
+.wgk__label { margin: 6px 0 0; font-size: 11px; line-height: 1.35; color: var(--text-faint); }
+
+.wgk__avg { margin: 12px 0 0; font-size: 11px; color: var(--text-dim); }
+.wgk__avg b { color: var(--text); font-weight: 600; }
+
+.wgk__right { display: flex; flex: 1; min-width: 0; }
+.wgk__week { flex: 1; gap: 7px; }
+.wgk__week .wgw__day { justify-content: flex-end; }
+.wgk__week .wgw__col { flex: 1; height: auto; min-height: 40px; border-radius: 9px; }
+.wgk__week .wgw__day.is-today .wgw__col { box-shadow: 0 0 0 1.5px var(--text-faint); }
+.wgk__week .wgw__letter { font-size: 10px; }
+
+/* Plans ----------------------------------------------------------------------- */
+
+.wgp { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+
+.wgp__title { margin: 2px 0 10px; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.wgp__title span { margin-left: 6px; font-size: 11px; font-weight: 400; color: var(--text-faint); }
+
+.wgp__list { display: flex; flex: 1; flex-direction: column; gap: 2px; min-height: 0; overflow-y: auto; }
+
+.wgp__task {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+  padding: 7px 8px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  -webkit-app-region: no-drag;
+  transition: background-color 0.14s ease;
+}
+
+.wgp__task:hover { background: var(--accent-bg); }
+
+.wgp__check {
+  position: relative;
+  flex: none;
+  width: 17px;
+  height: 17px;
+  border: 1.5px solid var(--text-faint);
+  border-radius: 50%;
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.wgp__task.is-done .wgp__check { border-color: var(--ok); background: var(--ok); }
+
+.wgp__task.is-done .wgp__check::after {
+  content: "";
+  position: absolute;
+  left: 4.6px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 1.8px 1.8px 0;
+  transform: rotate(45deg);
+}
+
+.wgp__text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wgp__task.is-done .wgp__text { color: var(--text-faint); text-decoration: line-through; }
+.wgp__none { margin: 4px 0; font-size: 12px; color: var(--text-faint); }
+
+.wgp__sub {
+  margin: 10px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.wgp__event { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; font-size: 12px; }
+.wgp__what { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wgp__when { flex: none; color: var(--text-faint); font-variant-numeric: tabular-nums; }
+
+/* Note ------------------------------------------------------------------------ */
+
+.wgn { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+
+.wgn__label {
+  margin: 2px 0 8px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.wgn__text {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  overflow-y: auto;
+  font-size: 15px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.wgn__none { margin: 0; font-size: 12px; line-height: 1.5; color: var(--text-faint); }
+
+/* Clock: just a clock ------------------------------------------------------- */
+
+/* The top line is laid over the clock rather than above it, and says
+   nothing: the dial has the window to itself, and the buttons still
+   appear at the top under the pointer. */
+.wg--clock { padding: 12px; }
+.wg--clock .wg__bar { position: absolute; top: 8px; left: 12px; right: 12px; z-index: 2; }
+.wg--clock .wg__meta { visibility: hidden; }
+.wg--clock .wg__tools { background: none; }
+
+.wgc { display: flex; flex: 1; min-height: 0; align-items: center; justify-content: center; }
+
+.wgc__dial { width: 100%; height: 100%; overflow: visible; }
+
+.wgc__face {
+  fill: color-mix(in srgb, var(--text) 4%, transparent);
+  stroke: color-mix(in srgb, var(--text) 14%, transparent);
+  stroke-width: 0.6;
+}
+
+.wgc__tick { stroke: var(--text-faint); stroke-width: 0.6; stroke-linecap: round; }
+.wgc__tick.is-major { stroke: var(--text); stroke-width: 1.7; }
+.wgc__dial--classic .wgc__tick { stroke-width: 0.5; }
+.wgc__dial--classic .wgc__tick.is-major { stroke-width: 1; }
+.wgc__dial--roman .wgc__tick.is-major { stroke: var(--text-dim); stroke-width: 1.3; }
+
+.wgc__dot { fill: var(--text-faint); }
+.wgc__dot.is-major { fill: var(--text); }
+
+.wgc__numeral {
+  font-size: 8.4px;
+  font-weight: 500;
+  fill: var(--text);
+  text-anchor: middle;
+  font-variant-numeric: tabular-nums;
+}
+
+.wgc__numeral.is-roman {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 10.5px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.wgc__hand { stroke: var(--text); stroke-linecap: round; fill: var(--text); }
+.wgc__hand.is-h { stroke-width: 3.2; }
+.wgc__hand.is-m { stroke-width: 2.1; }
+.wgc__dial--modern .wgc__hand.is-h { stroke-width: 4.6; }
+.wgc__dial--modern .wgc__hand.is-m { stroke-width: 3.2; }
+.wgc__dial--classic .wgc__hand.is-h,
+.wgc__dial--classic .wgc__hand.is-m,
+.wgc__dial--roman .wgc__hand.is-h,
+.wgc__dial--roman .wgc__hand.is-m { stroke-width: 0; }
+
+.wgc__hand.is-s { stroke: var(--wg-accent); stroke-width: 0.8; }
+.wgc__sectip { fill: var(--wg-accent); }
+.wgc__pin { fill: var(--wg-accent); stroke: var(--bg); stroke-width: 1; }
+.no-seconds .wgc__sec { display: none; }
+.no-seconds .wgc__pin { fill: var(--text); }
+
+/* Mono: black, white and grey, and nothing else. No accent on the second
+   hand, no tint on the face, no glow behind it — a hairline ring, twelve
+   short marks and plain hands. */
+.wg--dial-mono::before { display: none; }
+.wgc__dial--mono .wgc__face { fill: none; stroke: var(--text-faint); stroke-width: 0.5; }
+.wgc__dial--mono .wgc__tick { stroke: var(--text-faint); stroke-width: 0.7; }
+.wgc__dial--mono .wgc__tick.is-major { stroke: var(--text); stroke-width: 1; }
+.wgc__dial--mono .wgc__hand.is-h { stroke-width: 3; }
+.wgc__dial--mono .wgc__hand.is-m { stroke-width: 1.5; }
+.wgc__dial--mono .wgc__hand.is-s { stroke: var(--text-faint); stroke-width: 0.5; }
+.wgc__dial--mono .wgc__sectip { fill: var(--text-faint); r: 1.1px; }
+.wgc__dial--mono .wgc__pin { fill: var(--text); stroke: var(--bg); stroke-width: 0.8; r: 1.9px; }
+.wgc__dial--mono .wgc__datewin rect { fill: none; stroke: var(--text-faint); stroke-width: 0.4; }
+.wgc__dial--mono .wgc__datewin text { fill: var(--text-faint); font-weight: 500; }
+
+/* The date window, as a watch has it. */
+.wgc__datewin rect {
+  fill: color-mix(in srgb, var(--text) 6%, transparent);
+  stroke: color-mix(in srgb, var(--text) 16%, transparent);
+  stroke-width: 0.5;
+}
+
+.wgc__datewin text {
+  font-size: 5.4px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  fill: var(--text-dim);
+  text-anchor: middle;
+}
+
+/* Digital: the time as large as the window allows. */
+.wgc--digital { flex-direction: column; align-items: flex-start; padding: 0 6px; }
+.wgc__time { margin: 0; font-weight: 200; letter-spacing: -0.05em; line-height: 1; }
+.wgc--digital .wgc__time { font-size: min(27cqw, 52cqh); }
+.wgc__date { margin: 8px 0 0; font-size: 13px; color: var(--text-dim); }
+
+/* Stack: hours over minutes, the minutes in the accent. */
+.wgc--stack { flex-direction: column; gap: 0; }
+.wgc__hh, .wgc__mm { margin: 0; font-size: min(46cqw, 34cqh); line-height: 0.86; letter-spacing: -0.06em; }
+.wgc__hh { font-weight: 700; }
+.wgc__mm { font-weight: 200; color: var(--wg-accent); }
+.wgc--stack .wgc__date { margin-top: 12px; font-size: 11px; letter-spacing: 0.14em; }
+
+/* Ring: the time inside a ring that fills as the day's habits are done. */
+.wgc__ringwrap {
+  position: relative;
+  display: grid;
+  place-content: center;
+  width: min(100cqw - 24px, 100cqh - 24px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: conic-gradient(var(--wg-accent) calc(var(--p) * 1%), var(--cell-0) 0);
+  text-align: center;
+}
+
+.wgc__ringwrap::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: var(--bg);
+}
+
+.wgc__ringwrap > * { position: relative; }
+.wgc__ringwrap .wgc__time { font-size: min(20cqw, 20cqh); font-weight: 300; }
+.wgc__ringpct { margin: 6px 0 0; font-size: 10px; letter-spacing: 0.06em; color: var(--text-faint); }
+
+/* Money ------------------------------------------------------------------------ */
+
+.wgy { display: flex; flex: 1; flex-direction: column; min-height: 0; }
+
+.wgy__label {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+
+.wgy__total { margin: 4px 0 0; font-size: 38px; font-weight: 300; letter-spacing: -0.04em; line-height: 1.05; }
+.wgy__cmp { margin: 4px 0 0; font-size: 12px; color: var(--text-dim); }
+
+.wgy__bars {
+  display: grid;
+  flex: 1;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  min-height: 50px;
+  margin-top: 12px;
+}
+
+.wgy__bar { display: flex; flex-direction: column; gap: 5px; min-height: 0; }
+
+.wgy__col {
+  position: relative;
+  display: block;
+  flex: 1;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  overflow: hidden;
+}
+
+.wgy__col > span { position: absolute; inset: auto 0 0; border-radius: 7px; background: var(--viz-muted); }
+.wgy__bar.is-now .wgy__col > span { background: var(--text); }
+.wgy__tick { font-size: 9px; color: var(--text-faint); text-align: center; }
+.wgy__bar.is-now .wgy__tick { color: var(--text); font-weight: 600; }
+.wgy__today { margin: 10px 0 0; font-size: 12px; color: var(--text-dim); }
+.wgy__today b { color: var(--text); font-weight: 600; }

@@ -1,12 +1,41 @@
 /* The desktop widget. Same data and same logic as the panel — it loads
-   storage.js and habits.js — but its own compact drawing.
+   storage.js and habits.js — but its own drawing.
 
    It runs in a second window over the same origin as the panel, so both
    read one localStorage. The browser fires a `storage` event in every
    other window of an origin when one of them writes, which is how the
-   two stay in step without either knowing the other exists. */
+   two stay in step without either knowing the other exists — and how a
+   face chosen in the panel's Settings reaches the widget at once.
+
+   Six faces, each one section of the app, or none of it:
+
+     Clock   just a clock. Dials with hands — minimal, classic, roman,
+             modern, and mono (black, white and grey only) — or digits:
+             digital, stack, and ring (the time inside a ring that fills
+             as the day's habits are done).
+     Today   the habits to do today, each one pressed to count.
+     Week    the streak beside the last seven days, one bar a day.
+     Plans   today's tasks, ticked off here, and what is coming up.
+     Note    what was written today.
+     Money   this month's spending against last month's, and the months
+             before it.
+
+   Settings → Desktop widget also chooses the accent colour (the second
+   hand, the glow), whether the clock has a second hand and shows the
+   date, and the backdrop: lit by the accent, or plain.
+
+   The match stays in the panel: the owner did not want it on the desktop. */
 
 var Widget = (function () {
+
+  var FACES = ['today', 'week', 'plans', 'note', 'clock', 'money'];
+  var ANALOG = ['minimal', 'classic', 'roman', 'modern', 'mono'];
+  var DIALS = ANALOG.concat(['digital', 'stack', 'ring']);
+  var ACCENTS = ['orange', 'amber', 'red', 'green', 'blue', 'violet', 'ink'];
+  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+    'August', 'September', 'October', 'November', 'December'];
+  var SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   function escapeHtml(text) {
     return String(text)
@@ -16,29 +45,31 @@ var Widget = (function () {
       .replace(/"/g, '&quot;');
   }
 
-  function leadHabit() {
-    var log = Storage.load().log;
-    var todayKey = Storage.today();
-    var lead = null;
-    var best = -1;
-
-    var unit = 'day';
-    Habits.active().forEach(function (habit) {
-      var run = Habits.streaks(log, habit, todayKey);
-      if (run.current > best) {
-        best = run.current;
-        unit = run.unit;
-        lead = habit;
-      }
-    });
-
-    return lead ? { habit: lead, run: best, unit: unit } : null;
+  /* What the person chose, with the defaults filled in. Today is the
+     default face: it is what the widget has always been. */
+  function prefs() {
+    var w = Storage.load().settings.widget || {};
+    return {
+      face: FACES.indexOf(w.face) !== -1 ? w.face : 'today',
+      dial: DIALS.indexOf(w.dial) !== -1 ? w.dial : 'classic',
+      accent: ACCENTS.indexOf(w.accent) !== -1 ? w.accent : 'orange',
+      seconds: w.seconds !== false,
+      date: w.date !== false,
+      backdrop: w.backdrop === 'plain' ? 'plain' : 'glow'
+    };
   }
 
-  /* The widget never asked which theme was chosen, so it was light in
-     every case — including inside a window Electron paints black before
-     the page arrives. Same rule as the panel: the setting, or the clock
-     when the setting says to follow it. */
+  /* The shape of window a face is drawn for. The clock's depends on the
+     dial: a round one wants a square, a row of digits a wide strip. */
+  function shapeOf(p) {
+    if (p.face !== 'clock') return p.face;
+    if (p.dial === 'digital') return 'clock-digital';
+    if (p.dial === 'stack') return 'clock-stack';
+    return 'clock-round';
+  }
+
+  /* The widget follows the panel's theme: the setting, or the clock when
+     the setting says to follow it. */
   function applyTheme() {
     var choice = Storage.load().settings.theme || 'auto';
     var hour = new Date().getHours();
@@ -48,167 +79,513 @@ var Widget = (function () {
     document.documentElement.setAttribute('data-theme', theme);
   }
 
-  /* Header ------------------------------------------------------------ */
+  /* The pieces the faces draw from -------------------------------------- */
 
-  function renderDate() {
-    document.getElementById('wg-date').textContent = new Intl.DateTimeFormat('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric'
-    }).format(new Date());
+  function dueToday() {
+    var log = Storage.load().log;
+    var key = Storage.today();
+    return Habits.active().filter(function (h) { return Habits.dueOn(log, h, key); });
   }
 
-  function renderRing(percent) {
-    var ring = document.getElementById('wg-ring');
-    ring.style.setProperty('--p', percent);
-    document.getElementById('wg-ring-text').innerHTML = percent + '<i>%</i>';
+  function todayScore() {
+    var s = Storage.load();
+    var score = Habits.completionFor(s.log, s.habits, Storage.today());
+    return score === null ? 0 : Math.round(score * 100);
   }
 
-  function renderStreak() {
+  /* The habit with the longest run going. */
+  function leadHabit() {
+    var log = Storage.load().log;
+    var todayKey = Storage.today();
+    var lead = null;
+    Habits.active().forEach(function (habit) {
+      var run = Habits.streaks(log, habit, todayKey);
+      if (!lead || run.current > lead.run) lead = { habit: habit, run: run.current, unit: run.unit };
+    });
+    return lead;
+  }
+
+  function streakHtml(cls) {
     var lead = leadHabit();
-    var label = document.getElementById('wg-streak-label');
-    var value = document.getElementById('wg-streak');
-
-    /* The longest run going, and which habit it belongs to. When
-       nothing is running it still says so rather than swapping in a
-       different measure — a widget whose big number changes meaning is
-       a widget you have to read twice. */
-    if (lead && lead.run > 0) {
-      label.textContent = 'Streak · ' + lead.habit.name;
-      value.innerHTML = lead.run + ' <span>' +
-        lead.unit + (lead.run === 1 ? '' : 's') + '</span>';
-    } else {
-      label.textContent = 'Streak';
-      value.innerHTML = '0 <span>days</span>';
-    }
+    var run = lead ? lead.run : 0;
+    var unit = (lead ? lead.unit : 'day') + (run === 1 ? '' : 's');
+    return {
+      num: '<p class="' + cls + '"><b>' + run + '</b> <span>' + unit + '</span></p>',
+      label: lead ? 'Streak · ' + lead.habit.name : 'No habits yet'
+    };
   }
 
-  function renderChip(habits) {
-    var chip = document.getElementById('wg-done');
-
-    if (!habits.length) {
-      chip.setAttribute('hidden', '');
-      return;
-    }
-
-    /* Counted against what today actually asks for. A habit that is
-       not on today has no business making the number look worse. */
-    var due = habits.filter(function (habit) { return Habits.dueToday(habit); });
-    if (!due.length) {
-      chip.textContent = 'Nothing due today';
-      chip.classList.remove('is-full');
-      chip.removeAttribute('hidden');
-      return;
-    }
-
-    var done = due.filter(function (habit) {
-      return Habits.valueOf(habit.id) >= habit.goal;
-    }).length;
-
-    chip.textContent = done === due.length
-      ? 'All ' + due.length + ' done'
-      : done + ' of ' + due.length + ' done';
-    chip.classList.toggle('is-full', done === due.length);
-    chip.removeAttribute('hidden');
-  }
-
-  /* The last seven days, today last. Enough to see whether this week is
-     going anywhere without opening the panel; the panel keeps the month
-     and the year for when it matters. */
-  function renderWeek() {
-    var state = Storage.load();
+  /* The last seven days, today last: each day's share done and its level,
+     the same colours as the calendar. */
+  function lastWeek() {
+    var s = Storage.load();
     var todayKey = Storage.today();
     var narrow = new Intl.DateTimeFormat('en-US', { weekday: 'narrow' });
-    var html = '';
-
+    var out = [];
     for (var back = 6; back >= 0; back--) {
       var key = Habits.shiftDate(todayKey, -back);
-      var parts = key.split('-');
-      var date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-      var level = Habits.levelOn(state.log, state.habits, key);
-
-      html += '' +
-        '<div class="wgd' + (back === 0 ? ' is-today' : '') + '" title="' + key + '">' +
-          '<span class="wgd__bar"' + (level < 0 ? '' : ' data-level="' + level + '"') + '></span>' +
-          '<span class="wgd__day">' + escapeHtml(narrow.format(date)) + '</span>' +
-        '</div>';
+      var p = key.split('-');
+      var date = new Date(+p[0], +p[1] - 1, +p[2]);
+      var score = Storage.known(s.log, key) ? Habits.completionFor(s.log, s.habits, key) : null;
+      out.push({
+        key: key,
+        letter: narrow.format(date),
+        share: score === null ? null : Math.max(0, Math.min(1, score)),
+        level: Habits.levelOn(s.log, s.habits, key),
+        today: back === 0
+      });
     }
-
-    document.getElementById('wg-week').innerHTML = html;
+    return out;
   }
 
-  /* Habits ------------------------------------------------------------- */
-
-  function renderHabits(habits) {
-    var box = document.getElementById('wg-habits');
-
-    if (!habits.length) {
-      box.classList.remove('is-scrollable');
-      box.innerHTML = '<p class="wg__empty">No habits yet — open the panel to pick some.</p>';
-      return;
-    }
-
-    box.innerHTML = habits.map(function (habit) {
-      var value = Habits.valueOf(habit.id);
-      var done = value >= habit.goal;
-      var width = Math.min(100, Math.round((value / habit.goal) * 100));
-      var readout = habit.goal === 1
-        ? (done ? 'done' : '—')
-        : value + '/' + habit.goal + (habit.unit ? ' ' + habit.unit : '');
-
-      return '' +
-        '<button class="wgh' + (done ? ' is-done' : '') +
-          (Habits.dueToday(habit) ? '' : ' is-off') + '" data-id="' + escapeHtml(habit.id) + '"' +
-        ' title="Click to add, right-click to take away">' +
-          '<span class="wgh__name">' + escapeHtml(habit.name) + '</span>' +
-          '<span class="wgh__value">' + escapeHtml(readout) + '</span>' +
-          '<span class="wgh__bar"><span style="width:' + width + '%"></span></span>' +
-        '</button>';
-    }).join('');
-
-    fade(box);
+  function weekStrip(cls) {
+    return '<div class="wgw ' + cls + '">' + lastWeek().map(function (d) {
+      var h = d.share === null ? 0 : Math.max(0.08, d.share);
+      return '<div class="wgw__day' + (d.today ? ' is-today' : '') + '" title="' + d.key +
+          (d.share === null ? '' : ' · ' + Math.round(d.share * 100) + '% done') + '">' +
+        '<span class="wgw__col"><span class="wgw__fill"' + (d.level < 0 ? '' : ' data-level="' + d.level + '"') +
+          ' style="height:' + Math.round(h * 100) + '%"></span></span>' +
+        '<span class="wgw__letter">' + escapeHtml(d.letter) + '</span>' +
+      '</div>';
+    }).join('') + '</div>';
   }
 
-  /* The list fades out at the bottom only when something is actually
-     hidden below it — a permanent fade would leave the last row looking
-     half-erased on a list that fits perfectly well. */
-  function fade(box) {
-    box.classList.toggle('is-scrollable', box.scrollHeight > box.clientHeight + 1);
-  }
+  /* Today ---------------------------------------------------------------- */
 
-  function render() {
-    applyTheme();
-    renderDate();
-
-    var state = Storage.load();
-    var score = Habits.completionFor(state.log, state.habits, Storage.today());
-    /* Due first, the rest below and dimmed: what today asks for should
-       not be mixed in among what it does not. */
-    var log = state.log;
+  function faceToday() {
+    var streak = streakHtml('wgt__num');
+    var p = todayScore();
+    var log = Storage.load().log;
     var key = Storage.today();
     var habits = Habits.active().sort(function (a, b) {
       return (Habits.dueOn(log, b, key) ? 1 : 0) - (Habits.dueOn(log, a, key) ? 1 : 0);
     });
 
-    var percent = score === null ? 0 : Math.round(score * 100);
-    renderRing(percent);
-    tellTray(percent);
-    renderStreak();
-    renderChip(habits);
-    renderWeek();
-    renderHabits(habits);
+    var rows = habits.length ? habits.map(function (h) {
+      var value = Habits.valueOf(h.id);
+      var done = value >= h.goal;
+      var width = Math.min(100, Math.round((value / h.goal) * 100));
+      var readout = h.goal === 1 ? (done ? 'done' : '—') : value + '/' + h.goal + (h.unit ? ' ' + h.unit : '');
+      return '<button class="wgh' + (done ? ' is-done' : '') + (Habits.dueOn(log, h, key) ? '' : ' is-off') + '"' +
+        ' type="button" data-bump="' + escapeHtml(h.id) + '" title="Click to add, right-click to take away">' +
+        '<span class="wgh__name">' + escapeHtml(h.name) + '</span>' +
+        '<span class="wgh__value">' + escapeHtml(readout) + '</span>' +
+        '<span class="wgh__bar"><span style="width:' + width + '%"></span></span>' +
+      '</button>';
+    }).join('') : '<p class="wg__empty">No habits yet — open the panel to pick some.</p>';
+
+    return '' +
+      '<div class="wgt">' +
+        '<div class="wgt__head">' +
+          '<div class="wgt__streak">' + streak.num +
+            '<p class="wgt__label">' + escapeHtml(streak.label) + '</p>' +
+          '</div>' +
+          '<div class="ring wgt__ring" style="--p:' + p + '"><span class="ring__inner">' + p + '<i>%</i></span></div>' +
+        '</div>' +
+        weekStrip('wgt__week') +
+        '<div class="wgt__list" id="wg-list">' + rows + '</div>' +
+      '</div>';
+  }
+
+  /* Week ----------------------------------------------------------------- */
+
+  function faceWeek() {
+    var streak = streakHtml('wgk__num');
+    var week = lastWeek();
+    var known = week.filter(function (d) { return d.share !== null; });
+    var avg = known.length
+      ? Math.round(known.reduce(function (a, d) { return a + d.share; }, 0) / known.length * 100)
+      : null;
+    return '' +
+      '<div class="wgk">' +
+        '<div class="wgk__left">' + streak.num +
+          '<p class="wgk__label">' + escapeHtml(streak.label) + '</p>' +
+          '<p class="wgk__avg">' + (avg === null ? '' : '<b>' + avg + '%</b> a day on average') + '</p>' +
+        '</div>' +
+        '<div class="wgk__right">' + weekStrip('wgk__week') + '</div>' +
+      '</div>';
+  }
+
+  /* Plans: today's tasks and what is coming up ----------------------------- */
+
+  function whenLabel(key, todayKey) {
+    var a = key.split('-');
+    var b = todayKey.split('-');
+    var days = Math.round((new Date(+a[0], +a[1] - 1, +a[2]) - new Date(+b[0], +b[1] - 1, +b[2])) / 86400000);
+    if (days === 0) return 'today';
+    if (days === 1) return 'tomorrow';
+    return 'in ' + days + ' days';
+  }
+
+  function facePlans() {
+    var s = Storage.load();
+    var todayKey = Storage.today();
+    var tasks = (s.tasks || []).filter(function (t) { return t.date === todayKey; });
+    var events = (s.countdowns || [])
+      .filter(function (c) { return c.date >= todayKey; })
+      .sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; })
+      .slice(0, 3);
+    var done = tasks.filter(function (t) { return t.done; }).length;
+
+    var list = tasks.length ? tasks.map(function (t) {
+      return '<button class="wgp__task' + (t.done ? ' is-done' : '') + '" type="button" data-task="' + escapeHtml(t.id) + '">' +
+        '<span class="wgp__check" aria-hidden="true"></span>' +
+        '<span class="wgp__text">' + escapeHtml(t.text) + '</span>' +
+      '</button>';
+    }).join('') : '<p class="wgp__none">Nothing planned for today.</p>';
+
+    var coming = events.length ? '<p class="wgp__sub">Coming up</p>' + events.map(function (c) {
+      return '<div class="wgp__event"><span class="wgp__what">' + escapeHtml(c.title) + '</span>' +
+        '<span class="wgp__when">' + whenLabel(c.date, todayKey) + '</span></div>';
+    }).join('') : '';
+
+    return '' +
+      '<div class="wgp">' +
+        '<p class="wgp__title">Today' + (tasks.length ? ' <span>' + done + ' of ' + tasks.length + ' done</span>' : '') + '</p>' +
+        '<div class="wgp__list" id="wg-list">' + list + '</div>' +
+        coming +
+      '</div>';
+  }
+
+  /* Note ------------------------------------------------------------------ */
+
+  function faceNote() {
+    var s = Storage.load();
+    var todayKey = Storage.today();
+    var text = (s.notes[todayKey] || '').trim();
+    var label = 'Today';
+    if (!text) {
+      var keys = Object.keys(s.notes).filter(function (k) { return (s.notes[k] || '').trim(); }).sort();
+      var last = keys[keys.length - 1];
+      if (last) {
+        var p = last.split('-');
+        var d = new Date(+p[0], +p[1] - 1, +p[2]);
+        text = s.notes[last].trim();
+        label = DAYS[d.getDay()] + ', ' + SHORT[d.getMonth()] + ' ' + d.getDate();
+      }
+    }
+    return '' +
+      '<div class="wgn">' +
+        '<p class="wgn__label">' + (text ? 'Note · ' + escapeHtml(label) : 'Note') + '</p>' +
+        (text
+          ? '<p class="wgn__text" id="wg-list">' + escapeHtml(text) + '</p>'
+          : '<p class="wgn__none">Nothing written yet. The note box is at the bottom of the dashboard.</p>') +
+      '</div>';
+  }
+
+  /* The clock -------------------------------------------------------------- */
+
+  var ROMAN = { 12: 'XII', 3: 'III', 6: 'VI', 9: 'IX' };
+
+  function at(radius, degrees) {
+    var a = degrees * Math.PI / 180;
+    return { x: (50 + radius * Math.sin(a)).toFixed(2), y: (50 - radius * Math.cos(a)).toFixed(2) };
+  }
+
+  /* A dial with hands. Five styles, as watches come:
+       minimal  ticks only, bold at the hours
+       classic  the numbers 1–12 and a fine minute track
+       roman    XII, III, VI, IX in a serif, batons between
+       modern   dots for the hours, rounded hands, nothing else
+       mono     black, white and grey only: a hairline ring, twelve
+                short marks, plain hands, no accent and no glow
+     Each hand sits in its own group so it can be turned alone. */
+  function analog(kind, withDate) {
+    var marks = '';
+    var i;
+    var a;
+    var b;
+
+    if (kind === 'mono') {
+      for (i = 0; i < 12; i++) {
+        a = at(i % 3 === 0 ? 41 : 43, i * 30);
+        b = at(46, i * 30);
+        marks += '<line class="wgc__tick' + (i % 3 === 0 ? ' is-major' : '') + '" x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"/>';
+      }
+    } else if (kind === 'modern') {
+      for (i = 0; i < 12; i++) {
+        a = at(41, i * 30);
+        marks += '<circle class="wgc__dot' + (i % 3 === 0 ? ' is-major' : '') + '" cx="' + a.x + '" cy="' + a.y + '" r="' + (i % 3 === 0 ? 2.1 : 1.2) + '"/>';
+      }
+    } else {
+      for (i = 0; i < 60; i++) {
+        var major = i % 5 === 0;
+        var quarter = i % 15 === 0;
+        if (kind === 'roman' && quarter) continue;          // a numeral sits there
+        if (kind === 'roman' && !major) continue;           // batons only
+        var inner = kind === 'classic' ? (major ? 44 : 45.2)
+          : kind === 'roman' ? 39
+          : (major ? 38.5 : 44);
+        a = at(inner, i * 6);
+        b = at(46.5, i * 6);
+        marks += '<line class="wgc__tick' + (major ? ' is-major' : '') + '" x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"/>';
+      }
+    }
+
+    var numbers = '';
+    if (kind === 'classic') {
+      for (i = 1; i <= 12; i++) {
+        a = at(35.5, i * 30);
+        numbers += '<text class="wgc__numeral" x="' + a.x + '" y="' + (+a.y + 3.6).toFixed(2) + '">' + i + '</text>';
+      }
+    } else if (kind === 'roman') {
+      [12, 3, 6, 9].forEach(function (h) {
+        a = at(37, h * 30);
+        numbers += '<text class="wgc__numeral is-roman" x="' + a.x + '" y="' + (+a.y + 4).toFixed(2) + '">' + ROMAN[h] + '</text>';
+      });
+    }
+
+    var hour;
+    var minute;
+    if (kind === 'classic') {
+      hour = '<path class="wgc__hand is-h" d="M48.3 55 L49.1 28 L50 25.5 L50.9 28 L51.7 55 Z"/>';
+      minute = '<path class="wgc__hand is-m" d="M48.8 56 L49.4 13 L50 10.5 L50.6 13 L51.2 56 Z"/>';
+    } else if (kind === 'roman') {
+      hour = '<path class="wgc__hand is-h" d="M50 56 L48.2 50 L50 26 L51.8 50 Z"/>';
+      minute = '<path class="wgc__hand is-m" d="M50 57 L48.7 50 L50 11 L51.3 50 Z"/>';
+    } else {
+      var fromCentre = kind === 'modern' || kind === 'mono';
+      hour = '<line class="wgc__hand is-h" x1="50" y1="' + (fromCentre ? 50 : 54) + '" x2="50" y2="28"/>';
+      minute = '<line class="wgc__hand is-m" x1="50" y1="' + (fromCentre ? 50 : 55) + '" x2="50" y2="' + (kind === 'modern' ? 14 : kind === 'mono' ? 12.5 : 11.5) + '"/>';
+    }
+
+    /* The date, as a watch carries it: a small window in the lower half. */
+    var date = withDate
+      ? '<g class="wgc__datewin"><rect x="38.5" y="63.5" width="23" height="9" rx="2.4"/>' +
+        '<text x="50" y="70.2" data-date></text></g>'
+      : '';
+
+    return '' +
+      '<svg class="wgc__dial wgc__dial--' + kind + '" viewBox="0 0 100 100" aria-hidden="true">' +
+        '<circle class="wgc__face" cx="50" cy="50" r="48.5"/>' +
+        marks + numbers + date +
+        '<g class="wgc__turn" data-hand="h">' + hour + '</g>' +
+        '<g class="wgc__turn" data-hand="m">' + minute + '</g>' +
+        '<g class="wgc__turn wgc__sec" data-hand="s">' +
+          '<line class="wgc__hand is-s" x1="50" y1="60" x2="50" y2="9"/>' +
+          '<circle class="wgc__sectip" cx="50" cy="60" r="1.7"/>' +
+        '</g>' +
+        '<circle class="wgc__pin" cx="50" cy="50" r="2.3"/>' +
+      '</svg>';
+  }
+
+  function faceClock(p) {
+    var longDate = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date());
+
+    if (p.dial === 'digital') {
+      return '' +
+        '<div class="wgc wgc--digital">' +
+          '<p class="wgc__time" data-time></p>' +
+          (p.date ? '<p class="wgc__date">' + escapeHtml(longDate) + '</p>' : '') +
+        '</div>';
+    }
+
+    if (p.dial === 'stack') {
+      return '' +
+        '<div class="wgc wgc--stack">' +
+          '<p class="wgc__hh" data-hh></p>' +
+          '<p class="wgc__mm" data-mm></p>' +
+          (p.date ? '<p class="wgc__date" data-date></p>' : '') +
+        '</div>';
+    }
+
+    if (p.dial === 'ring') {
+      var pct = todayScore();
+      return '' +
+        '<div class="wgc wgc--round">' +
+          '<div class="wgc__ringwrap" style="--p:' + pct + '" title="Today: ' + pct + '% of your habits done">' +
+            '<p class="wgc__time" data-time></p>' +
+            '<p class="wgc__ringpct">' + (p.date ? '<span data-date></span> · ' : '') + pct + '% done</p>' +
+          '</div>' +
+        '</div>';
+    }
+
+    return '' +
+      '<div class="wgc wgc--round' + (p.seconds ? '' : ' no-seconds') + '">' +
+        analog(p.dial, p.date) +
+      '</div>';
+  }
+
+  /* The hands and the digits move on their own, apart from the minute
+     redraw: smoothly with motion on (the second hand sweeps), a tick a
+     second with it off. */
+  var clockTimer = null;
+  var clockFrame = 0;
+
+  function tickClock() {
+    var face = document.getElementById('wg-face');
+    var now = new Date();
+    var h = now.getHours();
+    var m = now.getMinutes();
+    var s = now.getSeconds() + now.getMilliseconds() / 1000;
+    var smooth = typeof Motion === 'undefined' || Motion.on();
+    var sec = smooth ? s : Math.floor(s);
+    var turns = {
+      h: ((h % 12) + m / 60 + sec / 3600) * 30,
+      m: (m + sec / 60) * 6,
+      s: sec * 6
+    };
+    face.querySelectorAll('.wgc__turn').forEach(function (g) {
+      g.setAttribute('transform', 'rotate(' + turns[g.getAttribute('data-hand')].toFixed(2) + ' 50 50)');
+    });
+    var hh = ('0' + h).slice(-2);
+    var mm = ('0' + m).slice(-2);
+    var day = DAYS[now.getDay()].toUpperCase() + ' ' + now.getDate();
+    function put(sel, text) {
+      face.querySelectorAll(sel).forEach(function (el) { if (el.textContent !== text) el.textContent = text; });
+    }
+    put('[data-time]', hh + ':' + mm);
+    put('[data-hh]', hh);
+    put('[data-mm]', mm);
+    put('[data-date]', day);
+  }
+
+  function runClock(on, sweeping) {
+    if (clockTimer) { clearInterval(clockTimer); clockTimer = null; }
+    cancelAnimationFrame(clockFrame);
+    if (!on) return;
+    tickClock();
+    var smooth = typeof Motion === 'undefined' || Motion.on();
+    if (sweeping && smooth) {
+      (function loop() {
+        tickClock();
+        clockFrame = requestAnimationFrame(loop);
+      })();
+    } else {
+      clockTimer = setInterval(tickClock, sweeping ? 1000 : 5000);
+    }
+  }
+
+  /* Money ------------------------------------------------------------ */
+
+  function formatMoney(cents) {
+    var cur = (Storage.load().money || {}).currency || 'EUR';
+    try {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: cur, currencyDisplay: 'narrowSymbol'
+      }).format(cents / 100);
+    } catch (err) {
+      return (cents / 100).toFixed(2) + ' ' + cur;
+    }
+  }
+
+  function sumBetween(from, to) {
+    var total = 0;
+    ((Storage.load().money || {}).entries || []).forEach(function (e) {
+      if (e.date >= from && e.date <= to) total += e.cents;
+    });
+    return total;
+  }
+
+  function keyOf(d) {
+    return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+  }
+
+  function faceMoney() {
+    var today = new Date();
+    var y = today.getFullYear();
+    var m = today.getMonth();
+    var todayKey = keyOf(today);
+    var thisMonth = sumBetween(keyOf(new Date(y, m, 1)), todayKey);
+    /* Last month up to the same date, so a month under way is not set
+       against a whole one. */
+    var lastEnd = new Date(y, m, 0);
+    var lastSame = sumBetween(keyOf(new Date(y, m - 1, 1)),
+      keyOf(new Date(y, m - 1, Math.min(today.getDate(), lastEnd.getDate()))));
+    var spentToday = sumBetween(todayKey, todayKey);
+
+    var cmp = '';
+    if (lastSame > 0) {
+      var ch = Math.round(((thisMonth - lastSame) / lastSame) * 100);
+      cmp = (ch > 0 ? '&#8593; ' : ch < 0 ? '&#8595; ' : '') + Math.abs(ch) + '% ' +
+        (ch >= 0 ? 'more' : 'less') + ' than ' + SHORT[(m + 11) % 12] + ' by this date';
+    }
+
+    var bars = [];
+    for (var k = 5; k >= 0; k--) {
+      var start = new Date(y, m - k, 1);
+      var end = new Date(y, m - k + 1, 0);
+      bars.push({ label: SHORT[start.getMonth()], cents: sumBetween(keyOf(start), keyOf(end)), now: k === 0 });
+    }
+    var max = Math.max.apply(null, bars.map(function (b) { return b.cents; })) || 1;
+
+    return '' +
+      '<div class="wgy">' +
+        '<p class="wgy__label">Spent in ' + MONTHS[m] + '</p>' +
+        '<p class="wgy__total">' + escapeHtml(formatMoney(thisMonth)) + '</p>' +
+        '<p class="wgy__cmp">' + (cmp || 'Nothing to compare with yet') + '</p>' +
+        '<div class="wgy__bars">' + bars.map(function (b) {
+          return '<div class="wgy__bar' + (b.now ? ' is-now' : '') + '" title="' + b.label + ' · ' + escapeHtml(formatMoney(b.cents)) + '">' +
+            '<span class="wgy__col"><span style="height:' + Math.max(b.cents ? 4 : 0, Math.round((b.cents / max) * 100)) + '%"></span></span>' +
+            '<span class="wgy__tick">' + b.label + '</span>' +
+          '</div>';
+        }).join('') + '</div>' +
+        '<p class="wgy__today">Today <b>' + escapeHtml(formatMoney(spentToday)) + '</b></p>' +
+      '</div>';
+  }
+
+  /* Drawing ------------------------------------------------------------ */
+
+  var lastShape = null;
+
+  function renderDate() {
+    document.getElementById('wg-date').textContent = new Intl.DateTimeFormat('en-US', {
+      weekday: 'short', month: 'short', day: 'numeric'
+    }).format(new Date());
+  }
+
+  /* The weather as last fetched, from the same store the panel uses. */
+  function renderWeather() {
+    var el = document.getElementById('weather');
+    var w = Storage.load().settings.weather;
+    if (!el || !w || typeof Weather === 'undefined') return;
+    el.textContent = Math.round(w.temp) + '° ' + Weather.describe(w.code);
+  }
+
+  function render() {
+    applyTheme();
+    renderDate();
+    renderWeather();
+
+    var p = prefs();
+    var root = document.getElementById('wg');
+    var face = document.getElementById('wg-face');
+
+    root.className = 'wg wg--' + p.face + ' wg--' + p.backdrop + ' wg--accent-' + p.accent +
+      (p.face === 'clock' ? ' wg--dial-' + p.dial : '');
+
+    face.innerHTML = p.face === 'week' ? faceWeek()
+      : p.face === 'plans' ? facePlans()
+      : p.face === 'note' ? faceNote()
+      : p.face === 'clock' ? faceClock(p)
+      : p.face === 'money' ? faceMoney()
+      : faceToday();
+
+    runClock(p.face === 'clock', ANALOG.indexOf(p.dial) !== -1 && p.seconds);
+    fadeList();
+    tellTray(todayScore());
+
+    /* A new face wants its own shape of window: the desktop app sets the
+       size it was drawn for, and the smallest it still works at. */
+    var shape = shapeOf(p);
+    if (shape !== lastShape) {
+      if (window.desktop && window.desktop.setWidgetFace) window.desktop.setWidgetFace(shape, lastShape !== null);
+      lastShape = shape;
+    }
+  }
+
+  /* A list fades out at the bottom only when something is really hidden
+     below. */
+  function fadeList() {
+    var list = document.getElementById('wg-list');
+    if (list) list.classList.toggle('is-scrollable', list.scrollHeight > list.clientHeight + 1);
   }
 
   /* The reminder ---------------------------------------------------
 
-     The app was entirely passive: it sat there and waited to be looked
-     at, which is the one thing a habit tracker cannot afford to do.
-     One nudge a day, at an hour the person picks, and only if the day
-     is actually unfinished when it comes.
-
-     It lives in the widget because the widget is the window that stays
-     open. The page has to be the one to decide, too — Electron's side
-     has no idea what got done. */
+     One nudge a day, at the hour chosen, and only if the day is actually
+     unfinished when it comes. It lives in the widget because the widget
+     is the window that stays open. */
   function checkReminder() {
     if (!window.desktop || !window.desktop.notify) return;
 
@@ -220,19 +597,13 @@ var Widget = (function () {
     if (plan.sent === todayKey) return;
     if (Storage.clock() < (plan.at || '21:00')) return;
 
-    var due = Habits.active().filter(function (habit) { return Habits.dueToday(habit); });
-    var left = due.filter(function (habit) {
-      return Habits.valueOf(habit.id) < habit.goal;
-    });
+    var left = dueToday().filter(function (h) { return Habits.valueOf(h.id) < h.goal; });
 
-    /* Marked as sent either way. A finished day should not leave the
-       check running every minute until midnight looking for a reason
-       to interrupt. */
     plan.sent = todayKey;
     Storage.save();
     if (!left.length) return;
 
-    var names = left.slice(0, 3).map(function (habit) { return habit.name; }).join(', ');
+    var names = left.slice(0, 3).map(function (h) { return h.name; }).join(', ');
     if (left.length > 3) names += ' and ' + (left.length - 3) + ' more';
 
     window.desktop.notify(
@@ -246,53 +617,65 @@ var Widget = (function () {
     window.desktop.setTrayNote('Daybook — ' + percent + '% of today done');
   }
 
-  /* habits.js calls repaint() after a tick; on the panel that redraws the
-     cards, here it redraws the widget. */
+  /* Pinned or not, as the desktop app says: pinned, the widget cannot be
+     dragged, and its own hide and move controls are gone. */
+  function setPinned(on) {
+    document.body.classList.toggle('is-pinned', !!on);
+  }
+
+  /* habits.js calls repaint() after a tick. */
   window.repaint = render;
 
   function start() {
+    if (typeof Motion !== 'undefined') Motion.apply();
     render();
 
-    /* Same as the panel: the file may hold a later version than this
-       window does. */
     Storage.adoptVault(function (adopted) {
       if (adopted) render();
     });
 
-    /* Only once a city is known. Started blind, the weather line would
-       read "set a city in Settings" — and the widget has no Settings,
-       so that is a line of chrome telling you to go somewhere else. */
     if (Storage.load().settings.place) Weather.start();
 
-    var box = document.getElementById('wg-habits');
+    var root = document.getElementById('wg');
 
-    box.addEventListener('click', function (event) {
-      var chip = event.target.closest('.wgh');
-      if (chip) Habits.bump(chip.getAttribute('data-id'), 1);
-    });
+    root.addEventListener('click', function (event) {
+      var b = event.target.closest('[data-bump]');
+      if (b) { Habits.bump(b.getAttribute('data-bump'), 1); return; }
 
-    box.addEventListener('contextmenu', function (event) {
-      var chip = event.target.closest('.wgh');
-      if (!chip) return;
-      event.preventDefault();
-      Habits.bump(chip.getAttribute('data-id'), -1);
-    });
-
-    /* Another window of this origin wrote to storage — most likely the
-       full panel. Redraw rather than drift out of date. */
-    window.addEventListener('storage', function (event) {
-      if (event.key === 'dayPanel') {
-        Storage.reload();
+      /* A task ticked off here is ticked off in the panel too: it is the
+         same list. */
+      var t = event.target.closest('[data-task]');
+      if (t) {
+        var id = t.getAttribute('data-task');
+        (Storage.load().tasks || []).forEach(function (task) {
+          if (task.id === id) task.done = !task.done;
+        });
+        Storage.save();
         render();
       }
     });
 
-    /* Resizing changes what fits, so the bottom fade has to be worked
-       out again. */
-    window.addEventListener('resize', function () { fade(box); });
+    root.addEventListener('contextmenu', function (event) {
+      var b = event.target.closest('[data-bump]');
+      if (!b) return;
+      event.preventDefault();
+      Habits.bump(b.getAttribute('data-bump'), -1);
+    });
 
-    /* Rolls the widget over at midnight without a restart, and is the
-       heartbeat the reminder rides on. */
+    /* Another window of this origin wrote to storage — most likely the
+       panel, perhaps with a new face. Redraw. */
+    window.addEventListener('storage', function (event) {
+      if (event.key === 'dayPanel') {
+        Storage.reload();
+        if (typeof Motion !== 'undefined') Motion.apply();
+        render();
+      }
+    });
+
+    window.addEventListener('resize', fadeList);
+
+    /* Rolls over at midnight without a restart, and is the heartbeat the
+       reminder rides on. */
     setInterval(function () {
       render();
       checkReminder();
@@ -304,6 +687,14 @@ var Widget = (function () {
 
     UpdateUI.start({ buttons: [document.getElementById('wg-update')] });
 
+    /* Pinned, a double-click anywhere opens the panel — there is nothing
+       to drag, so the gesture is free. */
+    root.addEventListener('dblclick', function (event) {
+      if (document.body.classList.contains('is-pinned') && !event.target.closest('button')) {
+        window.desktop.openPanel();
+      }
+    });
+
     document.getElementById('wg-open').addEventListener('click', function () {
       window.desktop.openPanel();
     });
@@ -312,9 +703,14 @@ var Widget = (function () {
       window.desktop.hideWidget();
     });
 
+    document.getElementById('wg-pin').addEventListener('click', function () {
+      window.desktop.togglePinned();
+    });
+
     var topBtn = document.getElementById('wg-top');
-    window.desktop.getWindowSettings().then(function (settings) {
-      topBtn.classList.toggle('is-on', settings.onTop);
+    window.desktop.getWindowSettings().then(function (s) {
+      topBtn.classList.toggle('is-on', s.onTop);
+      setPinned(s.pinned);
     });
 
     topBtn.addEventListener('click', function () {
@@ -322,6 +718,13 @@ var Widget = (function () {
         topBtn.classList.toggle('is-on', onTop);
       });
     });
+
+    if (window.desktop.onWidgetMode) {
+      window.desktop.onWidgetMode(function (mode) {
+        setPinned(mode.pinned);
+        topBtn.classList.toggle('is-on', !!mode.onTop);
+      });
+    }
   }
 
   return { start: start, render: render };

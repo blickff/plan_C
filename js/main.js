@@ -586,6 +586,61 @@ function wirePreviousCopy() {
   });
 }
 
+/* The widget's face and look (Settings → Desktop widget). Kept with the
+   other settings, so the widget window — reading the same storage — hears
+   of each change through the storage event and redraws. */
+function wireWidgetPrefs() {
+  function prefs() {
+    var s = Storage.load().settings;
+    if (!s.widget) s.widget = {};
+    return s.widget;
+  }
+
+  function mark() {
+    var w = prefs();
+    var face = w.face || 'today';
+    var dial = w.dial || 'classic';
+    function radio(attr, value) {
+      document.querySelectorAll('[' + attr + ']').forEach(function (b) {
+        var on = b.getAttribute(attr) === value;
+        b.classList.toggle('is-active', on);
+        b.setAttribute('aria-checked', String(on));
+      });
+    }
+    radio('data-wface', face);
+    radio('data-wdial', dial);
+    radio('data-waccent', w.accent || 'orange');
+    radio('data-wbackdrop', w.backdrop === 'plain' ? 'plain' : 'glow');
+
+    var sec = document.getElementById('wseconds-btn');
+    sec.classList.toggle('is-active', w.seconds !== false);
+    /* Only the dials with hands have a second hand to show. */
+    sec.hidden = ['minimal', 'classic', 'roman', 'modern', 'mono'].indexOf(dial) === -1;
+    document.getElementById('wdate-btn').classList.toggle('is-active', w.date !== false);
+    document.getElementById('wopts-clock').hidden = face !== 'clock';
+  }
+
+  function set(key, value) {
+    prefs()[key] = value;
+    Storage.save();
+    mark();
+  }
+
+  [['data-wface', 'face'], ['data-wdial', 'dial'], ['data-waccent', 'accent'], ['data-wbackdrop', 'backdrop']].forEach(function (pair) {
+    document.querySelectorAll('[' + pair[0] + ']').forEach(function (b) {
+      b.addEventListener('click', function () { set(pair[1], b.getAttribute(pair[0])); });
+    });
+  });
+  document.getElementById('wseconds-btn').addEventListener('click', function () {
+    set('seconds', prefs().seconds === false);
+  });
+  document.getElementById('wdate-btn').addEventListener('click', function () {
+    set('date', prefs().date === false);
+  });
+
+  mark();
+}
+
 function wireChrome() {
   var items = document.querySelectorAll('.nav__item');
   for (var i = 0; i < items.length; i++) {
@@ -630,6 +685,7 @@ function wireChrome() {
     var topBtn = document.getElementById('ontop-btn');
     var pinBtn = document.getElementById('pinned-btn');
     card.removeAttribute('hidden');
+    wireWidgetPrefs();
 
     window.desktop.getWindowSettings().then(function (settings) {
       autoBtn.classList.toggle('is-active', settings.openAtLogin);

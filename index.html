@@ -440,21 +440,93 @@
         </div>
       </div>
 
+      <!-- The desktop widget: which face it wears and how, and how it sits on
+           the desktop. Only in the desktop app (js/main.js shows it). Every
+           choice is saved with the rest of the settings, and the widget —
+           another window reading the same storage — redraws at once. -->
       <div class="card" id="desktop-card" hidden>
         <p class="card__title">Desktop widget</p>
-        <p class="card__note muted">
-          Ctrl+Shift+D hides and brings back the widget, and so does the icon by the clock.
-        </p>
+        <p class="card__note muted">What the widget on your desktop shows. It changes the moment you choose.</p>
+
+        <div class="wpick" role="radiogroup" aria-label="Widget face">
+          <button class="wpick__opt" type="button" role="radio" data-wface="clock">
+            <span class="wpick__art"><svg viewBox="0 0 64 48"><circle cx="32" cy="24" r="18" class="wa-dial"/><line x1="32.0" y1="9.5" x2="32.0" y2="7.5" class="wd-tick"/><line x1="39.3" y1="11.4" x2="40.3" y2="9.7" class="wd-tick"/><line x1="44.6" y1="16.8" x2="46.3" y2="15.7" class="wd-tick"/><line x1="46.5" y1="24.0" x2="48.5" y2="24.0" class="wd-tick"/><line x1="44.6" y1="31.2" x2="46.3" y2="32.3" class="wd-tick"/><line x1="39.3" y1="36.6" x2="40.3" y2="38.3" class="wd-tick"/><line x1="32.0" y1="38.5" x2="32.0" y2="40.5" class="wd-tick"/><line x1="24.8" y1="36.6" x2="23.8" y2="38.3" class="wd-tick"/><line x1="19.4" y1="31.3" x2="17.7" y2="32.3" class="wd-tick"/><line x1="17.5" y1="24.0" x2="15.5" y2="24.0" class="wd-tick"/><line x1="19.4" y1="16.8" x2="17.7" y2="15.7" class="wd-tick"/><line x1="24.7" y1="11.4" x2="23.7" y2="9.7" class="wd-tick"/><line x1="32" y1="24" x2="32" y2="12" class="wa-hand"/><line x1="32" y1="24" x2="40" y2="28" class="wa-hand"/><line x1="32" y1="26" x2="25" y2="11" class="wa-sec"/></svg></span>
+            <b class="wpick__name">Clock</b>
+            <span class="wpick__note">Just a clock, with the dial you choose</span>
+          </button>
+          <button class="wpick__opt" type="button" role="radio" data-wface="today">
+            <span class="wpick__art"><svg viewBox="0 0 64 48"><rect x="8" y="7" width="48" height="9" rx="3" class="wa-box"/><rect x="8" y="20" width="48" height="9" rx="3" class="wa-box"/><rect x="8" y="33" width="48" height="9" rx="3" class="wa-box"/><rect x="11" y="13" width="30" height="1.6" rx=".8" class="wa-ok"/><rect x="11" y="26" width="42" height="1.6" rx=".8" class="wa-ok"/><rect x="11" y="39" width="14" height="1.6" rx=".8" class="wa-ok"/></svg></span>
+            <b class="wpick__name">Today</b>
+            <span class="wpick__note">Tick today’s habits right there</span>
+          </button>
+          <button class="wpick__opt" type="button" role="radio" data-wface="week">
+            <span class="wpick__art"><svg viewBox="0 0 64 48"><rect x="7" y="14" width="12" height="8" rx="2" class="wa-line"/><rect x="7" y="26" width="9" height="2.4" rx="1.2" class="wa-bar"/><rect x="25" y="24" width="3.6" height="16" rx="1.8" class="wa-ok"/><rect x="30" y="18" width="3.6" height="22" rx="1.8" class="wa-ok"/><rect x="35" y="28" width="3.6" height="12" rx="1.8" class="wa-ok"/><rect x="40" y="14" width="3.6" height="26" rx="1.8" class="wa-ok"/><rect x="45" y="20" width="3.6" height="20" rx="1.8" class="wa-ok"/><rect x="50" y="12" width="3.6" height="28" rx="1.8" class="wa-ok"/><rect x="55" y="26" width="3.6" height="14" rx="1.8" class="wa-now"/></svg></span>
+            <b class="wpick__name">Week</b>
+            <span class="wpick__note">Your streak and the last seven days</span>
+          </button>
+          <button class="wpick__opt" type="button" role="radio" data-wface="plans">
+            <span class="wpick__art"><svg viewBox="0 0 64 48"><circle cx="13" cy="12" r="3.4" class="wa-ok"/><rect x="21" y="10.6" width="30" height="2.8" rx="1.4" class="wa-bar"/><circle cx="13" cy="24" r="3.4" class="wa-ring"/><rect x="21" y="22.6" width="24" height="2.8" rx="1.4" class="wa-line"/><circle cx="13" cy="36" r="3.4" class="wa-ring"/><rect x="21" y="34.6" width="34" height="2.8" rx="1.4" class="wa-line"/></svg></span>
+            <b class="wpick__name">Plans</b>
+            <span class="wpick__note">Today’s tasks and what is coming up</span>
+          </button>
+          <button class="wpick__opt" type="button" role="radio" data-wface="note">
+            <span class="wpick__art"><svg viewBox="0 0 64 48"><rect x="10" y="9" width="16" height="2.4" rx="1.2" class="wa-bar"/><rect x="10" y="17" width="44" height="2.8" rx="1.4" class="wa-line"/><rect x="10" y="23.5" width="40" height="2.8" rx="1.4" class="wa-line"/><rect x="10" y="30" width="44" height="2.8" rx="1.4" class="wa-line"/><rect x="10" y="36.5" width="22" height="2.8" rx="1.4" class="wa-line"/></svg></span>
+            <b class="wpick__name">Note</b>
+            <span class="wpick__note">What you wrote today</span>
+          </button>
+          <button class="wpick__opt" type="button" role="radio" data-wface="money">
+            <span class="wpick__art"><svg viewBox="0 0 64 48"><rect x="8" y="8" width="26" height="7" rx="2" class="wa-line"/><rect x="8" y="32" width="6" height="10" rx="2" class="wa-bar"/><rect x="16.4" y="28" width="6" height="14" rx="2" class="wa-bar"/><rect x="24.8" y="33" width="6" height="9" rx="2" class="wa-bar"/><rect x="33.2" y="26" width="6" height="16" rx="2" class="wa-bar"/><rect x="41.6" y="30" width="6" height="12" rx="2" class="wa-bar"/><rect x="50" y="22" width="6" height="20" rx="2" class="wa-now"/></svg></span>
+            <b class="wpick__name">Money</b>
+            <span class="wpick__note">This month’s spending at a glance</span>
+          </button>
+        </div>
+
+        <div class="wopts" id="wopts-clock" hidden>
+          <p class="wopts__label">Dial</p>
+          <div class="wdial" role="radiogroup" aria-label="Clock dial">
+            <button class="wdial__opt" type="button" role="radio" data-wdial="minimal" title="Minimal"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="wa-dial"/><line x1="20.0" y1="6.8" x2="20.0" y2="4.0" class="wd-tick"/><line x1="26.6" y1="8.6" x2="28.0" y2="6.1" class="wd-tick"/><line x1="31.4" y1="13.4" x2="33.9" y2="12.0" class="wd-tick"/><line x1="33.2" y1="20.0" x2="36.0" y2="20.0" class="wd-tick"/><line x1="31.4" y1="26.6" x2="33.9" y2="28.0" class="wd-tick"/><line x1="26.6" y1="31.4" x2="28.0" y2="33.9" class="wd-tick"/><line x1="20.0" y1="33.2" x2="20.0" y2="36.0" class="wd-tick"/><line x1="13.4" y1="31.4" x2="12.0" y2="33.9" class="wd-tick"/><line x1="8.6" y1="26.6" x2="6.1" y2="28.0" class="wd-tick"/><line x1="6.8" y1="20.0" x2="4.0" y2="20.0" class="wd-tick"/><line x1="8.6" y1="13.4" x2="6.1" y2="12.0" class="wd-tick"/><line x1="13.4" y1="8.6" x2="12.0" y2="6.1" class="wd-tick"/><line x1="20" y1="20" x2="20" y2="10.5" class="wa-hand"/><line x1="20" y1="20" x2="26.5" y2="23" class="wa-hand"/><line x1="20" y1="22" x2="14.5" y2="8" class="wa-sec"/></svg><span>Minimal</span></button>
+            <button class="wdial__opt" type="button" role="radio" data-wdial="classic" title="Classic"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="wa-dial"/><text x="20" y="10.8" class="wd-num">12</text><text x="30.6" y="22" class="wd-num">3</text><text x="20" y="33.4" class="wd-num">6</text><text x="9.4" y="22" class="wd-num">9</text><line x1="20" y1="20" x2="20" y2="10.5" class="wa-hand"/><line x1="20" y1="20" x2="26.5" y2="23" class="wa-hand"/><line x1="20" y1="22" x2="14.5" y2="8" class="wa-sec"/></svg><span>Classic</span></button>
+            <button class="wdial__opt" type="button" role="radio" data-wdial="roman" title="Roman"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="wa-dial"/><text x="20" y="11.2" class="wd-num wd-roman">XII</text><text x="30.2" y="22.2" class="wd-num wd-roman">III</text><text x="20" y="33.6" class="wd-num wd-roman">VI</text><text x="9.8" y="22.2" class="wd-num wd-roman">IX</text><line x1="20" y1="20" x2="20" y2="10.5" class="wa-hand"/><line x1="20" y1="20" x2="26.5" y2="23" class="wa-hand"/><line x1="20" y1="22" x2="14.5" y2="8" class="wa-sec"/></svg><span>Roman</span></button>
+            <button class="wdial__opt" type="button" role="radio" data-wdial="modern" title="Modern"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="wa-dial"/><circle cx="20.0" cy="6.0" r="1.3" class="wd-fill"/><circle cx="27.0" cy="7.9" r="0.7" class="wd-fill"/><circle cx="32.1" cy="13.0" r="0.7" class="wd-fill"/><circle cx="34.0" cy="20.0" r="1.3" class="wd-fill"/><circle cx="32.1" cy="27.0" r="0.7" class="wd-fill"/><circle cx="27.0" cy="32.1" r="0.7" class="wd-fill"/><circle cx="20.0" cy="34.0" r="1.3" class="wd-fill"/><circle cx="13.0" cy="32.1" r="0.7" class="wd-fill"/><circle cx="7.9" cy="27.0" r="0.7" class="wd-fill"/><circle cx="6.0" cy="20.0" r="1.3" class="wd-fill"/><circle cx="7.9" cy="13.0" r="0.7" class="wd-fill"/><circle cx="13.0" cy="7.9" r="0.7" class="wd-fill"/><line x1="20" y1="20" x2="20" y2="11" class="wa-hand wa-hand--bold"/><line x1="20" y1="20" x2="26" y2="23" class="wa-hand wa-hand--bold"/><line x1="20" y1="22" x2="14.5" y2="8" class="wa-sec"/></svg><span>Modern</span></button>
+            <button class="wdial__opt" type="button" role="radio" data-wdial="mono" title="Mono"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" class="wd-monoface"/><line x1="20.0" y1="5.4" x2="20.0" y2="4.0" class="wd-monotick"/><line x1="27.3" y1="7.4" x2="28.0" y2="6.1" class="wd-monotick"/><line x1="32.6" y1="12.7" x2="33.9" y2="12.0" class="wd-monotick"/><line x1="34.6" y1="20.0" x2="36.0" y2="20.0" class="wd-monotick"/><line x1="32.6" y1="27.3" x2="33.9" y2="28.0" class="wd-monotick"/><line x1="27.3" y1="32.6" x2="28.0" y2="33.9" class="wd-monotick"/><line x1="20.0" y1="34.6" x2="20.0" y2="36.0" class="wd-monotick"/><line x1="12.7" y1="32.6" x2="12.0" y2="33.9" class="wd-monotick"/><line x1="7.4" y1="27.3" x2="6.1" y2="28.0" class="wd-monotick"/><line x1="5.4" y1="20.0" x2="4.0" y2="20.0" class="wd-monotick"/><line x1="7.4" y1="12.7" x2="6.1" y2="12.0" class="wd-monotick"/><line x1="12.7" y1="7.4" x2="12.0" y2="6.1" class="wd-monotick"/><line x1="20" y1="20" x2="20" y2="11" class="wd-monohand"/><line x1="20" y1="20" x2="27" y2="23.4" class="wd-monohand wd-monohand--m"/><circle cx="20" cy="20" r="1.3" class="wd-fill"/></svg><span>Mono</span></button>
+            <button class="wdial__opt" type="button" role="radio" data-wdial="digital" title="Digital"><svg viewBox="0 0 40 40"><text x="20" y="25" class="wd-digits">9:41</text></svg><span>Digital</span></button>
+            <button class="wdial__opt" type="button" role="radio" data-wdial="stack" title="Stack"><svg viewBox="0 0 40 40"><text x="20" y="18.5" class="wd-stack">09</text><text x="20" y="33" class="wd-stack wd-stack--m">41</text></svg><span>Stack</span></button>
+            <button class="wdial__opt" type="button" role="radio" data-wdial="ring" title="Ring"><svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="16" class="wd-track"/><circle cx="20" cy="20" r="16" class="wd-prog" pathLength="100" stroke-dasharray="68 100" transform="rotate(-90 20 20)"/><text x="20" y="23.5" class="wd-digits wd-digits--small">9:41</text></svg><span>Ring</span></button>
+          </div>
+          <div class="row">
+            <button class="pill" type="button" id="wseconds-btn">Second hand</button>
+            <button class="pill" type="button" id="wdate-btn">Show the date</button>
+          </div>
+        </div>
+
+        <p class="wopts__label">Accent</p>
+        <div class="wsw" role="radiogroup" aria-label="Accent colour">
+          <button class="wsw__one wsw__one--orange" type="button" role="radio" data-waccent="orange" title="Orange" aria-label="Orange"></button>
+          <button class="wsw__one wsw__one--amber" type="button" role="radio" data-waccent="amber" title="Amber" aria-label="Amber"></button>
+          <button class="wsw__one wsw__one--red" type="button" role="radio" data-waccent="red" title="Red" aria-label="Red"></button>
+          <button class="wsw__one wsw__one--green" type="button" role="radio" data-waccent="green" title="Green" aria-label="Green"></button>
+          <button class="wsw__one wsw__one--blue" type="button" role="radio" data-waccent="blue" title="Blue" aria-label="Blue"></button>
+          <button class="wsw__one wsw__one--violet" type="button" role="radio" data-waccent="violet" title="Violet" aria-label="Violet"></button>
+          <button class="wsw__one wsw__one--ink" type="button" role="radio" data-waccent="ink" title="Ink" aria-label="Ink"></button>
+        </div>
+
+        <p class="wopts__label">Backdrop</p>
         <div class="row">
-          <button class="pill" type="button" id="autostart-btn">Start with Windows</button>
+          <button class="pill" type="button" data-wbackdrop="glow">Lit by the accent</button>
+          <button class="pill" type="button" data-wbackdrop="plain">Plain</button>
+        </div>
+
+        <p class="wopts__label">On the desktop</p>
+        <div class="row">
+          <button class="pill" type="button" id="pinned-btn">Pinned to the desktop</button>
           <button class="pill" type="button" id="ontop-btn">Keep above other windows</button>
-          <button class="pill" type="button" id="pinned-btn">Pin to the desktop</button>
+          <button class="pill" type="button" id="autostart-btn">Start with Windows</button>
         </div>
         <p class="card__note muted">
-          Pinned, it leaves the taskbar and Alt+Tab, stays behind whatever you
-          are working in rather than over it, and comes back after “show desktop”.
-          Windows has no real way to fasten a window to the wallpaper, so this is
-          as close as it gets without machinery this app does not otherwise need.
+          Pinned, it stays exactly where it is: it cannot be moved, resized or
+          hidden, sits behind whatever you are working in, and comes back after
+          “show desktop”. Unpin it here to move it. Double-click it to open the
+          panel; Ctrl+Shift+D and the icon by the clock bring it back.
         </p>
       </div>
 

@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Widget preview</title>
+  <!-- A fitting room for the desktop widget: the real widget, at the size
+       its window would be, beside the same choices Settings offers. For
+       looking at it in a browser (node scripts/serve.js, then
+       /scripts/widget-demo.html). Not part of the app — the build leaves
+       scripts/ out. It reads and writes the same storage as the panel on
+       that address, so use it on a copy with example data. -->
+  <link rel="stylesheet" href="../css/theme.css">
+  <link rel="stylesheet" href="../css/app.css">
+  <link rel="stylesheet" href="../css/widget.css">
+  <style>
+    body.widget-body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 330px;
+      min-height: 100vh;
+      overflow: auto;
+      user-select: auto;
+      background: #0e0e11;
+    }
+
+    /* A stand-in for the desktop behind the widget. */
+    .demo-stage {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 28px;
+      box-sizing: border-box;
+      background:
+        radial-gradient(70% 60% at 20% 15%, #3a4a6b 0%, transparent 60%),
+        radial-gradient(60% 60% at 85% 80%, #5a3a5c 0%, transparent 60%),
+        linear-gradient(160deg, #1d2433, #121219);
+    }
+
+    .demo-stage .wg {
+      width: var(--w, 340px);
+      height: var(--h, 440px);
+      border-radius: 10px;
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.06);
+      transition: width 0.3s cubic-bezier(0.2, 0, 0, 1), height 0.3s cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    .demo-panel {
+      padding: 22px 20px 30px;
+      border-left: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      overflow: auto;
+    }
+
+    .demo-panel h1 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+    .demo-panel p.lead { margin: 0 0 6px; font-size: 12px; line-height: 1.45; color: var(--text-faint); }
+    .demo-panel h2 {
+      margin: 18px 0 8px;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+    }
+    .demo-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .demo-row .pill { padding: 6px 12px; font-size: 12px; }
+    .demo-sw { display: flex; gap: 9px; }
+    .demo-sw button {
+      width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+      background: var(--sw); cursor: pointer;
+      box-shadow: 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent);
+    }
+    .demo-sw button.is-active { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+
+    @media (max-width: 760px) {
+      body.widget-body { grid-template-columns: 1fr; }
+      .demo-stage { min-height: 56vh; }
+      .demo-panel { border-left: 0; border-top: 1px solid var(--border); }
+    }
+  </style>
+</head>
+<body class="widget-body">
+
+  <div class="demo-stage">
+    <div class="wg" id="wg">
+      <div class="wg__bar">
+        <p class="wg__meta"><span id="wg-date"></span><span class="wg__weather" id="weather"></span></p>
+        <button class="wg__upd" type="button" id="wg-update" hidden></button>
+        <div class="wg__tools">
+          <button class="wg__btn wg__unpinned" type="button" id="wg-pin" title="Pin to the desktop">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3-1-5z"/><path d="M12 14v6"/></svg>
+          </button>
+          <button class="wg__btn wg__unpinned" type="button" id="wg-top" title="Keep above other windows">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg>
+          </button>
+          <button class="wg__btn" type="button" id="wg-open" title="Open the full panel">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5"/><path d="M19 5l-7 7"/><path d="M18 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></svg>
+          </button>
+          <button class="wg__btn wg__unpinned" type="button" id="wg-hide" title="Hide">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="wg__face" id="wg-face"></div>
+    </div>
+  </div>
+
+  <aside class="demo-panel" id="demo-panel"></aside>
+
+  <script src="../js/storage.js"></script>
+  <script src="../js/motion.js"></script>
+  <script src="../js/presets.js"></script>
+  <script src="../js/habits.js"></script>
+  <script src="../js/weather.js"></script>
+  <script src="../js/update-ui.js"></script>
+  <script src="../js/widget.js"></script>
+  <script src="widget-demo.js"></script>
+</body>
+</html>

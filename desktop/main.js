@@ -34,7 +34,14 @@ const ROOT = path.join(__dirname, '..');
    in the old folder, with nothing on screen to say so. The folder keeps
    its first name for good, whatever the app is called. Must run before
    the app is ready. */
-app.setPath('userData', path.join(app.getPath('appData'), 'day-panel'));
+/* Run from source (never in an installed copy), DAYBOOK_PROFILE=name gives
+   the app a folder of its own — and with it its own single-instance lock —
+   so a change can be tried beside the installed app without touching its
+   data or being turned away as a second copy. */
+const PROFILE = !app.isPackaged && process.env.DAYBOOK_PROFILE
+  ? 'day-panel-' + String(process.env.DAYBOOK_PROFILE).replace(/[^a-z0-9-]/gi, '')
+  : 'day-panel';
+app.setPath('userData', path.join(app.getPath('appData'), PROFILE));
 const STATE_FILE = () => path.join(app.getPath('userData'), 'window-state.json');
 
 const TYPES = {
@@ -152,6 +159,10 @@ function createWidget() {
     transparent: false,
     backgroundColor: '#0b0b0b',
     resizable: true,
+    /* A double-click on a frameless window's drag area would otherwise
+       blow the widget up to fill the screen. */
+    maximizable: false,
+    fullscreenable: false,
     /* Pinned to the desktop: out of the taskbar and out of Alt+Tab, and
        never held above other windows, so it sits on the desktop rather
        than in the way.
@@ -181,9 +192,11 @@ function createWidget() {
 
   /* Shown only once the page has painted, so it never flashes empty. */
   widget.once('ready-to-show', () => {
+    applyWidgetMode();
     if (loadState().pinned) widget.showInactive();
     else { widget.show(); widget.focus(); }
   });
+  widget.webContents.on('did-finish-load', applyWidgetMode);
 
   /* "Show desktop" minimises every top-level window, and a thing that
      is meant to live on the desktop should survive being shown it.
@@ -211,13 +224,44 @@ function createWidget() {
 }
 
 /* Pinned and always-on-top are opposite answers to the same question,
-   so turning either on turns the other off. */
+   so turning either on turns the other off.
+
+   Pinned is fastened to the desktop, as far as Windows allows without
+   native code: it cannot be moved or resized, not even by dragging; it
+   is out of the taskbar and Alt+Tab; it never takes the focus, so a
+   click on it — ticking a habit — does not lift it above the windows in
+   front; and it comes back after "show desktop". The only way to move
+   or remove it is to unpin it in Settings. The page is told too, so it
+   drops its own hide and move buttons. */
 function applyWidgetMode() {
   if (!widget || widget.isDestroyed()) return;
   const saved = loadState();
-  widget.setAlwaysOnTop(!saved.pinned && !!saved.onTop);
-  widget.setSkipTaskbar(!!saved.pinned);
+  const pinned = !!saved.pinned;
+  widget.setAlwaysOnTop(!pinned && !!saved.onTop);
+  widget.setSkipTaskbar(pinned);
+  widget.setMovable(!pinned);
+  widget.setResizable(!pinned);
+  widget.setFocusable(!pinned);
+  widget.webContents.send('widget-mode', { pinned, onTop: !pinned && !!saved.onTop });
+  console.log('widget mode: ' + (pinned ? 'pinned' : 'free') +
+    ' movable=' + widget.isMovable() + ' resizable=' + widget.isResizable() +
+    ' focusable=' + widget.isFocusable() + ' size=' + widget.getSize().join('x'));
 }
+
+/* Each face of the widget has the shape it was drawn for, and a smallest
+   size it still works at: [width, height, min width, min height]. The
+   clock's shape depends on its dial: a round one wants a square, a row
+   of digits a wide strip, hours over minutes a tall one. */
+const FACE_SIZES = {
+  today: [340, 440, 260, 260],
+  week: [410, 200, 330, 170],
+  plans: [310, 330, 250, 220],
+  note: [310, 230, 230, 160],
+  money: [330, 260, 260, 210],
+  'clock-round': [270, 270, 170, 170],
+  'clock-digital': [390, 180, 260, 130],
+  'clock-stack': [220, 280, 160, 210]
+};
 
 function openPanel() {
   if (panel && !panel.isDestroyed()) {
@@ -260,6 +304,7 @@ function openPanel() {
 
 function showWidget() {
   if (!widget || widget.isDestroyed()) return createWidget();
+  if (loadState().pinned) { widget.showInactive(); return; }
   widget.show();
   widget.focus();
 }
@@ -281,8 +326,11 @@ function createTray() {
     { label: 'Quit Daybook', click: () => { app.isQuitting = true; app.quit(); } }
   ]));
 
+  /* Pinned, the icon only ever brings the widget back — hiding a pinned
+     widget is done by unpinning it first. */
   tray.on('click', () => {
-    if (widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
+    const pinned = !!loadState().pinned;
+    if (!pinned && widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
     else showWidget();
   });
 }
@@ -304,6 +352,20 @@ function watch(win, name) {
 
 function wireMessages() {
   ipcMain.handle('open-panel', openPanel);
+
+  /* A face chosen in Settings: set its smallest size, and — when it is a
+     change rather than the widget starting up — its own size. */
+  ipcMain.handle('widget-face', (_event, face, reset) => {
+    const size = FACE_SIZES[face];
+    if (!size || !widget || widget.isDestroyed()) return;
+    widget.setMinimumSize(size[2], size[3]);
+    if (!reset) return;
+    const pinned = !!loadState().pinned;
+    if (pinned) widget.setResizable(true);
+    widget.setSize(size[0], size[1]);
+    if (pinned) widget.setResizable(false);
+    saveState({ width: size[0], height: size[1] });
+  });
 
   ipcMain.handle('toggle-on-top', () => {
     const next = !loadState().onTop;
@@ -341,8 +403,9 @@ function wireMessages() {
     return next;
   });
 
+  /* A pinned widget is not hidden from itself: unpin it first. */
   ipcMain.handle('hide-widget', () => {
-    if (widget) widget.hide();
+    if (widget && !loadState().pinned) widget.hide();
   });
 
   ipcMain.handle('open-external', (_event, url) => shell.openExternal(url));
@@ -469,7 +532,8 @@ app.whenReady().then(async () => {
      fail if another program already owns the combination — not worth
      stopping the app over. */
   const ok = globalShortcut.register('CommandOrControl+Shift+D', () => {
-    if (widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
+    const pinned = !!loadState().pinned;
+    if (!pinned && widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
     else showWidget();
   });
   if (!ok) console.warn('Could not register the Ctrl+Shift+D shortcut.');

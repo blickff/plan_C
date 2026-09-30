@@ -18,6 +18,15 @@
         "3211"
       ],
       "port": 3211
+    },
+    {
+      "name": "demo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "scripts/serve.js",
+        "3212"
+      ],
+      "port": 3212
     }
   ]
 }

@@ -147,31 +147,12 @@ var Dashboard = (function () {
         ' — ' + behind.met + ' of ' + Habits.plural(behind.total, behind.unit) + '</p>'
       : '';
 
-    /* The match (js/flame.js). A weekly habit's weeks count as seven days
-       each, so its fire grows at the same pace in time. It burns low
-       while today's part is still to do, and smokes when a streak has
-       just gone out. */
-    var days = lead.unit === 'week' ? lead.run * 7 : lead.run;
-    var run = Habits.streaks(state.log, lead.habit, todayKey);
-    var waiting = lead.run > 0 && Habits.dueOn(state.log, lead.habit, todayKey) &&
-      !Habits.metOn(state.log, lead.habit, todayKey);
-    /* Gone out: only on the day after the streak broke — the last
-       finished point was missed and the one before it was met. It smokes
-       then, burnt as far as that run had got; after that it is a fresh
-       match again, ready for the next run. */
-    var wentOut = false;
-    if (lead.run === 0 && run.best > 0) {
-      var points = Habits.occurrences(state.log, lead.habit, todayKey);
-      var k = points.length - 1;
-      if (k >= 0 && !points[k].met) k--;          // today, still in progress
-      var missed = 0;
-      while (k >= 0 && !points[k].met) { missed++; k--; }
-      if (missed === 1) {
-        var last = 0;
-        while (k >= 0 && points[k].met) { last++; k--; }
-        wentOut = Math.max(1, lead.unit === 'week' ? last * 7 : last);
-      }
-    }
+    /* The match (js/flame.js): how long it has burned, whether it is
+       waiting for today, and whether it has just gone out. */
+    var st = Flame.stateFor(lead.habit, lead.run, lead.unit);
+    var days = st.days;
+    var waiting = st.waiting;
+    var wentOut = st.wentOut;
     var match = typeof Flame !== 'undefined' ? Flame.html(days, waiting, wentOut) : '';
 
     /* Under the number: what the fire is now and how far the next one is,
