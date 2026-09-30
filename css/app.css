@@ -2595,11 +2595,11 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 
 .flame {
   flex: none;
-  width: 88px;
+  width: 62px;
   height: 106px;
   /* Reaches into the card's padding, so the card grows only a little for
      it. */
-  margin: -22px -8px -16px -18px;
+  margin: -22px -4px -16px -12px;
   cursor: default;
 }
 

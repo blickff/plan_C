@@ -52,22 +52,21 @@ var Flame = (function () {
   }
 
   /* One tongue of flame: round at the bottom, pointed at the top, its
-     base at 0,0 and its tip at 0,-1. A little fuller on one side, as a
-     real flame is, rather than a perfect drop. */
-  var TONGUE = 'M0.02,-1 C0.16,-0.76 0.5,-0.58 0.48,-0.27 C0.47,0.02 0.27,0.16 0,0.16 ' +
-    'C-0.27,0.16 -0.46,0.02 -0.46,-0.25 C-0.46,-0.52 -0.16,-0.72 0.02,-1 Z';
+     base at 0,0 and its tip at 0,-1. Even on both sides — a lopsided one
+     made the whole flame look pushed to the right of the match. */
+  var TONGUE = 'M0,-1 C0.14,-0.75 0.47,-0.56 0.47,-0.26 C0.47,0.02 0.27,0.16 0,0.16 ' +
+    'C-0.27,0.16 -0.47,0.02 -0.47,-0.26 C-0.47,-0.56 -0.14,-0.75 0,-1 Z';
 
   /* A thin lick of flame that rises beside the main one. */
   var LICK = 'M0,-1 C0.1,-0.7 0.3,-0.45 0.26,-0.2 C0.23,0.05 0.1,0.12 0,0.12 ' +
     'C-0.1,0.12 -0.24,0.04 -0.24,-0.2 C-0.24,-0.45 -0.08,-0.7 0,-1 Z';
 
-  /* The match leans 45° to the right, its head up at HX,HY; the flame
-     rises straight up from the head, as fire does whatever the match is
-     doing, and wraps round it — the bottom of the flame is thin enough to
-     see the glowing head through, with the faint blue a match flame has
-     at its root. */
-  var HX = 64;
-  var HY = 70;
+  /* The match stands upright in the middle of the drawing, its head at
+     HX,HY; the flame rises from the head and wraps round it — the bottom
+     of the flame is thin enough to see the glowing head through, with
+     the faint blue a match flame has at its root. */
+  var HX = 35;
+  var HY = 72;
 
   /* days: the streak in days. waiting: today not done yet. wentOut: the
      streak is nought but there has been one before. */
@@ -86,13 +85,13 @@ var Flame = (function () {
       ? '<circle class="flame__glow" cx="' + bx + '" cy="' + (by - size * 0.42) + '" r="' + (size * 0.8 + 12) + '" fill="' + url('g') + '"/>'
       : '';
 
-    /* The match, lying at 45°: the stick runs down to the left from the
-       head. Charred for a little way below the head once lit. */
+    /* The match, upright: the stick runs down from the head, charred
+       for a little way below it once lit. */
     var match =
-      '<g transform="translate(' + HX + ' ' + HY + ') rotate(45)">' +
-        '<rect x="-2.1" y="2" width="4.2" height="66" rx="2.1" fill="' + url('w') + '"/>' +
-        (lit ? '<rect x="-2.1" y="2" width="4.2" height="16" rx="2.1" fill="' + url('c') + '"/>' : '') +
-        '<ellipse class="flame__head" cx="0" cy="-0.5" rx="4.3" ry="6" fill="' + url('h') + '"/>' +
+      '<g transform="translate(' + HX + ' ' + HY + ')">' +
+        '<rect x="-2.3" y="2" width="4.6" height="42" rx="2.3" fill="' + url('w') + '"/>' +
+        (lit ? '<rect x="-2.3" y="2" width="4.6" height="13" rx="2.3" fill="' + url('c') + '"/>' : '') +
+        '<ellipse class="flame__head" cx="0" cy="-0.5" rx="4.6" ry="6.2" fill="' + url('h') + '"/>' +
         (lit ? '<ellipse class="flame__ember" cx="0" cy="-1" rx="2.8" ry="3.8"/>' : '') +
       '</g>';
 
@@ -106,8 +105,8 @@ var Flame = (function () {
             /* Two licks either side, then the main body, the middle and the
                bright core. Each wrapper holds its size and place; the group
                inside it is what flickers, so the two never fight. */
-            '<g transform="translate(-0.2 -0.02) scale(0.55 0.62)"><g class="flame__tongue flame__lick flame__lick--l"><path d="' + LICK + '" fill="' + url('o') + '"/></g></g>' +
-            '<g transform="translate(0.22 0) scale(0.5 0.55)"><g class="flame__tongue flame__lick flame__lick--r"><path d="' + LICK + '" fill="' + url('o') + '"/></g></g>' +
+            '<g transform="translate(-0.21 -0.02) scale(0.52 0.6)"><g class="flame__tongue flame__lick flame__lick--l"><path d="' + LICK + '" fill="' + url('o') + '"/></g></g>' +
+            '<g transform="translate(0.21 -0.02) scale(0.52 0.6)"><g class="flame__tongue flame__lick flame__lick--r"><path d="' + LICK + '" fill="' + url('o') + '"/></g></g>' +
             '<g class="flame__tongue flame__tongue--outer"><path d="' + TONGUE + '" fill="' + url('o') + '"/></g>' +
             '<g transform="translate(0 0.04) scale(0.7)"><g class="flame__tongue flame__tongue--mid"><path d="' + TONGUE + '" fill="' + url('m') + '"/></g></g>' +
           '</g>' +
@@ -131,7 +130,7 @@ var Flame = (function () {
       : '';
 
     return '' +
-      '<svg class="flame__svg" viewBox="0 0 100 120" aria-hidden="true">' +
+      '<svg class="flame__svg" viewBox="0 0 70 120" aria-hidden="true">' +
         '<defs>' +
           '<filter id="' + id + 's" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="0.7"/></filter>' +
           '<radialGradient id="' + id + 'g"><stop offset="0" class="flame__g0"/><stop offset="1" class="flame__g1"/></radialGradient>' +
