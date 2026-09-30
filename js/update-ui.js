@@ -19,20 +19,27 @@ var UpdateUI = (function () {
     return '';
   }
 
+  /* "checked at 14:05", so an answer is never mistaken for an old one. */
+  function when(s) {
+    if (!s || !s.checkedAt) return '';
+    var d = new Date(s.checkedAt);
+    return ' Checked at ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + '.';
+  }
+
   /* The longer sentence for Settings. */
   function describe(s) {
     if (!s) return '';
     switch (s.status) {
       case 'dev': return 'Running from the source folder. Updates are for the installed app.';
       case 'checking': return 'Looking for a newer version…';
-      case 'latest': return 'Up to date — this is the newest version.';
+      case 'latest': return 'You have the newest version' + (s.version ? ' (' + s.version + ')' : '') + '.' + when(s);
       case 'available':
         return s.inPlace
-          ? 'Version ' + s.latest + ' is out. Press the button and it downloads; one more press restarts into it.'
-          : 'Version ' + s.latest + ' is out. This copy cannot replace itself, so the button opens the download page.';
+          ? 'A newer version is out: ' + s.latest + '. Press “Update to ' + s.latest + '” — it downloads, and one more press restarts into it.' + when(s)
+          : 'A newer version is out: ' + s.latest + '. This copy cannot replace itself, so the button opens the download page.' + when(s);
       case 'downloading': return 'Downloading version ' + s.latest + '… ' + (s.percent || 0) + '%';
       case 'ready': return 'Version ' + s.latest + ' is downloaded. Restarting installs it; your data stays where it is.';
-      case 'error': return 'Could not reach the update server' + (s.message ? ' (' + s.message + ')' : '') + '. It will try again later.';
+      case 'error': return 'Could not reach the update server' + (s.message ? ' (' + s.message + ')' : '') + '. It tries again every hour.' + when(s);
       default: return 'Not checked yet.';
     }
   }

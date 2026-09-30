@@ -367,6 +367,20 @@
 
     <!-- Settings -------------------------------------------------- -->
     <section class="view" data-view="settings" hidden>
+      <!-- First in Settings: whether there is a newer version is the one
+           thing here that changes by itself. Desktop app only. -->
+      <div class="card" id="updates-card" hidden>
+        <div class="card__head">
+          <p class="card__title">Updates</p>
+          <span class="muted upd__version" id="updates-version"></span>
+        </div>
+        <p class="card__note muted" id="updates-status"></p>
+        <div class="row">
+          <button class="pill" type="button" id="updates-check">Check for updates</button>
+          <button class="pill pill--solid" type="button" id="updates-act" hidden></button>
+        </div>
+      </div>
+
       <div class="card">
         <p class="card__title">Your data</p>
         <p class="card__note muted">
@@ -425,18 +439,6 @@
         <div class="row">
           <button class="pill" type="button" id="remind-toggle">Remind me</button>
           <input class="input input--date" id="remind-at" type="time" value="21:00" aria-label="Time of day">
-        </div>
-      </div>
-
-      <div class="card" id="updates-card" hidden>
-        <div class="card__head">
-          <p class="card__title">Updates</p>
-          <span class="muted upd__version" id="updates-version"></span>
-        </div>
-        <p class="card__note muted" id="updates-status"></p>
-        <div class="row">
-          <button class="pill" type="button" id="updates-check">Check now</button>
-          <button class="pill pill--solid" type="button" id="updates-act" hidden></button>
         </div>
       </div>
 
@@ -526,15 +528,17 @@
 
         <p class="wopts__label">On the desktop</p>
         <div class="row">
-          <button class="pill" type="button" id="pinned-btn">Pinned to the desktop</button>
+          <button class="pill" type="button" id="pinned-btn">Pin to the desktop</button>
           <button class="pill" type="button" id="ontop-btn">Keep above other windows</button>
           <button class="pill" type="button" id="autostart-btn">Start with Windows</button>
         </div>
         <p class="card__note muted">
-          Pinned, it stays exactly where it is: it cannot be moved, resized or
-          hidden, sits behind whatever you are working in, and comes back after
-          “show desktop”. Unpin it here to move it. Double-click it to open the
-          panel; Ctrl+Shift+D and the icon by the clock bring it back.
+          Pinned, the widget is part of the desktop: it stays exactly where it
+          is, cannot be dragged or resized, sits behind whatever you are working
+          in, and is still there after “show desktop”. To move it, unpin it — here,
+          with the pin button on the widget itself, or from the icon by the clock —
+          drag it where you want it, and pin it again. Double-click a pinned
+          widget to open the panel.
         </p>
       </div>
 

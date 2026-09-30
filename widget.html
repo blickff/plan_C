@@ -18,15 +18,15 @@
 
     <!-- The one line of chrome there is: the date, the weather, and a few
          buttons that only appear under the pointer. Pinned to the desktop,
-         only "open the panel" is left — a pinned widget is not moved,
-         hidden or closed from itself, only unpinned in Settings. -->
+         "hide" and "keep on top" go — a pinned widget is not moved or
+         hidden — and the pin stays, lit, as the way to unpin it. -->
     <div class="wg__bar">
       <p class="wg__meta"><span id="wg-date"></span><span class="wg__weather" id="weather"></span></p>
       <!-- Only there when a newer version is out. Unlike the other
            buttons it does not wait for the pointer: it is news. -->
       <button class="wg__upd" type="button" id="wg-update" hidden></button>
       <div class="wg__tools">
-        <button class="wg__btn wg__unpinned" type="button" id="wg-pin" title="Pin to the desktop — it stays put until unpinned in Settings">
+        <button class="wg__btn" type="button" id="wg-pin" title="Pin to the desktop">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4h6l-1 5 3 3v2H7v-2l3-3-1-5z"/><path d="M12 14v6"/></svg>
         </button>
         <button class="wg__btn wg__unpinned" type="button" id="wg-top" title="Keep above other windows">

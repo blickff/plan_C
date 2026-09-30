@@ -157,6 +157,9 @@ body.is-pinned .wg__unpinned { display: none; }
 .wg__btn:hover,
 .wg__btn.is-on { background: var(--accent-bg); color: var(--text); }
 
+/* The pin, lit while pinned: filled, so it reads as "on". */
+#wg-pin.is-on svg { fill: currentColor; }
+
 .wg__upd {
   flex: none;
   padding: 3px 9px;

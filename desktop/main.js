@@ -20,6 +20,7 @@ const { app, BrowserWindow, dialog, globalShortcut, ipcMain, Menu,
         nativeImage, nativeTheme, Notification, protocol, shell, Tray } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFile } = require('node:child_process');
 const vault = require('./vault');
 const updates = require('./updates');
 
@@ -34,11 +35,12 @@ const ROOT = path.join(__dirname, '..');
    in the old folder, with nothing on screen to say so. The folder keeps
    its first name for good, whatever the app is called. Must run before
    the app is ready. */
-/* Run from source (never in an installed copy), DAYBOOK_PROFILE=name gives
-   the app a folder of its own — and with it its own single-instance lock —
-   so a change can be tried beside the installed app without touching its
-   data or being turned away as a second copy. */
-const PROFILE = !app.isPackaged && process.env.DAYBOOK_PROFILE
+/* DAYBOOK_PROFILE=name in the environment gives the app a folder of its
+   own — and with it its own single-instance lock — so a build can be
+   tried beside the copy somebody is actually using, without touching its
+   data or being turned away as a second instance. Nothing sets it in
+   normal use. */
+const PROFILE = process.env.DAYBOOK_PROFILE
   ? 'day-panel-' + String(process.env.DAYBOOK_PROFILE).replace(/[^a-z0-9-]/gi, '')
   : 'day-panel';
 app.setPath('userData', path.join(app.getPath('appData'), PROFILE));
@@ -220,19 +222,95 @@ function createWidget() {
 
   widget.on('moved', remember);
   widget.on('resized', remember);
-  widget.on('closed', () => { widget = null; });
+
+  /* From source only: what Windows does to the widget, as it happens —
+     the only way to see why a pinned widget went missing. */
+  if (!app.isPackaged) {
+    ['show', 'hide', 'minimize', 'restore', 'focus', 'blur'].forEach((name) => {
+      widget.on(name, () => console.log('widget event: ' + name));
+    });
+  }
+  /* A window owned by the desktop goes when the desktop's own window
+     does — Explorer restarting. It was not closed by anyone, so it comes
+     back, and is tied again. */
+  widget.on('closed', () => {
+    widget = null;
+    tiedToDesktop = false;
+    if (!app.isQuitting && loadState().pinned) setTimeout(() => { if (!widget) createWidget(); }, 2500);
+  });
+}
+
+/* Tying the widget to the desktop (Windows) ------------------------------
+
+   "Show desktop" (Win+D, the corner of the taskbar) does not minimise a
+   window like this one: it lifts the desktop over it, and the widget is
+   simply gone — under the wallpaper, with nothing to say so. That is what
+   a pinned widget did, and why it could not be found again.
+
+   The cure Windows offers is ownership: a window owned by the desktop
+   is lifted together with it, so it stays in view on the desktop, and it
+   still lets every other window go in front of it. Electron has no call
+   for giving a window an owner that is not one of its own, so this asks
+   Windows directly through PowerShell, once, when the widget is pinned
+   (and takes it back when it is unpinned). If PowerShell is not there or
+   refuses, nothing breaks — the widget is just not tied, as before.
+
+   The handle is this app's own window; nothing else is touched. */
+const DESKTOP_TIE = `
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public static class DaybookDesktop {
+  [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern IntPtr FindWindow(string cls, string title);
+  [DllImport("user32.dll", EntryPoint = "SetWindowLongPtrW")] static extern IntPtr SetWindowLongPtr(IntPtr h, int index, IntPtr value);
+  [DllImport("user32.dll", EntryPoint = "GetWindowLongPtrW")] static extern IntPtr GetWindowLongPtr(IntPtr h, int index);
+  public static string Tie(long handle, bool on) {
+    IntPtr h = new IntPtr(handle);
+    IntPtr desktop = on ? FindWindow("Progman", null) : IntPtr.Zero;
+    if (on && desktop == IntPtr.Zero) return "no desktop window";
+    SetWindowLongPtr(h, -8, desktop);
+    return GetWindowLongPtr(h, -8) == desktop ? (on ? "tied" : "released") : "refused";
+  }
+}
+"@
+[DaybookDesktop]::Tie(HANDLE, ON)
+`;
+
+let tiedToDesktop = false;
+
+function tieToDesktop(on) {
+  if (process.platform !== 'win32' || !widget || widget.isDestroyed()) return;
+  if (on === tiedToDesktop) return;
+  const buf = widget.getNativeWindowHandle();
+  const handle = buf.length >= 8 ? buf.readBigInt64LE(0).toString() : String(buf.readInt32LE(0));
+  const script = DESKTOP_TIE.replace('HANDLE', handle).replace('ON', on ? '$true' : '$false');
+  const encoded = Buffer.from(script, 'utf16le').toString('base64');
+  tiedToDesktop = on;
+  execFile('powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
+    { windowsHide: true, timeout: 20000 },
+    (err, stdout) => {
+      const said = String(stdout || '').trim().split(/\r?\n/).pop() || '';
+      if (err || (said !== 'tied' && said !== 'released')) {
+        tiedToDesktop = false;
+        console.warn('widget desktop tie failed: ' + (err ? err.message.split('\n')[0] : said || 'no answer'));
+        return;
+      }
+      console.log('widget desktop tie: ' + said);
+    });
 }
 
 /* Pinned and always-on-top are opposite answers to the same question,
    so turning either on turns the other off.
 
-   Pinned is fastened to the desktop, as far as Windows allows without
-   native code: it cannot be moved or resized, not even by dragging; it
-   is out of the taskbar and Alt+Tab; it never takes the focus, so a
-   click on it — ticking a habit — does not lift it above the windows in
-   front; and it comes back after "show desktop". The only way to move
-   or remove it is to unpin it in Settings. The page is told too, so it
-   drops its own hide and move buttons. */
+   Pinned is fastened to the desktop: it cannot be moved or resized, not
+   even by dragging; it is out of the taskbar and Alt+Tab; it never takes
+   the focus, so a click on it — ticking a habit — does not lift it above
+   the windows in front; and it is tied to the desktop (above), so it is
+   there whenever the desktop is, "show desktop" included, and behind
+   everything else. It is unpinned from its own button, the tray menu or
+   Settings. The page is told too, so it drops its drag area and its hide
+   button. */
 function applyWidgetMode() {
   if (!widget || widget.isDestroyed()) return;
   const saved = loadState();
@@ -242,7 +320,13 @@ function applyWidgetMode() {
   widget.setMovable(!pinned);
   widget.setResizable(!pinned);
   widget.setFocusable(!pinned);
-  widget.webContents.send('widget-mode', { pinned, onTop: !pinned && !!saved.onTop });
+  tieToDesktop(pinned);
+  /* The widget and the panel both show the state; either may not have
+     been the one that changed it. */
+  [widget, panel].forEach((win) => {
+    if (win && !win.isDestroyed()) win.webContents.send('widget-mode', { pinned, onTop: !pinned && !!saved.onTop });
+  });
+  buildTrayMenu();
   console.log('widget mode: ' + (pinned ? 'pinned' : 'free') +
     ' movable=' + widget.isMovable() + ' resizable=' + widget.isResizable() +
     ' focusable=' + widget.isFocusable() + ' size=' + widget.getSize().join('x'));
@@ -299,39 +383,107 @@ function openPanel() {
 
   watch(panel, 'panel');
   panel.loadURL(origin + '/index.html');
+  /* Opening the panel is when a person would want to hear of a newer
+     version, so it asks — unless it asked a moment ago. */
+  updates.checkIfStale(10 * 60 * 1000);
   panel.on('closed', () => { panel = null; });
 }
 
+/* Asked for by name — the tray, the shortcut, starting the app again.
+   It has to end up in front of whatever is open, or it looks as if
+   nothing happened. Windows does not let a program that is not in use
+   push a window to the front by asking nicely; being "always on top" for
+   an instant and then not is what does get there. A pinned widget is
+   shown without taking the focus, and goes back behind the other windows
+   as soon as one of them is used. */
 function showWidget() {
   if (!widget || widget.isDestroyed()) return createWidget();
-  if (loadState().pinned) { widget.showInactive(); return; }
-  widget.show();
-  widget.focus();
+  const saved = loadState();
+  const pinned = !!saved.pinned;
+  if (widget.isMinimized()) widget.restore();
+  widget.setAlwaysOnTop(true);
+  if (pinned) {
+    widget.showInactive();
+  } else {
+    widget.show();
+    widget.focus();
+  }
+  widget.setAlwaysOnTop(!pinned && !!saved.onTop);
+}
+
+function setPinned(next) {
+  saveState({ pinned: next, onTop: next ? false : loadState().onTop });
+  applyWidgetMode();
+  /* Either way it should be in plain view straight after: pinned, to see
+     where it now sits; unpinned, because it may have been buried. */
+  showWidget();
+  return next;
 }
 
 /* An icon by the clock, because until now the only way back to a hidden
    widget was a keyboard shortcut you had to already know about. It also
    carries the day's figure in its tooltip, which is the cheapest glance
    there is. */
+function buildTrayMenu() {
+  if (!tray || tray.isDestroyed()) return;
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Show the widget', click: showWidget },
+    { label: 'Open the panel', click: openPanel },
+    { type: 'separator' },
+    {
+      label: 'Pin the widget to the desktop',
+      type: 'checkbox',
+      checked: !!loadState().pinned,
+      click: () => setPinned(!loadState().pinned)
+    },
+    { label: 'Check for updates', click: checkForUpdatesAloud },
+    { type: 'separator' },
+    { label: 'Quit Daybook', click: () => { app.isQuitting = true; app.quit(); } }
+  ]));
+}
+
+/* Asked for from the tray, so the answer has to be said out loud: there
+   is no window open to show it in. */
+function checkForUpdatesAloud() {
+  updates.check().then((state) => {
+    if (state.status === 'available' || state.status === 'ready') {
+      openPanel();
+      return;
+    }
+    if (!Notification.isSupported()) return;
+    const text = state.status === 'latest' ? 'Version ' + app.getVersion() + ' is the newest.'
+      : state.status === 'dev' ? 'Running from the source folder; updates are for the installed app.'
+      : 'Could not reach the update server. It will try again later.';
+    new Notification({ title: 'Daybook', body: text }).show();
+  });
+}
+
 function createTray() {
   const icon = nativeImage.createFromPath(path.join(__dirname, 'tray.png'));
   if (icon.isEmpty()) return;
 
   tray = new Tray(icon);
   tray.setToolTip('Daybook');
-  tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Show the widget', click: showWidget },
-    { label: 'Open the panel', click: openPanel },
-    { type: 'separator' },
-    { label: 'Quit Daybook', click: () => { app.isQuitting = true; app.quit(); } }
-  ]));
+  buildTrayMenu();
 
-  /* Pinned, the icon only ever brings the widget back — hiding a pinned
-     widget is done by unpinning it first. */
+  /* One click brings the widget (or hides it, when it is free to be
+     hidden); a double-click opens the panel. Pinned, the icon only ever
+     brings the widget to the front. */
+  /* Windows reports a click and then a double-click for the same two
+     presses, so the single one waits a moment to see whether a second
+     is coming — otherwise a double-click would first hide the widget. */
+  let clickTimer = null;
   tray.on('click', () => {
-    const pinned = !!loadState().pinned;
-    if (!pinned && widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
-    else showWidget();
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+      const pinned = !!loadState().pinned;
+      if (!pinned && widget && !widget.isDestroyed() && widget.isVisible()) widget.hide();
+      else showWidget();
+    }, 260);
+  });
+  tray.on('double-click', () => {
+    clearTimeout(clickTimer);
+    openPanel();
   });
 }
 
@@ -388,19 +540,7 @@ function wireMessages() {
     return next;
   });
 
-  ipcMain.handle('toggle-pinned', () => {
-    const next = !loadState().pinned;
-    saveState({ pinned: next, onTop: next ? false : loadState().onTop });
-    applyWidgetMode();
-    /* Coming out of pinned mode, the window has been out of the
-       taskbar and behind everything — it may be buried. Bring it back
-       where it can be found. */
-    if (!next && widget && !widget.isDestroyed()) {
-      widget.show();
-      widget.focus();
-    }
-    return next;
-  });
+  ipcMain.handle('toggle-pinned', () => setPinned(!loadState().pinned));
 
   ipcMain.handle('get-window-settings', () => {
     const saved = loadState();
@@ -491,14 +631,9 @@ function wireMessages() {
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', () => {
-    if (widget && !widget.isDestroyed()) {
-      widget.show();
-      widget.focus();
-    } else {
-      createWidget();
-    }
-  });
+  /* Starting the app again is a person looking for it: the widget comes
+     to the front (pinned or not), rather than nothing happening. */
+  app.on('second-instance', showWidget);
 }
 
 app.whenReady().then(async () => {

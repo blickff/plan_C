@@ -763,6 +763,15 @@ function wireChrome() {
         if (on) topBtn.classList.remove('is-active');
       });
     });
+
+    /* Pinned or unpinned from somewhere else — the pin on the widget,
+       the icon by the clock: the buttons here follow. */
+    if (window.desktop.onWidgetMode) {
+      window.desktop.onWidgetMode(function (mode) {
+        pinBtn.classList.toggle('is-active', !!mode.pinned);
+        topBtn.classList.toggle('is-active', !!mode.onTop);
+      });
+    }
   }
 
   /* The same lookup the first-run question offers, available any time —

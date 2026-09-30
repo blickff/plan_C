@@ -27,6 +27,13 @@ const LATEST_API = 'https://api.github.com/repos/blickff/plan_C/releases/latest'
 let updater = null;
 let state = { status: 'idle', version: app.getVersion() };
 let listeners = [];
+/* When GitHub was last asked, so it is not asked again seconds later. */
+let askedAt = 0;
+
+/* How often a running app looks. It used to be twice a day, which meant a
+   version released while the app was open went unnoticed until the next
+   day; an hour is one small request and soon enough. */
+const EVERY = 60 * 60 * 1000;
 
 /* Only an installed Windows build can replace itself. The portable
    exe's own launcher sets PORTABLE_EXECUTABLE_DIR, which is how the
@@ -46,6 +53,10 @@ function canInstallInPlace() {
 
 function set(next) {
   state = Object.assign({ version: app.getVersion() }, next);
+  /* Every answer carries when it was given, for "checked at 14:05". */
+  if (state.status === 'latest' || state.status === 'available' || state.status === 'error') {
+    state.checkedAt = Date.now();
+  }
   /* One line per change, for anyone running it from a terminal to see
      why an update did or did not show up. */
   console.log('update: ' + state.status +
@@ -111,8 +122,8 @@ function start() {
   }
 
   if (!canInstallInPlace()) {
-    setTimeout(checkByRelease, 8000);
-    setInterval(checkByRelease, 12 * 60 * 60 * 1000);
+    setTimeout(check, 8000);
+    setInterval(check, EVERY);
     return;
   }
 
@@ -152,14 +163,18 @@ function start() {
   }));
 
   /* Once a little after start, so the first thing the app does is show
-     the widget rather than go to the network, and then twice a day for
+     the widget rather than go to the network, and then every hour for
      anyone who never closes it. */
   setTimeout(check, 8000);
-  setInterval(check, 12 * 60 * 60 * 1000);
+  setInterval(check, EVERY);
 }
 
 function check() {
   if (!app.isPackaged) return Promise.resolve(state);
+  /* A download under way, or one waiting for its restart, is not
+     interrupted to go and ask again. */
+  if (state.status === 'downloading' || state.status === 'ready') return Promise.resolve(state);
+  askedAt = Date.now();
   if (!canInstallInPlace()) return checkByRelease();
   if (!updater) return Promise.resolve(state);
   return updater.checkForUpdates()
@@ -195,4 +210,10 @@ function act() {
   return Promise.resolve(state);
 }
 
-module.exports = { start, check, act, current, onChange, RELEASES };
+/* Ask, unless it was asked within the last `ms`. */
+function checkIfStale(ms) {
+  if (Date.now() - askedAt < ms) return Promise.resolve(state);
+  return check();
+}
+
+module.exports = { start, check, checkIfStale, act, current, onChange, RELEASES };

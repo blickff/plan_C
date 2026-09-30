@@ -667,6 +667,13 @@ var Widget = (function () {
      dragged, and its own hide and move controls are gone. */
   function setPinned(on) {
     document.body.classList.toggle('is-pinned', !!on);
+    var pin = document.getElementById('wg-pin');
+    if (pin) {
+      pin.classList.toggle('is-on', !!on);
+      pin.title = on
+        ? 'Pinned to the desktop. Press to unpin — then it can be moved.'
+        : 'Pin to the desktop: it stays where it is, behind your windows';
+    }
   }
 
   /* habits.js calls repaint() after a tick. */
@@ -750,7 +757,7 @@ var Widget = (function () {
     });
 
     document.getElementById('wg-pin').addEventListener('click', function () {
-      window.desktop.togglePinned();
+      window.desktop.togglePinned().then(setPinned);
     });
 
     var topBtn = document.getElementById('wg-top');
