@@ -80,7 +80,8 @@ var Flame = (function () {
     /* The longer it has burned, the further the black creeps down the
        stick: a tenth of it on the first day, a little over half at a
        hundred, and no further. */
-    var charred = lit ? Math.round(10 + (Math.min(days, 100) / 100) * 14) : 0;
+    var gone = !lit && wentOut;
+    var charred = lit ? Math.round(10 + (Math.min(days, 100) / 100) * 14) : (gone ? 14 : 0);
     /* How rough the flame's edge is, and at what grain: see the filter. */
     var rough = (size * 0.2).toFixed(1);
     var grain = (3.4 / Math.max(size, 1)).toFixed(3) + ' ' + (2.4 / Math.max(size, 1)).toFixed(3);
@@ -98,9 +99,10 @@ var Flame = (function () {
     var match =
       '<g transform="translate(' + HX + ' ' + HY + ')">' +
         '<rect x="-2.3" y="2" width="4.6" height="42" rx="2.3" fill="' + url('w') + '"/>' +
-        (lit ? '<rect x="-2.3" y="2" width="4.6" height="' + charred + '" rx="2.3" fill="' + url('c') + '"/>' : '') +
+        (charred ? '<rect x="-2.3" y="2" width="4.6" height="' + charred + '" rx="2.3" fill="' + url('c') + '"/>' : '') +
         '<ellipse class="flame__head" cx="0" cy="-0.5" rx="4.6" ry="6.2" fill="' + url('h') + '"/>' +
         (lit ? '<ellipse class="flame__ember" cx="0" cy="-1" rx="2.8" ry="3.8"/>' : '') +
+        (gone ? '<ellipse class="flame__dying" cx="0.6" cy="-2.6" rx="1.9" ry="2.3"/>' : '') +
       '</g>';
 
     var fire = '';
@@ -136,10 +138,22 @@ var Flame = (function () {
       }
     }
 
-    var smoke = !lit && wentOut
-      ? '<path class="flame__smoke" d="M' + HX + ' ' + (HY - 7) + ' C' + (HX - 5) + ' ' + (HY - 15) + ' ' + (HX + 5) + ' ' + (HY - 21) +
-        ' ' + HX + ' ' + (HY - 29) + ' C' + (HX - 5) + ' ' + (HY - 37) + ' ' + (HX + 5) + ' ' + (HY - 43) + ' ' + HX + ' ' + (HY - 52) + '"/>'
-      : '';
+    var smoke = '';
+    if (gone) {
+      var top = HY - 7;
+      smoke =
+        '<g filter="' + url('f') + '">' +
+          '<g class="flame__thread">' +
+            '<path d="M' + HX + ' ' + top + ' C' + (HX - 3) + ' ' + (top - 8) + ' ' + (HX + 4) + ' ' + (top - 14) + ' ' + (HX + 1) + ' ' + (top - 22) +
+              ' C' + (HX - 2) + ' ' + (top - 29) + ' ' + (HX + 5) + ' ' + (top - 34) + ' ' + (HX + 3) + ' ' + (top - 42) + '"' +
+              ' fill="none" stroke="' + url('t') + '" stroke-width="2.2" stroke-linecap="round"/>' +
+          '</g>' +
+          [0, 1.4, 2.8].map(function (delay, i) {
+            return '<circle class="flame__puff" cx="' + (HX + (i - 1) * 1.5) + '" cy="' + (top - 16) + '" r="4"' +
+              ' fill="' + url('p') + '" style="animation-delay:' + delay + 's"/>';
+          }).join('') +
+        '</g>';
+    }
 
     return '' +
       '<svg class="flame__svg" viewBox="0 0 70 120" aria-hidden="true">' +
@@ -174,6 +188,15 @@ var Flame = (function () {
           '<linearGradient id="' + id + 'c" x1="0" y1="0" x2="0" y2="1">' +
             '<stop offset="0" class="flame__c0"/><stop offset="0.45" class="flame__c1"/><stop offset="1" class="flame__c2"/></linearGradient>' +
           '<radialGradient id="' + id + 'h" cx="0.38" cy="0.32" r="0.75"><stop offset="0" class="flame__h0"/><stop offset="1" class="flame__h1"/></radialGradient>' +
+          /* Smoke: the thread thick and grey at the head, gone by the top;
+             the puffs soft all round; the noise roughens both. */
+          '<linearGradient id="' + id + 't" x1="0" y1="1" x2="0" y2="0"><stop offset="0" class="flame__t0"/><stop offset="0.5" class="flame__t1"/><stop offset="1" class="flame__t2"/></linearGradient>' +
+          '<radialGradient id="' + id + 'p"><stop offset="0" class="flame__p0"/><stop offset="1" class="flame__p1"/></radialGradient>' +
+          '<filter id="' + id + 'f" x="-100%" y="-60%" width="300%" height="220%">' +
+            '<feTurbulence class="flame__noise" type="fractalNoise" baseFrequency="0.08 0.05" numOctaves="2" seed="11" result="n"/>' +
+            '<feDisplacementMap in="SourceGraphic" in2="n" scale="7" xChannelSelector="R" yChannelSelector="G" result="d"/>' +
+            '<feGaussianBlur in="d" stdDeviation="0.9"/>' +
+          '</filter>' +
         '</defs>' +
         glow +
         smoke +
@@ -185,6 +208,8 @@ var Flame = (function () {
   /* The whole piece for the card: the match and its classes. Moving up a
      stage since the last time this was drawn in this browser makes it
      flare once; the first time ever it only remembers. */
+  function lit(days) { return stageOf(days).key !== 'out'; }
+
   function html(days, waiting, wentOut) {
     var stage = stageOf(days);
     var flare = false;
@@ -196,6 +221,7 @@ var Flame = (function () {
     } catch (err) { /* private window: no flare, nothing lost */ }
 
     var cls = 'flame flame--' + stage.key +
+      (!lit(days) && wentOut ? ' is-gone' : '') +
       (waiting ? ' is-waiting' : '') +
       (flare ? ' is-flare' : '');
     var title = stage.key === 'out'
