@@ -20,8 +20,11 @@
      Money   this month's spending against last month's, and the months
              before it.
 
+   Any face but the clock can have the clock above it ("Clock on top"):
+   Today with a clock over it, Plans with a clock over it, and so on.
+
    Settings → Desktop widget also chooses the accent colour (the second
-   hand, the glow), whether the clock has a second hand and shows the
+   hand, the tint), whether the clock has a second hand and shows the
    date, and the backdrop: lit by the accent, or plain.
 
    The match stays in the panel: the owner did not want it on the desktop. */
@@ -53,6 +56,8 @@ var Widget = (function () {
       face: FACES.indexOf(w.face) !== -1 ? w.face : 'today',
       dial: DIALS.indexOf(w.dial) !== -1 ? w.dial : 'classic',
       accent: ACCENTS.indexOf(w.accent) !== -1 ? w.accent : 'orange',
+      /* A clock above another face: Today with a clock over it, and so on. */
+      clockOnTop: w.clockOnTop === true,
       seconds: w.seconds !== false,
       date: w.date !== false,
       backdrop: w.backdrop === 'plain' ? 'plain' : 'glow'
@@ -61,11 +66,19 @@ var Widget = (function () {
 
   /* The shape of window a face is drawn for. The clock's depends on the
      dial: a round one wants a square, a row of digits a wide strip. */
-  function shapeOf(p) {
-    if (p.face !== 'clock') return p.face;
+  function clockShape(p) {
     if (p.dial === 'digital') return 'clock-digital';
     if (p.dial === 'stack') return 'clock-stack';
     return 'clock-round';
+  }
+
+  function hasClock(p) { return p.face === 'clock' || p.clockOnTop; }
+
+  /* "today+clock-round": the face's own window, made taller for the clock
+     that sits above it. */
+  function shapeOf(p) {
+    if (p.face === 'clock') return clockShape(p);
+    return p.clockOnTop ? p.face + '+' + clockShape(p) : p.face;
   }
 
   /* The widget follows the panel's theme: the setting, or the clock when
@@ -276,6 +289,7 @@ var Widget = (function () {
   /* The clock -------------------------------------------------------------- */
 
   var ROMAN = { 12: 'XII', 3: 'III', 6: 'VI', 9: 'IX' };
+  var tintCount = 0;
 
   function at(radius, degrees) {
     var a = degrees * Math.PI / 180;
@@ -355,9 +369,15 @@ var Widget = (function () {
         '<text x="50" y="70.2" data-date></text></g>'
       : '';
 
+    /* The accent's tint, in the dial itself: strongest at the centre and
+       gone at the rim, the same in every direction. */
+    var tint = 'wgtint' + (++tintCount);
+
     return '' +
       '<svg class="wgc__dial wgc__dial--' + kind + '" viewBox="0 0 100 100" aria-hidden="true">' +
+        '<defs><radialGradient id="' + tint + '"><stop offset="0" class="wgc__tint-0"/><stop offset="1" class="wgc__tint-1"/></radialGradient></defs>' +
         '<circle class="wgc__face" cx="50" cy="50" r="48.5"/>' +
+        '<circle class="wgc__tint" cx="50" cy="50" r="48.5" fill="url(#' + tint + ')"/>' +
         marks + numbers + date +
         '<g class="wgc__turn" data-hand="h">' + hour + '</g>' +
         '<g class="wgc__turn" data-hand="m">' + minute + '</g>' +
@@ -551,17 +571,25 @@ var Widget = (function () {
     var root = document.getElementById('wg');
     var face = document.getElementById('wg-face');
 
+    var combined = p.face !== 'clock' && p.clockOnTop;
     root.className = 'wg wg--' + p.face + ' wg--' + p.backdrop + ' wg--accent-' + p.accent +
-      (p.face === 'clock' ? ' wg--dial-' + p.dial : '');
+      (hasClock(p) ? ' wg--dial-' + p.dial : '') +
+      (combined ? ' wg--combined wg--with-' + clockShape(p) : '');
 
-    face.innerHTML = p.face === 'week' ? faceWeek()
+    var body = p.face === 'week' ? faceWeek()
       : p.face === 'plans' ? facePlans()
       : p.face === 'note' ? faceNote()
       : p.face === 'clock' ? faceClock(p)
       : p.face === 'money' ? faceMoney()
       : faceToday();
 
-    runClock(p.face === 'clock', ANALOG.indexOf(p.dial) !== -1 && p.seconds);
+    /* Combined: the clock in a band of its own across the top, the chosen
+       face below it. */
+    face.innerHTML = combined
+      ? '<div class="wg__clockband">' + faceClock(p) + '</div><div class="wg__under">' + body + '</div>'
+      : body;
+
+    runClock(hasClock(p), ANALOG.indexOf(p.dial) !== -1 && p.seconds);
     fadeList();
     tellTray(todayScore());
 

@@ -617,7 +617,12 @@ function wireWidgetPrefs() {
     /* Only the dials with hands have a second hand to show. */
     sec.hidden = ['minimal', 'classic', 'roman', 'modern', 'mono'].indexOf(dial) === -1;
     document.getElementById('wdate-btn').classList.toggle('is-active', w.date !== false);
-    document.getElementById('wopts-clock').hidden = face !== 'clock';
+    /* The dial and its options matter whenever a clock is on the widget:
+       as the face itself, or sat above another one. */
+    var onTop = w.clockOnTop === true;
+    document.getElementById('wclock-row').hidden = face === 'clock';
+    document.getElementById('wclock-btn').classList.toggle('is-active', onTop);
+    document.getElementById('wopts-clock').hidden = !(face === 'clock' || onTop);
   }
 
   function set(key, value) {
@@ -636,6 +641,9 @@ function wireWidgetPrefs() {
   });
   document.getElementById('wdate-btn').addEventListener('click', function () {
     set('date', prefs().date === false);
+  });
+  document.getElementById('wclock-btn').addEventListener('click', function () {
+    set('clockOnTop', prefs().clockOnTop !== true);
   });
 
   mark();

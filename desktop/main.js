@@ -350,13 +350,27 @@ function watch(win, name) {
   });
 }
 
+/* How much taller a face's window gets for a clock sat above it. */
+const CLOCK_ABOVE = { 'clock-round': 196, 'clock-digital': 118, 'clock-stack': 176 };
+
+/* "today" → its own size; "today+clock-round" → the same, made taller by
+   the band the clock takes. */
+function sizeFor(shape) {
+  const parts = shape.split('+');
+  const base = FACE_SIZES[parts[0]];
+  if (!base) return null;
+  const extra = parts[1] ? CLOCK_ABOVE[parts[1]] : 0;
+  if (parts[1] && !extra) return null;
+  return [base[0], base[1] + extra, base[2], base[3] + extra];
+}
+
 function wireMessages() {
   ipcMain.handle('open-panel', openPanel);
 
   /* A face chosen in Settings: set its smallest size, and — when it is a
      change rather than the widget starting up — its own size. */
   ipcMain.handle('widget-face', (_event, face, reset) => {
-    const size = FACE_SIZES[face];
+    const size = sizeFor(String(face));
     if (!size || !widget || widget.isDestroyed()) return;
     widget.setMinimumSize(size[2], size[3]);
     if (!reset) return;

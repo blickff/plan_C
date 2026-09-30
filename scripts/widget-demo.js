@@ -16,6 +16,9 @@
     'clock-stack': [220, 280]
   };
 
+  /* How much taller the window gets for a clock above the face. */
+  var ABOVE = { 'clock-round': 196, 'clock-digital': 118, 'clock-stack': 176 };
+
   var FACES = [['clock', 'Clock'], ['today', 'Today'], ['week', 'Week'], ['plans', 'Plans'], ['note', 'Note'], ['money', 'Money']];
   var DIALS = ['minimal', 'classic', 'roman', 'modern', 'mono', 'digital', 'stack', 'ring'];
   var ACCENTS = { orange: '#ff7a2a', amber: '#f5a800', red: '#ef4444', green: '#22a35a', blue: '#3b9cff', violet: '#b46cff', ink: 'var(--text)' };
@@ -44,19 +47,21 @@
     var theme = Storage.load().settings.theme || 'auto';
     var panel = document.getElementById('demo-panel');
 
-    var shape = face !== 'clock' ? face
-      : dial === 'digital' ? 'clock-digital'
-      : dial === 'stack' ? 'clock-stack'
-      : 'clock-round';
+    var clockShape = dial === 'digital' ? 'clock-digital' : dial === 'stack' ? 'clock-stack' : 'clock-round';
+    var onTop = face !== 'clock' && w.clockOnTop === true;
+    var size = SIZES[face === 'clock' ? clockShape : face];
     var root = document.getElementById('wg');
-    root.style.setProperty('--w', SIZES[shape][0] + 'px');
-    root.style.setProperty('--h', SIZES[shape][1] + 'px');
+    root.style.setProperty('--w', size[0] + 'px');
+    root.style.setProperty('--h', (size[1] + (onTop ? ABOVE[clockShape] : 0)) + 'px');
 
     panel.innerHTML =
       '<h1>Widget preview</h1>' +
       '<p class="lead">The widget as it would sit on the desktop, at the size of its window. Everything here is also in Settings → Desktop widget.</p>' +
       '<h2>Face</h2>' + pills('data-set-face', FACES, face) +
-      (face === 'clock'
+      (face !== 'clock'
+        ? '<div class="demo-row" style="margin-top:8px"><button class="pill' + (onTop ? ' is-active' : '') + '" type="button" data-toggle="clockOnTop">Clock on top</button></div>'
+        : '') +
+      (face === 'clock' || onTop
         ? '<h2>Dial</h2>' + pills('data-set-dial', DIALS, dial) +
           '<h2>On the dial</h2><div class="demo-row">' +
             (HANDS.indexOf(dial) !== -1 ? '<button class="pill' + (w.seconds !== false ? ' is-active' : '') + '" type="button" data-toggle="seconds">Second hand</button>' : '') +
@@ -88,6 +93,9 @@
     var toggle = b.getAttribute('data-toggle');
     if (toggle === 'pinned') {
       document.body.classList.toggle('is-pinned');
+      done = true;
+    } else if (toggle === 'clockOnTop') {
+      w.clockOnTop = w.clockOnTop !== true;
       done = true;
     } else if (toggle) {
       w[toggle] = w[toggle] === false;

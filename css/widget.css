@@ -26,7 +26,6 @@ body.is-pinned .wg__unpinned { display: none; }
 
 .wg {
   --wg-accent: #ff7a2a;
-  --glow-at: 50% 46%;
   position: relative;
   isolation: isolate;
   /* Sizes inside are measured against the widget itself (cqw / cqh), so
@@ -39,9 +38,7 @@ body.is-pinned .wg__unpinned { display: none; }
   padding: 11px 14px 14px;
   box-sizing: border-box;
   overflow: hidden;
-  background:
-    radial-gradient(140% 90% at 50% -20%, color-mix(in srgb, var(--text) 6%, transparent), transparent 60%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .wg--accent-orange { --wg-accent: #ff7a2a; }
@@ -52,21 +49,34 @@ body.is-pinned .wg__unpinned { display: none; }
 .wg--accent-violet { --wg-accent: #b46cff; }
 .wg--accent-ink    { --wg-accent: var(--text); }
 
-/* The accent's light, behind everything. */
+/* The accent's light. Even, so nothing reads as a stain: on a face of
+   text, a wash across the whole width that thins towards the bottom; on a
+   dial with hands, a tint drawn in the dial itself, from its centre out to
+   the rim (js/widget.js, the wgc__tint circle); behind digits, a circle
+   centred on them. An earlier version put one off-centre blob behind
+   everything and a second light across the top, and the two together
+   looked like a smear across the clock. */
 .wg--glow::before {
   content: "";
   position: absolute;
-  inset: -30%;
+  inset: 0;
   z-index: -1;
-  background: radial-gradient(40% 36% at var(--glow-at), color-mix(in srgb, var(--wg-accent) 20%, transparent), transparent 72%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--wg-accent) 13%, transparent), transparent 75%);
   pointer-events: none;
 }
 
-.wg--today { --glow-at: 14% 12%; }
-.wg--week  { --glow-at: 14% 40%; }
-.wg--plans { --glow-at: 12% 10%; }
-.wg--note  { --glow-at: 12% 12%; }
-.wg--money { --glow-at: 12% 22%; }
+/* Just a clock: the dial carries its own tint, so the window adds none —
+   except behind digits, which have no dial to carry one. */
+.wg--clock.wg--glow::before { background: none; }
+.wg--clock.wg--dial-digital.wg--glow::before,
+.wg--clock.wg--dial-stack.wg--glow::before {
+  background: radial-gradient(circle closest-side at 50% 50%, color-mix(in srgb, var(--wg-accent) 17%, transparent), transparent);
+}
+
+.wgc__tint { display: none; }
+.wg--glow .wgc__tint { display: block; }
+.wgc__tint-0 { stop-color: var(--wg-accent); stop-opacity: 0.2; }
+.wgc__tint-1 { stop-color: var(--wg-accent); stop-opacity: 0; }
 
 .wg__face {
   display: flex;
@@ -479,6 +489,7 @@ body.is-pinned .wg__unpinned { display: none; }
    hand, no tint on the face, no glow behind it — a hairline ring, twelve
    short marks and plain hands. */
 .wg--dial-mono::before { display: none; }
+.wg--dial-mono .wgc__tint { display: none; }
 .wgc__dial--mono .wgc__face { fill: none; stroke: var(--text-faint); stroke-width: 0.5; }
 .wgc__dial--mono .wgc__tick { stroke: var(--text-faint); stroke-width: 0.7; }
 .wgc__dial--mono .wgc__tick.is-major { stroke: var(--text); stroke-width: 1; }
@@ -583,3 +594,32 @@ body.is-pinned .wg__unpinned { display: none; }
 .wgy__bar.is-now .wgy__tick { color: var(--text); font-weight: 600; }
 .wgy__today { margin: 10px 0 0; font-size: 12px; color: var(--text-dim); }
 .wgy__today b { color: var(--text); font-weight: 600; }
+
+/* A clock above another face ------------------------------------------------
+   Today with a clock over it, Plans with a clock over it, and so on: the
+   clock in a band of its own across the top, the chosen face below. The
+   band is its own measure (container), so the clock inside it sizes to
+   the band exactly as a clock alone sizes to the window. */
+.wg--combined .wg__face { gap: 12px; }
+
+.wg__clockband {
+  display: flex;
+  flex: none;
+  height: 172px;
+  container-type: size;
+}
+
+.wg--with-clock-digital .wg__clockband { height: 94px; }
+.wg--with-clock-stack .wg__clockband { height: 152px; }
+
+.wg__under {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.wg__clockband .wgc__ringwrap { width: min(100cqw, 100cqh); }
+.wg__clockband .wgc--digital { padding: 0 2px; justify-content: center; }
