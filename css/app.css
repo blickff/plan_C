@@ -2588,18 +2588,18 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 
 /* The match on the streak card (js/flame.js) --------------------------------
    Each stage sets the fire's colours; everything else — the flicker, the
-   glow, the sparks — is the same drawing, so the stages differ in heat,
-   not in kind. */
+   licks, the glow, the sparks — is the same drawing, so the stages differ
+   in heat, not in kind. */
 
-.streak__main { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.streak__main { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
 .flame {
   flex: none;
-  width: 64px;
+  width: 88px;
   height: 106px;
-  /* Reaches up into the card's padding, so the card grows only a little
-     for it. */
-  margin: -20px -2px -14px -10px;
+  /* Reaches into the card's padding, so the card grows only a little for
+     it. */
+  margin: -22px -8px -16px -18px;
   cursor: default;
 }
 
@@ -2611,45 +2611,61 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
   transition: transform 0.35s cubic-bezier(0.3, 1.4, 0.5, 1);
 }
 
-.flame:hover .flame__svg { transform: scale(1.06); }
+.flame:hover .flame__svg { transform: scale(1.05); }
 
-/* The stick and the head. */
-.flame__w0 { stop-color: #c8955a; }
-.flame__w1 { stop-color: #edc996; }
-.flame__w2 { stop-color: #b98549; }
-.flame__char { fill: #2a1d15; opacity: 0.85; }
+/* The stick: pale wood, rounder in the middle. Charred below the head. */
+.flame__w0 { stop-color: #c9965c; }
+.flame__w1 { stop-color: #f0d2a2; }
+.flame__w2 { stop-color: #b8834a; }
+.flame__c0 { stop-color: #120c08; }
+.flame__c1 { stop-color: #2b1b11; stop-opacity: 0.9; }
+.flame__c2 { stop-color: #3a2616; stop-opacity: 0; }
 
-.flame__h0 { stop-color: #ff6b5a; }
-.flame__h1 { stop-color: #b3261e; }
-.flame:not(.flame--out) .flame__h0 { stop-color: #4a3426; }
-.flame:not(.flame--out) .flame__h1 { stop-color: #1c130e; }
+/* The head: red and glossy before it is struck, black after. */
+.flame__h0 { stop-color: #ff7a66; }
+.flame__h1 { stop-color: #a8201a; }
+.flame:not(.flame--out) .flame__h0 { stop-color: #4d3526; }
+.flame:not(.flame--out) .flame__h1 { stop-color: #140d09; }
 
+/* The ember in the burnt head, seen through the thin root of the flame. */
 .flame__ember {
   fill: var(--f-m1);
-  opacity: 0.75;
-  filter: blur(1.2px);
-  animation: flame-ember 1.8s ease-in-out infinite alternate;
+  opacity: 0.8;
+  filter: blur(1px);
+  animation: flame-ember 1.6s ease-in-out infinite alternate;
 }
 
-/* The fire's colours, stage by stage: top and bottom of the outer and
-   middle tongues, the core, and the glow behind. */
-.flame--spark  { --f-o0: #ff5a1f; --f-o1: #ff9a3c; --f-m0: #ff9f1c; --f-m1: #ffc15e; --f-core: #fff1c9; --f-glow: rgba(255, 110, 20, 0.5); }
-.flame--flame  { --f-o0: #ff6a00; --f-o1: #ffab3d; --f-m0: #ffb020; --f-m1: #ffd66b; --f-core: #fff8dd; --f-glow: rgba(255, 140, 30, 0.55); }
-.flame--blaze  { --f-o0: #ff8a00; --f-o1: #ffc93c; --f-m0: #ffd23f; --f-m1: #fff0a0; --f-core: #ffffff; --f-glow: rgba(255, 185, 40, 0.6); }
-.flame--blue   { --f-o0: #1d4ed8; --f-o1: #38bdf8; --f-m0: #60a5fa; --f-m1: #bae6fd; --f-core: #f0f9ff; --f-glow: rgba(56, 140, 255, 0.55); }
-.flame--violet { --f-o0: #6d28d9; --f-o1: #c084fc; --f-m0: #a855f7; --f-m1: #f0abfc; --f-core: #fdf4ff; --f-glow: rgba(168, 85, 247, 0.55); }
-.flame--white  { --f-o0: #7dd3fc; --f-o1: #e9d5ff; --f-m0: #e0f2fe; --f-m1: #ffffff; --f-core: #ffffff; --f-glow: rgba(210, 235, 255, 0.75); }
+/* The fire's colours, stage by stage: the outer and middle tongues top
+   and bottom, the core, the root, and the glow. */
+.flame--spark  { --f-o0: #ff4d1a; --f-o1: #ff8a2a; --f-m0: #ff9f1c; --f-m1: #ffc766; --f-core: #fff4d6; --f-root: #3b82f6; --f-glow: rgba(255, 110, 20, 0.45); }
+.flame--flame  { --f-o0: #ff5a0a; --f-o1: #ff9d2e; --f-m0: #ffb020; --f-m1: #ffd978; --f-core: #fffaea; --f-root: #3b82f6; --f-glow: rgba(255, 140, 30, 0.5); }
+.flame--blaze  { --f-o0: #ff7a00; --f-o1: #ffbd2e; --f-m0: #ffd23f; --f-m1: #fff1a8; --f-core: #ffffff; --f-root: #2563eb; --f-glow: rgba(255, 180, 40, 0.55); }
+.flame--blue   { --f-o0: #1e40af; --f-o1: #3b9cff; --f-m0: #60a5fa; --f-m1: #c7ecff; --f-core: #ffffff; --f-root: #1e3a8a; --f-glow: rgba(56, 140, 255, 0.5); }
+.flame--violet { --f-o0: #5b21b6; --f-o1: #b46cff; --f-m0: #a855f7; --f-m1: #f3c4ff; --f-core: #ffffff; --f-root: #3b0764; --f-glow: rgba(168, 85, 247, 0.5); }
+.flame--white  { --f-o0: #7dd3fc; --f-o1: #dfe9ff; --f-m0: #e0f2fe; --f-m1: #ffffff; --f-core: #ffffff; --f-root: #38bdf8; --f-glow: rgba(205, 232, 255, 0.7); }
 
-.flame__o0 { stop-color: var(--f-o0); stop-opacity: 0.35; }
-.flame__o1 { stop-color: var(--f-o1); }
-.flame__m0 { stop-color: var(--f-m0); stop-opacity: 0.8; }
+.flame__o0 { stop-color: var(--f-o0); stop-opacity: 0.08; }
+.flame__o1 { stop-color: var(--f-o1); stop-opacity: 0.95; }
+.flame__o2 { stop-color: var(--f-o1); stop-opacity: 0.6; }
+.flame__o3 { stop-color: var(--f-root); stop-opacity: 0.18; }
+.flame__m0 { stop-color: var(--f-m0); stop-opacity: 0.45; }
 .flame__m1 { stop-color: var(--f-m1); }
-.flame__core { fill: var(--f-core); }
+.flame__m2 { stop-color: var(--f-m1); stop-opacity: 0.1; }
+.flame__k0 { stop-color: var(--f-core); stop-opacity: 0.7; }
+.flame__k1 { stop-color: var(--f-core); }
+.flame__k2 { stop-color: var(--f-core); stop-opacity: 0; }
 .flame__g0 { stop-color: var(--f-glow); }
 .flame__g1 { stop-color: var(--f-glow); stop-opacity: 0; }
 
-/* Three tongues, three rhythms, so the flicker never reads as a loop.
-   Each bends from its base. */
+.flame__root {
+  fill: var(--f-root);
+  opacity: 0.45;
+  filter: blur(1.4px);
+  animation: flame-ember 1.2s ease-in-out infinite alternate;
+}
+
+/* Every tongue bends from its own base. Different rhythms, so the flicker
+   never reads as a loop. */
 .flame__tongue {
   transform-box: fill-box;
   transform-origin: 50% 88%;
@@ -2657,6 +2673,8 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 .flame__tongue--outer { animation: flame-a 1.9s ease-in-out infinite; }
 .flame__tongue--mid   { animation: flame-b 1.3s ease-in-out infinite; }
 .flame__tongue--core  { animation: flame-c 0.9s ease-in-out infinite; }
+.flame__lick--l { animation: flame-lick 1.5s ease-in-out infinite; }
+.flame__lick--r { animation: flame-lick 1.15s ease-in-out 0.4s infinite reverse; }
 
 .flame__glow {
   transform-box: fill-box;
@@ -2682,14 +2700,19 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
   50% { transform: scale(0.9, 1.1); }
 }
 
+@keyframes flame-lick {
+  0%, 100% { transform: scale(1, 0.85) skewX(4deg); opacity: 0.55; }
+  50% { transform: scale(0.8, 1.2) skewX(-6deg); opacity: 0.95; }
+}
+
 @keyframes flame-glow {
   0%, 100% { opacity: 0.75; transform: scale(1); }
   50% { opacity: 1; transform: scale(1.08); }
 }
 
 @keyframes flame-ember {
-  from { opacity: 0.45; }
-  to { opacity: 0.9; }
+  from { opacity: 0.4; }
+  to { opacity: 0.85; }
 }
 
 /* Embers, from a blaze on: they rise, drift and burn out. */
@@ -2703,7 +2726,7 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 @keyframes flame-spark {
   0% { opacity: 0; transform: translate(0, 0) scale(1); }
   15% { opacity: 1; }
-  100% { opacity: 0; transform: translate(4px, -34px) scale(0.3); }
+  100% { opacity: 0; transform: translate(5px, -36px) scale(0.3); }
 }
 
 /* White-hot: the edge shimmers through the colours of hot metal. */
@@ -2716,12 +2739,12 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 /* Waiting for today: lower, dimmer and restless. */
 .flame.is-waiting .flame__tongue--outer { animation: flame-waver 0.8s ease-in-out infinite; }
 .flame.is-waiting .flame__tongue--mid { animation-duration: 0.6s; }
-.flame.is-waiting .flame__glow { opacity: 0.45; animation: none; }
+.flame.is-waiting .flame__glow { opacity: 0.4; animation: none; }
 .flame.is-waiting .flame__tongue { opacity: 0.88; }
 
 @keyframes flame-waver {
   0%, 100% { transform: scale(1, 1) skewX(0deg); }
-  25% { transform: scale(0.9, 0.88) skewX(-6deg); }
+  25% { transform: scale(0.9, 0.86) skewX(-7deg); }
   50% { transform: scale(1.02, 1.04) skewX(4deg); }
   75% { transform: scale(0.92, 0.9) skewX(-3deg); }
 }
@@ -2730,23 +2753,23 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 .flame__smoke {
   fill: none;
   stroke: rgba(160, 160, 170, 0.7);
-  stroke-width: 1.6;
+  stroke-width: 1.5;
   stroke-linecap: round;
-  stroke-dasharray: 40 60;
+  stroke-dasharray: 40 70;
   animation: flame-smoke 3.2s ease-out infinite;
 }
 
 @keyframes flame-smoke {
   0% { stroke-dashoffset: 40; opacity: 0; transform: translateY(4px); }
   25% { opacity: 0.8; }
-  100% { stroke-dashoffset: -60; opacity: 0; transform: translateY(-6px); }
+  100% { stroke-dashoffset: -70; opacity: 0; transform: translateY(-6px); }
 }
 
 /* A new stage: one bright flare. */
 .flame.is-flare .flame__svg { animation: flame-flare 1.4s cubic-bezier(0.2, 0.9, 0.3, 1) 0.2s 1 both; }
 @keyframes flame-flare {
   0% { transform: scale(1); filter: brightness(1); }
-  30% { transform: scale(1.35) translateY(-4px); filter: brightness(1.6) drop-shadow(0 0 10px var(--f-glow)); }
+  30% { transform: scale(1.3) translateY(-4px); filter: brightness(1.6) drop-shadow(0 0 10px var(--f-glow)); }
   100% { transform: scale(1); filter: brightness(1); }
 }
 
