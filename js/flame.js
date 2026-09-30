@@ -12,9 +12,10 @@
      30–99        violet
      100 and on   white-hot, with a shimmer at the edge
 
-   While today's habit is still to do, the flame burns low and wavers —
-   it is waiting to be fed. Done, it stands up to full height. Moving up a
-   stage makes it flare once.
+   While today's habit is still to do, the flame — whatever its stage and
+   colour — burns about a fifth dimmer; done, it is back to full. If the
+   streak breaks, the match goes out and smokes for the day after, then
+   is a fresh match again. Moving up a stage makes it flare once.
 
    Drawn in SVG with three tongues (outer, middle, core), each flickering
    on its own rhythm so it never looks like a loop, over a soft glow.
@@ -81,7 +82,9 @@ var Flame = (function () {
     var id = 'flm' + (++uid);
     var stage = stageOf(days);
     var lit = stage.key !== 'out';
-    var size = SIZE[stage.key] * (waiting ? 0.7 : 1);
+    /* Waiting for today does not shrink the fire or change its stage:
+       it only burns about a fifth dimmer (see .is-waiting). */
+    var size = SIZE[stage.key];
     var bx = HX;
     var by = HY + 3;
     /* The longer it has burned, the further the black creeps down the
@@ -140,7 +143,7 @@ var Flame = (function () {
         '</g>';
 
       /* Sparks from a blaze on: embers that rise off the tip and fade. */
-      if (days >= 7 && !waiting) {
+      if (days >= 7) {
         [[-5, 0], [4, 0.6], [-1, 1.2], [7, 1.8], [-8, 2.3]].forEach(function (s, i) {
           fire += '<circle class="flame__spark" cx="' + (bx + s[0]) + '" cy="' + (by - size * 0.7) + '" r="' + (i % 2 ? 0.9 : 1.3) + '"' +
             ' style="animation-delay:' + s[1] + 's"/>';
@@ -236,7 +239,7 @@ var Flame = (function () {
       (flare ? ' is-flare' : '');
     var title = stage.key === 'out'
       ? (wentOut ? 'The match went out. Light it again today.' : 'Not lit yet — do it today to strike it.')
-      : stage.name + (waiting ? ' · burning low until today is done' : '');
+      : stage.name + (waiting ? ' · dimmed until today is done' : '');
     return '<div class="' + cls + '" title="' + title + '">' + svg(days, waiting, wentOut) + '</div>';
   }
 

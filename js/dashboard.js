@@ -152,16 +152,22 @@ var Dashboard = (function () {
     var run = Habits.streaks(state.log, lead.habit, todayKey);
     var waiting = lead.run > 0 && Habits.dueOn(state.log, lead.habit, todayKey) &&
       !Habits.metOn(state.log, lead.habit, todayKey);
-    /* Gone out: how long the last run lasted, counted back from the
-       most recent point it was met — the match is burnt that far. */
+    /* Gone out: only on the day after the streak broke — the last
+       finished point was missed and the one before it was met. It smokes
+       then, burnt as far as that run had got; after that it is a fresh
+       match again, ready for the next run. */
     var wentOut = false;
     if (lead.run === 0 && run.best > 0) {
       var points = Habits.occurrences(state.log, lead.habit, todayKey);
       var k = points.length - 1;
-      while (k >= 0 && !points[k].met) k--;
-      var last = 0;
-      while (k >= 0 && points[k].met) { last++; k--; }
-      wentOut = Math.max(1, lead.unit === 'week' ? last * 7 : last);
+      if (k >= 0 && !points[k].met) k--;          // today, still in progress
+      var missed = 0;
+      while (k >= 0 && !points[k].met) { missed++; k--; }
+      if (missed === 1) {
+        var last = 0;
+        while (k >= 0 && points[k].met) { last++; k--; }
+        wentOut = Math.max(1, lead.unit === 'week' ? last * 7 : last);
+      }
     }
     var match = typeof Flame !== 'undefined' ? Flame.html(days, waiting, wentOut) : '';
 
@@ -178,7 +184,7 @@ var Dashboard = (function () {
         : 'as hot as it gets';
       stageLine = stage.key === 'out'
         ? (wentOut ? 'It went out — strike it again today' : 'Do it today to strike the match')
-        : (waiting ? '<b>' + stage.name + '</b> · burning low until today is done'
+        : (waiting ? '<b>' + stage.name + '</b> · dimmed until today is done'
           : '<b>' + stage.name + '</b> · ' + toNext);
     }
 
