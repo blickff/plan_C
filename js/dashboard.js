@@ -152,7 +152,17 @@ var Dashboard = (function () {
     var run = Habits.streaks(state.log, lead.habit, todayKey);
     var waiting = lead.run > 0 && Habits.dueOn(state.log, lead.habit, todayKey) &&
       !Habits.metOn(state.log, lead.habit, todayKey);
-    var wentOut = lead.run === 0 && run.best > 0;
+    /* Gone out: how long the last run lasted, counted back from the
+       most recent point it was met — the match is burnt that far. */
+    var wentOut = false;
+    if (lead.run === 0 && run.best > 0) {
+      var points = Habits.occurrences(state.log, lead.habit, todayKey);
+      var k = points.length - 1;
+      while (k >= 0 && !points[k].met) k--;
+      var last = 0;
+      while (k >= 0 && points[k].met) { last++; k--; }
+      wentOut = Math.max(1, lead.unit === 'week' ? last * 7 : last);
+    }
     var match = typeof Flame !== 'undefined' ? Flame.html(days, waiting, wentOut) : '';
 
     /* Under the number: what the fire is now and how far the next one is,

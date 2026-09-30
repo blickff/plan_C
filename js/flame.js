@@ -68,8 +68,15 @@ var Flame = (function () {
   var HX = 35;
   var HY = 72;
 
+  /* How far down the stick is black after burning so many days: a tenth
+     of it on the first day, a little over half at a hundred, no further. */
+  function charFor(days) {
+    return Math.round(10 + (Math.min(Math.max(days, 1), 100) / 100) * 14);
+  }
+
   /* days: the streak in days. waiting: today not done yet. wentOut: the
-     streak is nought but there has been one before. */
+     streak is nought but there has been one before — true, or how many
+     days that last one lasted, which sets how burnt the match is. */
   function svg(days, waiting, wentOut) {
     var id = 'flm' + (++uid);
     var stage = stageOf(days);
@@ -81,7 +88,10 @@ var Flame = (function () {
        stick: a tenth of it on the first day, a little over half at a
        hundred, and no further. */
     var gone = !lit && wentOut;
-    var charred = lit ? Math.round(10 + (Math.min(days, 100) / 100) * 14) : (gone ? 14 : 0);
+    /* A match that went out is burnt as far as it had got: the days it
+       burned before it went out, not a fixed amount. */
+    var burned = gone ? (typeof wentOut === 'number' ? wentOut : 1) : days;
+    var charred = lit || gone ? charFor(burned) : 0;
     /* How rough the flame's edge is, and at what grain: see the filter. */
     var rough = (size * 0.2).toFixed(1);
     var grain = (3.4 / Math.max(size, 1)).toFixed(3) + ' ' + (2.4 / Math.max(size, 1)).toFixed(3);
