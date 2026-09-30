@@ -15,10 +15,10 @@ release](https://github.com/blickff/plan_C/releases/latest).
 
 ### Windows
 
-- **`Daybook-Setup-1.3.0.exe`** — installs it properly, with a Start
+- **`Daybook-Setup-1.4.0.exe`** — installs it properly, with a Start
   menu entry and a desktop shortcut. Installs for you alone, so it does
   not ask for an administrator. **This is the one that updates itself.**
-- **`Daybook-1.3.0-portable.exe`** — no installation. Double-click and
+- **`Daybook-1.4.0-portable.exe`** — no installation. Double-click and
   it runs. Handy for trying it, or for a USB stick.
 
 Both keep their data in the same place, so you can start with the
@@ -35,7 +35,7 @@ honest about that rather than about the program.
 
 ### Mac
 
-- **`Daybook-1.3.0-mac.dmg`** — one file for every Mac, Intel or Apple
+- **`Daybook-1.4.0-mac.dmg`** — one file for every Mac, Intel or Apple
   silicon. Open it and drag Daybook into Applications.
 
 The first time, macOS will refuse to open it: *"Daybook cannot be
