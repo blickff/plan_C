@@ -258,19 +258,22 @@ var Flame = (function () {
      drops away and fades, a fresh one rises in its place, a flash at its
      head as it is struck, and the fire grows out of the flash. From a
      fresh, never-lit match, just the strike and the fire. */
-  function html(days, waiting, wentOut) {
+  /* quiet: a match drawn for show (a preview, a gallery) rather than the
+     streak card's own — it neither plays a scene nor changes what the card
+     remembers having shown. */
+  function html(days, waiting, wentOut, quiet) {
     var stage = stageOf(days);
     var isLit = lit(days);
     var gone = !isLit && wentOut;
     var state = isLit ? 'lit' : gone ? 'gone:' + (typeof wentOut === 'number' ? wentOut : 1) : 'fresh';
-    var before = lastShown();
-    remember(state);
+    var before = quiet ? state : lastShown();
+    if (!quiet) remember(state);
 
     var ignite = isLit && before !== '' && before !== 'lit';
     var swapFrom = ignite && before.indexOf('gone:') === 0 ? +before.slice(5) || 1 : 0;
 
     var flare = false;
-    try {
+    if (!quiet) try {
       var seen = window.localStorage.getItem('daybook.flameStage');
       var now = stageIndex(days);
       if (!ignite && seen !== null && now > +seen && !waiting) flare = true;
@@ -560,7 +563,28 @@ var Flame = (function () {
       requestAnimationFrame(function (ts) { if (id === loop) tick(ts); });
     }
 
+    /* The one-off scenes — lighting again, a stage-up flare — are CSS
+       animations on classes. A browser plays an element's animations
+       again every time it comes back on screen, so coming back to the
+       dashboard showed a bare match and the lighting all over again.
+       Once a scene has played, its classes come off and the burnt match
+       it swapped out goes, so the fire is simply burning when you return. */
+    function settle(event) {
+      var name = event.animationName;
+      if (name !== 'flame-ignite' && name !== 'flame-fade-in' && name !== 'flame-flare') return;
+      var el = event.target.closest && event.target.closest('.flame');
+      if (!el) return;
+      if (name === 'flame-flare') {
+        el.classList.remove('is-flare');
+        return;
+      }
+      el.classList.remove('is-ignite', 'is-swap');
+      var old = el.querySelector('.flame__old');
+      if (old) old.remove();
+    }
+
     function start() {
+      document.addEventListener('animationend', settle, true);
       document.addEventListener('visibilitychange', function () { last = 0; if (alive()) schedule(); });
       new MutationObserver(function () {
         lastScan = 0;
