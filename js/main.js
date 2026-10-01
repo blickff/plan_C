@@ -209,9 +209,11 @@ function renderTheme() {
    tell; the values come from the theme itself, so the two can never
    disagree. */
 var lastWindowTheme = null;
+/* While the new theme spreads as a circle, the strip waits for it. */
+var windowThemeHeld = false;
 
 function tellWindowTheme(theme) {
-  if (!window.desktop || !window.desktop.setTheme) return;
+  if (!window.desktop || !window.desktop.setTheme || windowThemeHeld) return;
   theme = theme || document.documentElement.getAttribute('data-theme');
   var css = getComputedStyle(document.documentElement);
   var bg = css.getPropertyValue('--bg').trim();
@@ -707,8 +709,19 @@ function wireChrome() {
     themeButtons[j].addEventListener('click', function (event) {
       var choice = this.getAttribute('data-theme-set');
       /* The new theme spreads as a circle from the button pressed. */
-      if (typeof Motion !== 'undefined') Motion.reveal(event, function () { setTheme(choice); });
-      else setTheme(choice);
+      /* Windows paints the window's buttons at the top right, outside the
+         page, so they cannot be part of the circle: they change colour
+         when it reaches them, not the moment the button is pressed. */
+      if (typeof Motion !== 'undefined') {
+        windowThemeHeld = true;
+        Motion.reveal(event, function () { setTheme(choice); }, {
+          x: window.innerWidth - 70,
+          y: 18,
+          then: function () { windowThemeHeld = false; tellWindowTheme(); }
+        });
+      } else {
+        setTheme(choice);
+      }
     });
   }
 

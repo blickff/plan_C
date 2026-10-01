@@ -198,19 +198,50 @@ var Motion = (function () {
     seen = sigs();
   }
 
-  /* The theme spreads as a circle from where it was pressed. */
-  function reveal(event, change) {
-    if (!on() || !document.startViewTransition) { change(); return; }
+  /* How far along EASE is (0…1) a given share of the way through the
+     time — the same curve the browser runs, solved by halving. */
+  function eased(p) {
+    function bez(t, a, b) { var u = 1 - t; return 3 * u * u * t * a + 3 * u * t * t * b + t * t * t; }
+    var lo = 0;
+    var hi = 1;
+    for (var i = 0; i < 24; i++) {
+      var mid = (lo + hi) / 2;
+      if (bez(mid, 0.2, 0) < p) lo = mid; else hi = mid;
+    }
+    return bez((lo + hi) / 2, 0, 1);
+  }
+
+  /* The theme spreads as a circle from where it was pressed.
+
+     `reached` is for what the page cannot draw: the window's own buttons
+     at the top right, painted by Windows. It is told when the circle gets
+     to them ({ x, y, then }), so they change colour as the circle arrives
+     rather than all at once at the start. */
+  var DURATION = 560;
+
+  function reveal(event, change, reached) {
+    var told = false;
+    function tell() { if (!told && reached) { told = true; reached.then(); } }
+    if (!on() || !document.startViewTransition) { change(); tell(); return; }
     var x = event && event.clientX ? event.clientX : window.innerWidth / 2;
     var y = event && event.clientY ? event.clientY : window.innerHeight / 2;
     var r = Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y));
     var t = document.startViewTransition(change);
     t.ready.then(function () {
-      document.documentElement.animate(
+      var anim = document.documentElement.animate(
         { clipPath: ['circle(0px at ' + x + 'px ' + y + 'px)', 'circle(' + r + 'px at ' + x + 'px ' + y + 'px)'] },
-        { duration: 560, easing: EASE, pseudoElement: '::view-transition-new(root)' }
+        { duration: DURATION, easing: EASE, pseudoElement: '::view-transition-new(root)' }
       );
-    }).catch(function () { /* the change has still happened */ });
+      if (!reached) return;
+      var share = Math.min(1, Math.hypot(reached.x - x, reached.y - y) / r);
+      (function watch() {
+        if (told) return;
+        var p = Math.min(1, (Number(anim.currentTime) || 0) / DURATION);
+        if (anim.playState === 'finished' || eased(p) >= share) tell();
+        else requestAnimationFrame(watch);
+      })();
+      anim.finished.then(tell, tell);
+    }).catch(tell);
   }
 
   /* The dashboard's cards arrive in a short wave on opening the app. */
