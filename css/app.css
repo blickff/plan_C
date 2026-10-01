@@ -1963,7 +1963,10 @@ body.is-editing .topbar {
 
 .titlebar { display: none; }
 
+/* display: block, said out loud: without it the rule above still hid the
+   strip, and the window had nothing to be dragged by. */
 .is-desktop.is-win32 .titlebar {
+  display: block;
   position: fixed;
   top: 0;
   right: 0;
@@ -1974,6 +1977,11 @@ body.is-editing .topbar {
   -webkit-app-region: drag;
   transition: background-color var(--fade);
 }
+
+/* The greeting and the clock under it hold the window too, so the whole
+   top of the panel is a handle. Its buttons stay buttons. */
+.is-desktop.is-win32 .topbar { -webkit-app-region: drag; }
+.is-desktop.is-win32 .topbar :is(button, a, input, select, textarea) { -webkit-app-region: no-drag; }
 
 .is-desktop.is-win32 body { padding-top: 36px; }
 .is-desktop.is-win32 .topbar { top: 36px; }
