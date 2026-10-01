@@ -24,7 +24,7 @@
    section alone, or the clock above the section.
 
    Settings → Desktop widget also chooses the accent colour (the second
-   hand, the tint), whether the clock has a second hand and shows the
+   hand, the light behind the face), whether the clock has a second hand and shows the
    date, and the backdrop: lit by the accent, or plain.
 
    The match stays in the panel: the owner did not want it on the desktop. */
@@ -309,7 +309,6 @@ var Widget = (function () {
   /* The clock -------------------------------------------------------------- */
 
   var ROMAN = { 12: 'XII', 3: 'III', 6: 'VI', 9: 'IX' };
-  var tintCount = 0;
 
   function at(radius, degrees) {
     var a = degrees * Math.PI / 180;
@@ -389,15 +388,9 @@ var Widget = (function () {
         '<text x="50" y="70.2" data-date></text></g>'
       : '';
 
-    /* The accent's tint, in the dial itself: strongest at the centre and
-       gone at the rim, the same in every direction. */
-    var tint = 'wgtint' + (++tintCount);
-
     return '' +
       '<svg class="wgc__dial wgc__dial--' + kind + '" viewBox="0 0 100 100" aria-hidden="true">' +
-        '<defs><radialGradient id="' + tint + '"><stop offset="0" class="wgc__tint-0"/><stop offset="1" class="wgc__tint-1"/></radialGradient></defs>' +
         '<circle class="wgc__face" cx="50" cy="50" r="48.5"/>' +
-        '<circle class="wgc__tint" cx="50" cy="50" r="48.5" fill="url(#' + tint + ')"/>' +
         marks + numbers + date +
         '<g class="wgc__turn" data-hand="h">' + hour + '</g>' +
         '<g class="wgc__turn" data-hand="m">' + minute + '</g>' +
@@ -598,10 +591,20 @@ var Widget = (function () {
      The widget is as wide as its face needs and exactly as tall as what
      is in it: one habit makes a small widget, five a taller one. Past a
      limit the list scrolls instead of the window growing down the screen.
-     A clock alone has a shape of its own. */
+     A clock alone has a shape of its own.
+
+     No shape is allowed to get extreme: never lower than about two thirds
+     of its width (one habit made a thin strip, a digital clock a wide
+     band), never smaller than SMALLEST and never taller than TALLEST. */
   var WIDTH = { today: 280, plans: 280, note: 280, money: 300, week: 350 };
-  var CLOCK_ALONE = { 'clock-round': [220, 220], 'clock-digital': [320, 136], 'clock-stack': [190, 236] };
-  var TALLEST = 600;
+  var CLOCK_ALONE = { 'clock-round': [230, 230], 'clock-digital': [260, 190], 'clock-stack': [200, 240] };
+  var SMALLEST = 170;
+  var TALLEST = 540;
+  var FLATTEST = 0.66;
+
+  function shape(w, h) {
+    return { w: w, h: Math.min(TALLEST, Math.max(SMALLEST, Math.round(w * FLATTEST), h)) };
+  }
   var SCALE = { small: 0.85, medium: 1, large: 1.2 };
   var lastSize = '';
   var size = { w: 280, h: 300 };
@@ -609,7 +612,7 @@ var Widget = (function () {
   function measure(p, root) {
     if (p.face === 'clock') {
       var fixed = CLOCK_ALONE[clockShape(p)];
-      return { w: fixed[0], h: fixed[1] };
+      return shape(fixed[0], fixed[1]);
     }
     var w = WIDTH[p.face] || 280;
     /* Let it take the height it wants, at the width it will have, and
@@ -620,7 +623,7 @@ var Widget = (function () {
     var h = root.offsetHeight + 1;
     root.style.width = '';
     root.classList.remove('is-measuring');
-    return { w: w, h: Math.min(TALLEST, Math.max(90, h)) };
+    return shape(w, h);
   }
 
   function render() {
@@ -663,7 +666,27 @@ var Widget = (function () {
     }
 
     fadeList();
+    placeGlow();
     tellTray(todayScore());
+  }
+
+  /* The light behind the clock (css/widget.css, .wg--glow) is centred on
+     what is actually drawn — the dial, the digits — and reaches well past
+     it, so it fades out on the widget's own background rather than
+     stopping at the clock's edge. Read after every layout change: the
+     window is given its size a moment after it asks for it. */
+  function placeGlow() {
+    var root = document.getElementById('wg');
+    var clock = root.querySelector('.wgc__dial, .wgc__ringwrap, .wgc--stack, .wgc__time');
+    if (!clock) return;
+    var box = root.getBoundingClientRect();
+    var r = clock.getBoundingClientRect();
+    if (!r.width || !r.height) return;
+    /* A dial's svg fills its box; the round face is the smaller side. */
+    var reach = clock.classList.contains('wgc__dial') ? Math.min(r.width, r.height) : Math.max(r.width, r.height);
+    root.style.setProperty('--glow-x', Math.round(r.left - box.left + r.width / 2) + 'px');
+    root.style.setProperty('--glow-y', Math.round(r.top - box.top + r.height / 2) + 'px');
+    root.style.setProperty('--glow-r', Math.round(reach * 0.95) + 'px');
   }
 
   /* A list fades out at the bottom only when something is really hidden
@@ -775,6 +798,7 @@ var Widget = (function () {
     /* The window was given its size a moment after the page asked; what
        fits in it may have changed. */
     window.addEventListener('resize', function () { setTimeout(fadeList, 60); });
+    window.addEventListener('resize', placeGlow);
 
     /* Rolls over at midnight without a restart, and is the heartbeat the
        reminder rides on. */
@@ -829,7 +853,7 @@ var Widget = (function () {
     }
   }
 
-  return { start: start, render: render, choice: choice, size: function () { return size; }, refit: fadeList };
+  return { start: start, render: render, choice: choice, size: function () { return size; }, refit: function () { fadeList(); placeGlow(); } };
 })();
 
 Widget.start();

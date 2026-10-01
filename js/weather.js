@@ -78,6 +78,10 @@ var Weather = (function () {
         Storage.save();
         remember(cached.code);
         render(cached);
+        /* The widget shows the weather in its top line, which can take
+           the line from nothing to a row of text: it redraws and is made
+           tall enough again, instead of cutting off its last line. */
+        if (typeof window.repaint === 'function') window.repaint();
       });
   }
 

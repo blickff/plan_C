@@ -197,6 +197,7 @@ function createWidget() {
     applyWidgetMode();
     if (loadState().pinned) widget.showInactive();
     else { widget.show(); widget.focus(); }
+    dropBorder();
   });
   widget.webContents.on('did-finish-load', applyWidgetMode);
 
@@ -289,26 +290,61 @@ public static class DaybookDesktop {
 
 let tiedToDesktop = false;
 
-function tieToDesktop(on) {
-  if (process.platform !== 'win32' || !widget || widget.isDestroyed()) return;
-  if (on === tiedToDesktop) return;
+function widgetHandle() {
   const buf = widget.getNativeWindowHandle();
-  const handle = buf.length >= 8 ? buf.readBigInt64LE(0).toString() : String(buf.readInt32LE(0));
-  const script = DESKTOP_TIE.replace('HANDLE', handle).replace('ON', on ? '$true' : '$false');
+  return buf.length >= 8 ? buf.readBigInt64LE(0).toString() : String(buf.readInt32LE(0));
+}
+
+function runPowerShell(script, done) {
   const encoded = Buffer.from(script, 'utf16le').toString('base64');
-  tiedToDesktop = on;
   execFile('powershell.exe',
     ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-EncodedCommand', encoded],
     { windowsHide: true, timeout: 20000 },
-    (err, stdout) => {
-      const said = String(stdout || '').trim().split(/\r?\n/).pop() || '';
-      if (err || (said !== 'tied' && said !== 'released')) {
-        tiedToDesktop = false;
-        console.warn('widget desktop tie failed: ' + (err ? err.message.split('\n')[0] : said || 'no answer'));
-        return;
-      }
-      console.log('widget desktop tie: ' + said);
-    });
+    (err, stdout) => done(err, String(stdout || '').trim().split(/\r?\n/).pop() || ''));
+}
+
+/* No outline. Windows 11 draws a thin light border round every window,
+   this frameless one included, and on a dark widget it reads as a white
+   line round the edge. Windows lets a window ask for no border colour at
+   all (DWMWA_BORDER_COLOR, 34, set to DWMWA_COLOR_NONE); Electron has no
+   call for it, so it is asked through PowerShell, as the desktop tie is.
+   Windows 10 has no such border and answers with an error: nothing to do
+   there. The rounded corners stay. */
+const NO_BORDER = `
+Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public static class DaybookBorder {
+  [DllImport("dwmapi.dll")] static extern int DwmSetWindowAttribute(IntPtr h, int attr, ref uint value, int size);
+  public static string Drop(long handle) {
+    uint none = 0xFFFFFFFE;
+    return DwmSetWindowAttribute(new IntPtr(handle), 34, ref none, 4) == 0 ? "no border" : "kept";
+  }
+}
+"@
+[DaybookBorder]::Drop(HANDLE)
+`;
+
+function dropBorder() {
+  if (process.platform !== 'win32' || !widget || widget.isDestroyed()) return;
+  runPowerShell(NO_BORDER.replace('HANDLE', widgetHandle()), (err, said) => {
+    console.log('widget border: ' + (err ? 'failed, ' + err.message.split('\n')[0] : said));
+  });
+}
+
+function tieToDesktop(on) {
+  if (process.platform !== 'win32' || !widget || widget.isDestroyed()) return;
+  if (on === tiedToDesktop) return;
+  const script = DESKTOP_TIE.replace('HANDLE', widgetHandle()).replace('ON', on ? '$true' : '$false');
+  tiedToDesktop = on;
+  runPowerShell(script, (err, said) => {
+    if (err || (said !== 'tied' && said !== 'released')) {
+      tiedToDesktop = false;
+      console.warn('widget desktop tie failed: ' + (err ? err.message.split('\n')[0] : said || 'no answer'));
+      return;
+    }
+    console.log('widget desktop tie: ' + said);
+  });
 }
 
 /* Pinned and always-on-top are opposite answers to the same question,

@@ -49,34 +49,30 @@ body.is-pinned .wg__unpinned { display: none; }
 .wg--accent-violet { --wg-accent: #b46cff; }
 .wg--accent-ink    { --wg-accent: var(--text); }
 
-/* The accent's light. Even, so nothing reads as a stain: on a face of
-   text, a wash across the whole width that thins towards the bottom; on a
-   dial with hands, a tint drawn in the dial itself, from its centre out to
-   the rim (js/widget.js, the wgc__tint circle); behind digits, a circle
-   centred on them. An earlier version put one off-centre blob behind
-   everything and a second light across the top, and the two together
-   looked like a smear across the clock. */
-.wg--glow::before {
+/* The accent's light, and only where there is a clock: a round glow from
+   behind it, centred on the clock wherever it sits (js/widget.js puts
+   --glow-x, --glow-y and --glow-r on the widget), strongest in the middle
+   and easing out to nothing, with no edge to see. Without a clock the
+   widget is plain: just the page colour.
+
+   Earlier versions washed the whole window, or lit the dial alone, or put
+   a small circle behind digits; each left one side brighter than another
+   or showed where the light stopped. */
+.wg--glow:is(.wg--clock, .wg--combined)::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--wg-accent) 13%, transparent), transparent 75%);
+  background: radial-gradient(circle var(--glow-r, 160px) at var(--glow-x, 50%) var(--glow-y, 50%),
+    color-mix(in srgb, var(--wg-accent) 22%, transparent) 0%,
+    color-mix(in srgb, var(--wg-accent) 19%, transparent) 15%,
+    color-mix(in srgb, var(--wg-accent) 14%, transparent) 32%,
+    color-mix(in srgb, var(--wg-accent) 8.5%, transparent) 50%,
+    color-mix(in srgb, var(--wg-accent) 4%, transparent) 68%,
+    color-mix(in srgb, var(--wg-accent) 1.2%, transparent) 85%,
+    transparent 100%);
   pointer-events: none;
 }
-
-/* Just a clock: the dial carries its own tint, so the window adds none —
-   except behind digits, which have no dial to carry one. */
-.wg--clock.wg--glow::before { background: none; }
-.wg--clock.wg--dial-digital.wg--glow::before,
-.wg--clock.wg--dial-stack.wg--glow::before {
-  background: radial-gradient(circle closest-side at 50% 50%, color-mix(in srgb, var(--wg-accent) 17%, transparent), transparent);
-}
-
-.wgc__tint { display: none; }
-.wg--glow .wgc__tint { display: block; }
-.wgc__tint-0 { stop-color: var(--wg-accent); stop-opacity: 0.2; }
-.wgc__tint-1 { stop-color: var(--wg-accent); stop-opacity: 0; }
 
 .wg__face {
   display: flex;
@@ -495,7 +491,6 @@ body.is-pinned .wg__unpinned { display: none; }
    hand, no tint on the face, no glow behind it — a hairline ring, twelve
    short marks and plain hands. */
 .wg--dial-mono::before { display: none; }
-.wg--dial-mono .wgc__tint { display: none; }
 .wgc__dial--mono .wgc__face { fill: none; stroke: var(--text-faint); stroke-width: 0.5; }
 .wgc__dial--mono .wgc__tick { stroke: var(--text-faint); stroke-width: 0.7; }
 .wgc__dial--mono .wgc__tick.is-major { stroke: var(--text); stroke-width: 1; }
@@ -524,6 +519,8 @@ body.is-pinned .wg__unpinned { display: none; }
 
 /* Digital: the time as large as the window allows. */
 .wgc--digital { flex-direction: column; align-items: flex-start; padding: 0 6px; }
+/* Alone it sits in the middle, where the light behind it is. */
+.wg--clock .wgc--digital { align-items: center; text-align: center; }
 .wgc__time { margin: 0; font-weight: 200; letter-spacing: -0.05em; line-height: 1; }
 .wgc--digital .wgc__time { font-size: min(27cqw, 52cqh); }
 .wgc__date { margin: 8px 0 0; font-size: 13px; color: var(--text-dim); }
@@ -543,16 +540,19 @@ body.is-pinned .wg__unpinned { display: none; }
   width: min(100cqw - 24px, 100cqh - 24px);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: conic-gradient(var(--wg-accent) calc(var(--p) * 1%), var(--cell-0) 0);
   text-align: center;
 }
 
+/* Only the ring itself is drawn; inside it the light behind the clock
+   shows through. */
 .wgc__ringwrap::before {
   content: "";
   position: absolute;
-  inset: 7px;
+  inset: 0;
   border-radius: 50%;
-  background: var(--bg);
+  background: conic-gradient(var(--wg-accent) calc(var(--p) * 1%), var(--cell-0) 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7.5px), #000 calc(100% - 7px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 7.5px), #000 calc(100% - 7px));
 }
 
 .wgc__ringwrap > * { position: relative; }
