@@ -179,6 +179,11 @@ var Widget = (function () {
 
   /* Today ---------------------------------------------------------------- */
 
+  var TICK = '<svg class="wgh__tick" viewBox="0 0 16 16" aria-label="done"><path d="M3.5 8.5l3 3 6-7"/></svg>';
+  /* Which habits were finished at the last drawing, so the one that has
+     just been finished can be told apart from those done earlier. */
+  var finished = {};
+
   function faceToday() {
     var log = Storage.load().log;
     var key = Storage.today();
@@ -190,11 +195,16 @@ var Widget = (function () {
       var value = Habits.valueOf(h.id);
       var done = value >= h.goal;
       var width = Math.min(100, Math.round((value / h.goal) * 100));
-      var readout = h.goal === 1 ? (done ? 'done' : '—') : value + '/' + h.goal + (h.unit ? ' ' + h.unit : '');
-      return '<button class="wgh' + (done ? ' is-done' : '') + (Habits.dueOn(log, h, key) ? '' : ' is-off') + '"' +
+      var readout = done ? TICK
+        : h.goal === 1 ? '—'
+        : escapeHtml(value + '/' + h.goal + (h.unit ? ' ' + h.unit : ''));
+      /* Finished just now, by a click here or in the panel: lit once. */
+      var fresh = done && finished[h.id] === false;
+      finished[h.id] = done;
+      return '<button class="wgh' + (done ? ' is-done' : '') + (fresh ? ' is-fresh' : '') + (Habits.dueOn(log, h, key) ? '' : ' is-off') + '"' +
         ' type="button" data-bump="' + escapeHtml(h.id) + '" title="Click to add, right-click to take away">' +
         '<span class="wgh__name">' + escapeHtml(h.name) + '</span>' +
-        '<span class="wgh__value">' + escapeHtml(readout) + '</span>' +
+        '<span class="wgh__value">' + readout + '</span>' +
         '<span class="wgh__bar"><span style="width:' + width + '%"></span></span>' +
       '</button>';
     }).join('') : '<p class="wg__empty">No habits yet — open the panel to pick some.</p>';
@@ -426,7 +436,7 @@ var Widget = (function () {
       var pct = todayScore();
       return '' +
         '<div class="wgc wgc--round">' +
-          '<div class="wgc__ringwrap" style="--p:' + pct + '" title="Today: ' + pct + '% of your habits done">' +
+          '<div class="wgc__ringwrap" style="--ring-p:' + pct + '" title="Today: ' + pct + '% of your habits done">' +
             '<p class="wgc__time" data-time></p>' +
             '<p class="wgc__ringpct">' + (p.date ? '<span data-date></span> · ' : '') + pct + '% done</p>' +
           '</div>' +
@@ -666,27 +676,7 @@ var Widget = (function () {
     }
 
     fadeList();
-    placeGlow();
     tellTray(todayScore());
-  }
-
-  /* The light behind the clock (css/widget.css, .wg--glow) is centred on
-     what is actually drawn — the dial, the digits — and reaches well past
-     it, so it fades out on the widget's own background rather than
-     stopping at the clock's edge. Read after every layout change: the
-     window is given its size a moment after it asks for it. */
-  function placeGlow() {
-    var root = document.getElementById('wg');
-    var clock = root.querySelector('.wgc__dial, .wgc__ringwrap, .wgc--stack, .wgc__time');
-    if (!clock) return;
-    var box = root.getBoundingClientRect();
-    var r = clock.getBoundingClientRect();
-    if (!r.width || !r.height) return;
-    /* A dial's svg fills its box; the round face is the smaller side. */
-    var reach = clock.classList.contains('wgc__dial') ? Math.min(r.width, r.height) : Math.max(r.width, r.height);
-    root.style.setProperty('--glow-x', Math.round(r.left - box.left + r.width / 2) + 'px');
-    root.style.setProperty('--glow-y', Math.round(r.top - box.top + r.height / 2) + 'px');
-    root.style.setProperty('--glow-r', Math.round(reach * 0.95) + 'px');
   }
 
   /* A list fades out at the bottom only when something is really hidden
@@ -798,7 +788,6 @@ var Widget = (function () {
     /* The window was given its size a moment after the page asked; what
        fits in it may have changed. */
     window.addEventListener('resize', function () { setTimeout(fadeList, 60); });
-    window.addEventListener('resize', placeGlow);
 
     /* Rolls over at midnight without a restart, and is the heartbeat the
        reminder rides on. */
@@ -853,7 +842,7 @@ var Widget = (function () {
     }
   }
 
-  return { start: start, render: render, choice: choice, size: function () { return size; }, refit: function () { fadeList(); placeGlow(); } };
+  return { start: start, render: render, choice: choice, size: function () { return size; }, refit: fadeList };
 })();
 
 Widget.start();

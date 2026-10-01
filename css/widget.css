@@ -4,9 +4,10 @@
    frame, so the page is the whole widget: the chrome is kept to a line
    of small buttons that only appear under the pointer.
 
-   The surface is the page colour with a faint light from above. One
-   accent colour, chosen in Settings, is the clock's second hand and —
-   with the "glow" backdrop — a soft light behind the face. */
+   The surface is the page colour. One accent colour, chosen in Settings,
+   runs through the whole widget: the clock's second hand, the lines that
+   fill as habits are done, the ticked tasks and — with the "glow"
+   backdrop — a soft light behind the clock. */
 
 .widget-body {
   margin: 0;
@@ -49,30 +50,55 @@ body.is-pinned .wg__unpinned { display: none; }
 .wg--accent-violet { --wg-accent: #b46cff; }
 .wg--accent-ink    { --wg-accent: var(--text); }
 
-/* The accent's light, and only where there is a clock: a round glow from
-   behind it, centred on the clock wherever it sits (js/widget.js puts
-   --glow-x, --glow-y and --glow-r on the widget), strongest in the middle
-   and easing out to nothing, with no edge to see. Without a clock the
-   widget is plain: just the page colour.
+/* The accent's light, and only where there is a clock: one glow from
+   behind it, drawn by the clock itself (.wgc::before, below), so it is
+   centred on the clock by construction — the same in every direction,
+   strongest in the middle and easing out to nothing before any edge.
+   Without a clock the widget is plain: just the page colour.
 
-   Earlier versions washed the whole window, or lit the dial alone, or put
-   a small circle behind digits; each left one side brighter than another
-   or showed where the light stopped. */
-.wg--glow:is(.wg--clock, .wg--combined)::before {
+   Earlier versions washed the whole window, lit the dial alone, or were
+   placed by script — which drifted off centre whenever the widget was
+   scaled. Each left one side brighter than another. */
+.wg { --glow-a: 30%; }
+[data-theme="light"] .wg { --glow-a: 24%; }
+
+.wgc { position: relative; }
+
+.wg--glow .wgc::before {
   content: "";
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
   z-index: -1;
-  background: radial-gradient(circle var(--glow-r, 160px) at var(--glow-x, 50%) var(--glow-y, 50%),
-    color-mix(in srgb, var(--wg-accent) 22%, transparent) 0%,
-    color-mix(in srgb, var(--wg-accent) 19%, transparent) 15%,
-    color-mix(in srgb, var(--wg-accent) 14%, transparent) 32%,
-    color-mix(in srgb, var(--wg-accent) 8.5%, transparent) 50%,
-    color-mix(in srgb, var(--wg-accent) 4%, transparent) 68%,
-    color-mix(in srgb, var(--wg-accent) 1.2%, transparent) 85%,
+  width: var(--glow-w);
+  height: var(--glow-h);
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  /* A bell-shaped fall-off: flat in the middle, steepest half way, and
+     arriving at nothing so gently that no rim can be seen. */
+  background: radial-gradient(closest-side,
+    color-mix(in srgb, var(--wg-accent) var(--glow-a), transparent) 0%,
+    color-mix(in srgb, var(--wg-accent) calc(var(--glow-a) * 0.94), transparent) 14%,
+    color-mix(in srgb, var(--wg-accent) calc(var(--glow-a) * 0.8), transparent) 28%,
+    color-mix(in srgb, var(--wg-accent) calc(var(--glow-a) * 0.6), transparent) 42%,
+    color-mix(in srgb, var(--wg-accent) calc(var(--glow-a) * 0.38), transparent) 56%,
+    color-mix(in srgb, var(--wg-accent) calc(var(--glow-a) * 0.2), transparent) 70%,
+    color-mix(in srgb, var(--wg-accent) calc(var(--glow-a) * 0.08), transparent) 83%,
+    color-mix(in srgb, var(--wg-accent) calc(var(--glow-a) * 0.02), transparent) 93%,
     transparent 100%);
   pointer-events: none;
 }
+
+/* How far the light reaches. A clock alone fills its window, so the light
+   is as wide as the window and fades out at its edges. Above a section it
+   is a circle reaching well past the dial, or for digits an oval as wide
+   as the widget — in both cases fading out before the sides. */
+.wg--clock .wgc { --glow-w: 100cqmin; --glow-h: 100cqmin; }
+.wg--clock .wgc--digital,
+.wg--clock .wgc--stack { --glow-w: 100cqw; --glow-h: 100cqh; }
+.wg__clockband .wgc { --glow-w: min(100cqw, 175cqh); --glow-h: min(100cqw, 175cqh); }
+.wg__clockband .wgc--digital,
+.wg__clockband .wgc--stack { --glow-w: 100cqw; --glow-h: 210cqh; }
 
 .wg__face {
   display: flex;
@@ -114,6 +140,9 @@ body.is-pinned .wg__unpinned { display: none; }
 .wg--nobar .wg__bar { position: absolute; top: 6px; left: 12px; right: 12px; z-index: 2; }
 .wg--nobar .wg__meta { display: none; }
 .wg--nobar .wg__tools { background: none; }
+/* A clock above a section, with no line over it: a little more room at
+   the top, or the dial sits nearer the edge than anything else does. */
+.wg--nobar.wg--combined { padding-top: 16px; }
 
 /* Measuring (js/widget.js): for an instant everything takes the height it
    wants, so the window can be made exactly that tall. */
@@ -240,26 +269,32 @@ body.is-pinned .wg__unpinned { display: none; }
   overflow-y: auto;
 }
 
+/* A habit: its name, how far along, and a thin line that fills in the
+   accent colour — the same colour as the second hand and the light, so
+   the widget reads as one thing. No outline round each row: the rows sit
+   on a faint tint of their own, and the line says the rest. */
 .wgh {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
-  gap: 7px 10px;
+  gap: 8px 10px;
   flex: none;
-  padding: 8px 11px 9px;
-  border: 1px solid var(--border);
+  padding: 9px 12px 10px;
+  border: 0;
   border-radius: 12px;
-  background: var(--surface);
+  background: color-mix(in srgb, var(--text) 5.5%, transparent);
   color: var(--text);
   font: inherit;
   font-size: 13px;
   text-align: left;
   cursor: pointer;
   -webkit-app-region: no-drag;
-  transition: border-color 0.14s ease, transform 0.12s ease;
+  transition: background-color 0.14s ease, transform 0.12s ease;
 }
 
-.wgh:hover { border-color: var(--text-faint); }
+[data-theme="light"] .wgh { background: color-mix(in srgb, var(--surface) 80%, transparent); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+.wgh:hover { background: color-mix(in srgb, var(--text) 9%, transparent); }
+[data-theme="light"] .wgh:hover { background: var(--surface); }
 .wgh:active { transform: scale(0.985); }
 .wgh.is-off { opacity: 0.55; }
 .wgh__name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -267,9 +302,9 @@ body.is-pinned .wg__unpinned { display: none; }
 
 .wgh__bar {
   grid-column: 1 / -1;
-  height: 4px;
+  height: 3px;
   border-radius: 2px;
-  background: var(--cell-0);
+  background: color-mix(in srgb, var(--text) 8%, transparent);
   overflow: hidden;
 }
 
@@ -277,13 +312,29 @@ body.is-pinned .wg__unpinned { display: none; }
   display: block;
   height: 100%;
   border-radius: 2px;
-  background: var(--ok);
+  background: var(--wg-accent);
   transition: width 0.4s cubic-bezier(0.2, 0, 0, 1);
 }
 
-.wgh.is-done { border-color: var(--ok); }
-.wgh.is-done .wgh__value { color: var(--ok); }
+/* Done: the line is full, a tick takes the place of the count. */
 .wgh.is-done .wgh__name { color: var(--text-dim); }
+.wgh__tick {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: var(--wg-accent);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The moment one is finished: a short light round the row, once. */
+.wgh.is-fresh { animation: wgh-done 0.7s cubic-bezier(0.2, 0, 0, 1); }
+@keyframes wgh-done {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--wg-accent) 55%, transparent); }
+  100% { box-shadow: 0 0 0 7px transparent; }
+}
+[data-motion="reduced"] .wgh.is-fresh { animation: none; }
 
 /* The last seven days, as bars ----------------------------------------------- */
 
@@ -373,7 +424,7 @@ body.is-pinned .wg__unpinned { display: none; }
   transition: background-color 0.16s ease, border-color 0.16s ease;
 }
 
-.wgp__task.is-done .wgp__check { border-color: var(--ok); background: var(--ok); }
+.wgp__task.is-done .wgp__check { border-color: var(--wg-accent); background: var(--wg-accent); }
 
 .wgp__task.is-done .wgp__check::after {
   content: "";
@@ -382,7 +433,7 @@ body.is-pinned .wg__unpinned { display: none; }
   top: 2px;
   width: 4px;
   height: 8px;
-  border: solid #fff;
+  border: solid var(--bg);
   border-width: 0 1.8px 1.8px 0;
   transform: rotate(45deg);
 }
@@ -490,7 +541,8 @@ body.is-pinned .wg__unpinned { display: none; }
 /* Mono: black, white and grey, and nothing else. No accent on the second
    hand, no tint on the face, no glow behind it — a hairline ring, twelve
    short marks and plain hands. */
-.wg--dial-mono::before { display: none; }
+.wg--dial-mono { --wg-accent: var(--text-dim); }
+.wg--dial-mono .wgc::before { display: none; }
 .wgc__dial--mono .wgc__face { fill: none; stroke: var(--text-faint); stroke-width: 0.5; }
 .wgc__dial--mono .wgc__tick { stroke: var(--text-faint); stroke-width: 0.7; }
 .wgc__dial--mono .wgc__tick.is-major { stroke: var(--text); stroke-width: 1; }
@@ -550,7 +602,9 @@ body.is-pinned .wg__unpinned { display: none; }
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: conic-gradient(var(--wg-accent) calc(var(--p) * 1%), var(--cell-0) 0);
+  /* Its own variable: the panel's ring registers --p as not inherited
+     (app.css), and under that name this ring never filled. */
+  background: conic-gradient(var(--wg-accent) calc(var(--ring-p) * 1%), var(--cell-0) 0);
   -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7.5px), #000 calc(100% - 7px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 7.5px), #000 calc(100% - 7px));
 }
@@ -620,12 +674,24 @@ body.is-pinned .wg__unpinned { display: none; }
 .wg--with-clock-stack .wg__clockband { height: 132px; }
 
 .wg__under {
+  position: relative;
   display: flex;
   flex: 1;
   flex-direction: column;
   min-height: 0;
   padding-top: 10px;
-  border-top: 1px solid var(--border);
+}
+
+/* Between the clock and the section: a hairline that fades out at both
+   ends, rather than a ruled edge across the widget. */
+.wg__under::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 8%;
+  right: 8%;
+  height: 1px;
+  background: linear-gradient(to right, transparent, var(--border) 30%, var(--border) 70%, transparent);
 }
 
 .wg__clockband .wgc__ringwrap { width: min(100cqw, 100cqh); }
