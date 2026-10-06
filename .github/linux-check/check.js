@@ -118,7 +118,7 @@ function expect(ok, what) {
   await panel.run('showView("settings")');
   await sleep(600);
   expect(await panel.run('getComputedStyle(document.querySelector(".only-linux")).display !== "none"'), 'Settings shows the Linux note');
-  await panel.run('document.getElementById("desktop-card").scrollIntoView()');
+  await panel.run('document.getElementById("quit-btn").scrollIntoView({ block: "center" })');
   await sleep(400);
   await panel.shoot('settings-desktop.png');
 

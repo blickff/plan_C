@@ -113,7 +113,7 @@
           ]
         }
       ],
-      "icon": "build/icon.png",
+      "icon": "build/icons",
       "category": "Utility",
       "executableName": "daybook",
       "synopsis": "Your day, your habits, your notes and your spending",
@@ -122,7 +122,7 @@
       "desktop": {
         "entry": {
           "Name": "Daybook",
-          "StartupWMClass": "Daybook",
+          "StartupWMClass": "day-panel",
           "Keywords": "habits;tasks;notes;money;"
         }
       }

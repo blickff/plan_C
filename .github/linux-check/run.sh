@@ -27,6 +27,11 @@ BIN=$(grep '^Exec=' "$DESKTOP" | head -1 | sed 's/^Exec=//; s/ %U$//; s/^"//; s/
 ICON=$(grep '^Icon=' "$DESKTOP" | sed 's/^Icon=//')
 say "      icons installed for '$ICON':"
 rpm -ql "$PKG" | grep "/icons/.*/$ICON\.png$" | sed 's/^/        /' | tee -a "$OUT/report.txt"
+if rpm -ql "$PKG" | grep -q "/icons/hicolor/256x256/apps/$ICON\.png$"; then
+  say "ok    the icon comes in the usual sizes"
+else
+  say "FAIL  no 256x256 icon, so the dock may show none"; fail=1
+fi
 
 # A screen, and a session bus as a desktop would have.
 Xvfb :99 -screen 0 1600x1000x24 >/dev/null 2>&1 &
@@ -44,12 +49,14 @@ node "$(dirname "$0")/check.js" "$OUT" || fail=1
 
 # The windows as the X server has them: their names and WM_CLASS, which
 # the desktop matches against StartupWMClass to give them the app's icon.
-xwininfo -root -tree | grep -i daybook | sed 's/^ */        /' | tee "$OUT/windows.txt"
+# Only the two real windows, titled "Daybook": Chromium also keeps tiny
+# helper windows, with a class of their own, that the dock never sees.
+xwininfo -root -tree | grep '"Daybook": ' | sed 's/^ */        /' | tee "$OUT/windows.txt"
 WMCLASS=$(grep '^StartupWMClass=' "$DESKTOP" | sed 's/^StartupWMClass=//')
-if grep -q "\"$WMCLASS\")" "$OUT/windows.txt"; then
-  say "ok    the windows' class matches the menu entry ($WMCLASS)"
+if [ "$(grep -c . "$OUT/windows.txt")" -ge 2 ] && ! grep -v "\"$WMCLASS\")" "$OUT/windows.txt" | grep -q .; then
+  say "ok    both windows' class matches the menu entry ($WMCLASS)"
 else
-  say "FAIL  no window has the class '$WMCLASS' the menu entry expects"; fail=1
+  say "FAIL  not every window has the class '$WMCLASS' the menu entry expects"; fail=1
 fi
 import -window root "$OUT/screen.png" 2>/dev/null
 
