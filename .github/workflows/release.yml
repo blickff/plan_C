@@ -1,6 +1,11 @@
-# Builds the Windows and macOS versions and publishes them as one release.
+# Builds the Windows, macOS and Linux versions, tries the Linux one on a
+# clean Fedora, and publishes them as one release.
 #
 # Runs when a version tag is pushed (git tag v1.2.0 && git push --tags).
+# A branch named check/<anything> runs the same builds and the Fedora
+# check without publishing anything — a way to try a build before
+# releasing it.
+#
 # The macOS build has to happen on a Mac: electron-builder only signs Mac
 # apps on macOS, and an unsigned app does not start on Apple-silicon Macs
 # at all. GitHub's Mac runners are free for public repositories.
@@ -10,6 +15,7 @@ name: Release
 on:
   push:
     tags: ['v*']
+    branches: ['check/**']
 
 permissions:
   contents: write
@@ -17,7 +23,7 @@ permissions:
 jobs:
   build:
     strategy:
-      # One platform failing should not hide whether the other worked.
+      # One platform failing should not hide whether the others worked.
       fail-fast: false
       matrix:
         include:
@@ -25,6 +31,8 @@ jobs:
             target: --win
           - os: macos-latest
             target: --mac
+          - os: ubuntu-latest
+            target: --linux
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -36,8 +44,14 @@ jobs:
 
       - run: npm ci
 
+      # electron-builder makes the .rpm with rpmbuild, which Ubuntu does
+      # not have by default.
+      - name: Tools for the .rpm package
+        if: runner.os == 'Linux'
+        run: sudo apt-get update -q && sudo apt-get install -y -q rpm
+
       # --publish never: build only. The release job below uploads
-      # everything at once, so two runners never race to create it.
+      # everything at once, so three runners never race to create it.
       - name: Build
         run: npx electron-builder ${{ matrix.target }} --publish never
         env:
@@ -49,23 +63,51 @@ jobs:
         with:
           name: dist-${{ matrix.os }}
           if-no-files-found: error
-          # latest.yml and the blockmap are what the installed Windows app
-          # reads to find and download an update; without them the update
-          # button never appears.
+          # latest.yml (Windows) and latest-linux.yml (the AppImage) are
+          # what an installed app reads to find and download an update;
+          # without them the update button never appears.
           path: |
             release/*.exe
             release/*.exe.blockmap
             release/*.dmg
+            release/*.AppImage
+            release/*.rpm
             release/latest.yml
+            release/latest-linux.yml
+
+  # The Linux build installed and started on Fedora, the system it is
+  # mostly for: see .github/linux-check/. Its pictures and log are kept
+  # with the run.
+  linux-check:
+    needs: build
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-ubuntu-latest
+          path: dist
+
+      - run: bash .github/linux-check/run.sh dist
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-check
+          path: check
 
   release:
-    needs: build
+    needs: [build, linux-check]
+    if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/download-artifact@v4
         with:
+          pattern: dist-*
           path: dist
           merge-multiple: true
 

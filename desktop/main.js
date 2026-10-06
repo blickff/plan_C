@@ -26,6 +26,10 @@ const updates = require('./updates');
 
 const ROOT = path.join(__dirname, '..');
 
+/* On Linux a window carries its own icon, for the dock and the window
+   switcher; Windows and macOS take it from the installed app. */
+const WINDOW_ICON = process.platform === 'linux' ? { icon: path.join(__dirname, 'icon.png') } : {};
+
 /* Pinned rather than left to Electron.
 
    Electron names this folder after the product, so every rename of the
@@ -92,6 +96,63 @@ function saveState(patch) {
   }
 }
 
+/* Starting at login ------------------------------------------------------
+
+   Windows and macOS keep the list of programs that start at login
+   themselves, and Electron asks them (setLoginItemSettings). Linux has no
+   such list to ask: the desktops — GNOME, KDE and the rest — read
+   ~/.config/autostart, where a small .desktop file is the entry. So on
+   Linux the app writes that file, or removes it. */
+function autostartFile() {
+  const suffix = PROFILE === 'day-panel' ? '' : PROFILE.replace(/^day-panel/, '');
+  return path.join(app.getPath('appData'), 'autostart', 'daybook' + suffix + '.desktop');
+}
+
+/* A path in a .desktop file's Exec line, quoted as that format wants. */
+function execQuote(text) {
+  return '"' + String(text).replace(/(["`$\\])/g, '\\$1') + '"';
+}
+
+function autostartOn() {
+  if (process.platform !== 'linux') return app.getLoginItemSettings().openAtLogin;
+  return fs.existsSync(autostartFile());
+}
+
+function setAutostart(on) {
+  if (process.platform !== 'linux') {
+    app.setLoginItemSettings({ openAtLogin: on });
+    return autostartOn();
+  }
+  const file = autostartFile();
+  try {
+    if (!on) {
+      fs.rmSync(file, { force: true });
+    } else {
+      /* An AppImage is started through the file itself (APPIMAGE), not
+         the copy it unpacks to a temporary folder each time. */
+      const exec = [process.env.APPIMAGE || process.execPath]
+        .concat(app.isPackaged ? [] : [app.getAppPath()])
+        .map(execQuote);
+      if (process.env.DAYBOOK_PROFILE) exec.unshift('env', 'DAYBOOK_PROFILE=' + PROFILE.replace(/^day-panel-/, ''));
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, [
+        '[Desktop Entry]',
+        'Type=Application',
+        'Name=Daybook',
+        'Comment=Your day, your habits, your notes and your spending',
+        'Exec=' + exec.join(' '),
+        'Icon=daybook',
+        'Terminal=false',
+        'X-GNOME-Autostart-enabled=true',
+        ''
+      ].join('\n'), 'utf8');
+    }
+  } catch (err) {
+    console.warn('autostart: could not ' + (on ? 'write ' : 'remove ') + file + ': ' + err.message);
+  }
+  return autostartOn();
+}
+
 /* One fixed origin, app://panel, for the whole life of the app.
 
    This used to be an http server on whatever port the system handed
@@ -153,6 +214,7 @@ function createWidget() {
     x: saved.x,
     y: saved.y,
     center: firstRun,
+    ...WINDOW_ICON,
     frame: false,
     /* Not transparent. A frameless transparent window on Windows very
        often renders as nothing at all, and an invisible window is
@@ -398,6 +460,7 @@ function openPanel() {
     minWidth: 760,
     minHeight: 560,
     title: 'Daybook',
+    ...WINDOW_ICON,
     backgroundColor: theme.bg,
     /* On Windows the title bar is drawn by the page, in the page's own
        colours, with Windows' buttons laid over it — a white bar above a
@@ -572,14 +635,19 @@ function wireMessages() {
     return {
       onTop: !!saved.onTop,
       pinned: !!saved.pinned,
-      openAtLogin: app.getLoginItemSettings().openAtLogin
+      openAtLogin: autostartOn()
     };
   });
 
-  ipcMain.handle('toggle-autostart', () => {
-    const next = !app.getLoginItemSettings().openAtLogin;
-    app.setLoginItemSettings({ openAtLogin: next });
-    return next;
+  ipcMain.handle('toggle-autostart', () => setAutostart(!autostartOn()));
+
+  /* Quitting from the panel. The icon by the clock has "Quit" too, but on
+     Linux under GNOME that icon is not shown at all (it needs an
+     extension), and closing the windows leaves the app running for the
+     widget — so without this there would be no way out. */
+  ipcMain.handle('quit-app', () => {
+    app.isQuitting = true;
+    app.quit();
   });
 
   /* A pinned widget is not hidden from itself: unpin it first. */
@@ -689,6 +757,7 @@ app.whenReady().then(async () => {
 
   origin = serve();
   wireMessages();
+  if (process.platform === 'linux' && autostartOn()) setAutostart(true);
 
   /* Every open window hears about a new version as soon as the main
      process does, so the button can appear wherever the person is

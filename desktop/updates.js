@@ -12,6 +12,11 @@
 
    - Windows, installed with the setup file: downloads in the background,
      then one press restarts into the new version.
+   - Linux, the AppImage: the same — the file is swapped for the new one
+     and the app restarts into it.
+   - Linux, the .rpm package: installed by the system's package manager,
+     which only the person can ask to replace it (it wants their
+     password), so the button opens the download page.
    - Windows portable, and macOS: the new version can be found but not
      swapped in by the app itself. The portable exe is a single file the
      app cannot overwrite while it is running; on a Mac, replacing an app
@@ -35,15 +40,21 @@ let askedAt = 0;
    day; an hour is one small request and soon enough. */
 const EVERY = 60 * 60 * 1000;
 
-/* Only an installed Windows build can replace itself. The portable
-   exe's own launcher sets PORTABLE_EXECUTABLE_DIR, which is how the
-   portable one is told apart. And the installer writes app-update.yml
-   beside the app, which is what tells the updater where to look — a
-   build without it could only ever fail, so it takes the simpler path
-   of asking the release page instead. */
+/* Only an installed Windows build and a Linux AppImage can replace
+   themselves. The portable exe's own launcher sets
+   PORTABLE_EXECUTABLE_DIR, which is how the portable one is told apart;
+   an AppImage's sets APPIMAGE, the file to replace. And the build writes
+   app-update.yml beside the app, which is what tells the updater where
+   to look — a build without it could only ever fail, so it takes the
+   simpler path of asking the release page instead. */
 function canInstallInPlace() {
-  if (process.platform !== 'win32') return false;
-  if (process.env.PORTABLE_EXECUTABLE_DIR) return false;
+  if (process.platform === 'win32') {
+    if (process.env.PORTABLE_EXECUTABLE_DIR) return false;
+  } else if (process.platform === 'linux') {
+    if (!process.env.APPIMAGE) return false;
+  } else {
+    return false;
+  }
   try {
     return require('node:fs').existsSync(require('node:path').join(process.resourcesPath, 'app-update.yml'));
   } catch (err) {

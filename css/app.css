@@ -3171,3 +3171,10 @@ body.is-editing .tile[draggable="true"]:active { cursor: grabbing; }
 .wsw__one--blue   { --sw: #3b9cff; }
 .wsw__one--violet { --sw: #b46cff; }
 .wsw__one--ink    { --sw: var(--text); }
+
+/* Notes that only hold on one system ---------------------------------------
+   The desktop app marks the page with its system (is-win32, is-darwin,
+   is-linux; js/main.js), and a few explanations differ between them. */
+.only-linux { display: none; }
+.is-linux .only-linux { display: block; }
+.is-linux .only-not-linux { display: none; }

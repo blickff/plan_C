@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('desktop', {
   toggleOnTop: () => ipcRenderer.invoke('toggle-on-top'),
   togglePinned: () => ipcRenderer.invoke('toggle-pinned'),
   toggleAutostart: () => ipcRenderer.invoke('toggle-autostart'),
+  quit: () => ipcRenderer.invoke('quit-app'),
   getWindowSettings: () => ipcRenderer.invoke('get-window-settings'),
   hideWidget: () => ipcRenderer.invoke('hide-widget'),
 

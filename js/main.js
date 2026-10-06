@@ -759,6 +759,10 @@ function wireChrome() {
       pinBtn.classList.toggle('is-active', settings.pinned);
     });
 
+    document.getElementById('quit-btn').addEventListener('click', function () {
+      window.desktop.quit();
+    });
+
     autoBtn.addEventListener('click', function () {
       window.desktop.toggleAutostart().then(function (on) {
         autoBtn.classList.toggle('is-active', on);

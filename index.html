@@ -539,15 +539,24 @@
         <div class="row">
           <button class="pill" type="button" id="pinned-btn">Pin to the desktop</button>
           <button class="pill" type="button" id="ontop-btn">Keep above other windows</button>
-          <button class="pill" type="button" id="autostart-btn">Start with Windows</button>
+          <button class="pill" type="button" id="autostart-btn">Start when I log in</button>
+          <button class="pill" type="button" id="quit-btn">Quit Daybook</button>
         </div>
-        <p class="card__note muted">
+        <p class="card__note muted only-not-linux">
           Pinned, the widget is part of the desktop: it stays exactly where it
           is, cannot be dragged or resized, sits behind whatever you are working
           in, and is still there after “show desktop”. To move it, unpin it — here,
           with the pin button on the widget itself, or from the icon by the clock —
           drag it where you want it, and pin it again. Double-click a pinned
           widget to open the panel.
+        </p>
+        <p class="card__note muted only-linux">
+          Pinned, the widget stays where it is, cannot be dragged and is not
+          held above your windows. To move it, unpin it with the pin button on
+          the widget itself, drag it, and pin it again. Double-click a pinned
+          widget to open the panel. Closing the windows keeps Daybook running
+          for the widget; to bring a hidden widget back, start Daybook again
+          from the app menu, and to stop it, press Quit Daybook.
         </p>
       </div>
 

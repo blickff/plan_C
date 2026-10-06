@@ -7,7 +7,8 @@
   "scripts": {
     "start": "electron .",
     "icon": "node scripts/make-icon.js",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "dist:linux": "electron-builder --linux"
   },
   "devDependencies": {
     "electron": "^33.0.0",
@@ -96,6 +97,44 @@
     },
     "dmg": {
       "title": "${productName} ${version}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png",
+      "category": "Utility",
+      "executableName": "daybook",
+      "synopsis": "Your day, your habits, your notes and your spending",
+      "description": "A calm desktop panel for habits, tasks, notes and spending, with a widget for the desktop.",
+      "maintainer": "blickff",
+      "desktop": {
+        "entry": {
+          "Name": "Daybook",
+          "StartupWMClass": "Daybook",
+          "Keywords": "habits;tasks;notes;money;"
+        }
+      }
+    },
+    "appImage": {
+      "artifactName": "Daybook-${version}.${ext}"
+    },
+    "rpm": {
+      "artifactName": "Daybook-${version}.x86_64.${ext}",
+      "fpm": [
+        "--rpm-rpmbuild-define=_build_id_links none"
+      ]
     }
   },
   "dependencies": {
